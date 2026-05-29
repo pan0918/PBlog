@@ -1,7 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import matter from 'gray-matter';
-import Link from 'next/link';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
@@ -10,7 +8,9 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeStringify from 'rehype-stringify';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import matter from 'gray-matter';
 import 'highlight.js/styles/atom-one-dark.css';
+import Link from 'next/link';
 import Navbar from '../../../components/Navbar';
 import PageTransition from '../../../components/PageTransition';
 import { siteConfig } from '../../../siteConfig';
@@ -19,11 +19,11 @@ import ClientTOC from '../../../components/ClientTOC';
 import BackButton from '../../../components/BackButton';
 import Comments from '../../../components/Comments';
 import SidebarLyric from '../../../components/SidebarLyric';
+import { getAllPosts } from '../../../lib/posts';
 
 export async function generateStaticParams() {
-  const postsDirectory = path.join(process.cwd(), 'posts');
-  if (!fs.existsSync(postsDirectory)) return [];
-  return fs.readdirSync(postsDirectory).filter(n => n.endsWith('.md')).map(n => ({ slug: n.replace(/\.md$/, '') }));
+  const posts = getAllPosts();
+  return posts.map(p => ({ slug: p.slug.split('/') }));
 }
 
 function extractToc(content: string) {
@@ -36,8 +36,12 @@ function extractToc(content: string) {
   return toc;
 }
 
-async function getPostData(slug: string) {
-  const fullPath = path.join(process.cwd(), 'posts', `${slug}.md`);
+async function getPostData(slugArr: string[]) {
+  const slug = slugArr.join('/');
+  const postsDir = path.join(process.cwd(), 'posts');
+  const fullPath = path.join(postsDir, `${slug}.md`);
+  if (!fs.existsSync(fullPath)) return null;
+
   const fileContents = fs.readFileSync(fullPath, 'utf8');
   let { data, content } = matter(fileContents);
   content = content.replace(/^(\s*\d+)\.([^ \n])/gm, '$1. $2');
@@ -60,22 +64,31 @@ async function getPostData(slug: string) {
 }
 
 function getRecentPosts(currentSlug: string) {
-  const postsDirectory = path.join(process.cwd(), 'posts');
-  let fileNames: string[] = [];
-  try { fileNames = fs.readdirSync(postsDirectory).filter(f => f.endsWith('.md')); } catch(e) {}
-  if (!fileNames) return [];
-  return fileNames.map(f => {
-    const s = f.replace(/\.md$/, '');
-    const c = fs.readFileSync(path.join(postsDirectory, f), 'utf8');
-    const { data } = matter(c);
-    return { slug: s, title: data.title || '无标题', date: data.date };
-  }).filter(p => p.slug !== currentSlug).slice(0, 3);
+  const posts = getAllPosts();
+  return posts.filter(p => p.slug !== currentSlug).slice(0, 3);
 }
 
-export default async function Post({ params }: { params: Promise<{ slug: string }> }) {
+export default async function Post({ params }: { params: Promise<{ slug?: string[] }> }) {
   const resolvedParams = await params;
-  const postData = await getPostData(resolvedParams.slug);
-  const recentPosts = getRecentPosts(resolvedParams.slug);
+  const slugArr = resolvedParams.slug || [];
+  const postData = await getPostData(slugArr);
+  if (!postData) {
+    return (
+      <div className="min-h-screen relative pb-20">
+        <Navbar />
+        <PageTransition>
+          <main className="w-[95%] md:w-[90%] max-w-6xl mx-auto mt-24 md:mt-28 relative z-10">
+            <div className="bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 dark:border-white/10 p-12 text-center">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">文章不存在</h1>
+              <Link href="/" className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">返回首页</Link>
+            </div>
+          </main>
+        </PageTransition>
+      </div>
+    );
+  }
+
+  const recentPosts = getRecentPosts(postData.slug);
 
   return (
     <div className="min-h-screen relative pb-20">
@@ -153,7 +166,7 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
                 {recentPosts.map(p => (
                   <Link key={p.slug} href={`/posts/${p.slug}`} className="group block">
                     <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">{p.title}</h4>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-bold uppercase">{p.date}</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-bold uppercase">{p.formattedDate}</p>
                   </Link>
                 ))}
               </div>

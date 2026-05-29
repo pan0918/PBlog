@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import PageTransition from '../components/PageTransition';
 import SearchBar from '../components/SearchBar';
@@ -14,6 +15,7 @@ import CalendarCard from '../components/CalendarCard';
 import SiteDashboard from '../components/SiteDashboard';
 import { albums } from '../data/albums';
 import { ToastProvider } from '../components/ToastProvider';
+import { getAllPosts } from '../lib/posts';
 
 function formatUpdateTime(dateString: string) {
   if (!dateString || dateString === '1970-01-01') return '刚刚更新';
@@ -27,20 +29,17 @@ function formatUpdateTime(dateString: string) {
   } catch { return dateString; }
 }
 
-export default function Home() {
-  const postsDirectory = path.join(process.cwd(), 'posts');
-  let allPosts: any[] = [];
-  try {
-    if (fs.existsSync(postsDirectory)) {
-      const fileNames = fs.readdirSync(postsDirectory).filter(f => f.endsWith('.md'));
-      allPosts = fileNames.map(fileName => {
-        const fullPath = path.join(postsDirectory, fileName);
-        const { data, content } = matter(fs.readFileSync(fullPath, 'utf8'));
-        const rawDate = data.date || '1970-01-01';
-        return { slug: fileName.replace(/\.md$/, ''), ...data, title: data.title || '', description: data.description || content.substring(0, 120), content: content || '', date: rawDate, formattedDate: formatUpdateTime(rawDate) };
-      }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }
-  } catch (e) {}
+const POSTS_PER_PAGE = 5;
+
+export default async function Home({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const params = await searchParams;
+  const currentPage = Math.max(1, parseInt(params.page || '1', 10) || 1);
+
+  const allPosts = getAllPosts();
+  const totalPages = Math.max(1, Math.ceil(allPosts.length / POSTS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * POSTS_PER_PAGE;
+  const posts = allPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
 
   const chattersDirectory = path.join(process.cwd(), 'chatters');
   let allChatters: any[] = [];
@@ -80,11 +79,38 @@ export default function Home() {
 
             {/* Center Column */}
             <main className="flex-1 min-w-0 flex flex-col gap-6">
-              {allPosts.length > 0 ? allPosts.map((post: any) => (
+              {posts.length > 0 ? posts.map((post: any) => (
                 <ArticleCard key={post.slug} post={post} />
               )) : (
                 <div className="rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-12 text-center">
                   <p className="text-slate-400 dark:text-slate-500 font-bold">暂无文章</p>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-3 mt-4">
+                  {safePage > 1 ? (
+                    <Link href={`/?page=${safePage - 1}`} className="px-4 py-2 rounded-full bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 transition-all shadow-md">
+                      上一页
+                    </Link>
+                  ) : (
+                    <span className="px-4 py-2 rounded-full bg-white/20 dark:bg-slate-800/30 text-sm font-bold text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                      上一页
+                    </span>
+                  )}
+                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400">
+                    {safePage} / {totalPages}
+                  </span>
+                  {safePage < totalPages ? (
+                    <Link href={`/?page=${safePage + 1}`} className="px-4 py-2 rounded-full bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 transition-all shadow-md">
+                      下一页
+                    </Link>
+                  ) : (
+                    <span className="px-4 py-2 rounded-full bg-white/20 dark:bg-slate-800/30 text-sm font-bold text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                      下一页
+                    </span>
+                  )}
                 </div>
               )}
             </main>

@@ -191,104 +191,110 @@ export default function BookViewer({ album, onClose }: BookViewerProps) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center"
-      onClick={onClose}
-    >
+    <>
+      {/* Close button - outside flex container for reliable positioning */}
       <button
         onClick={onClose}
-        className="absolute top-6 right-6 z-[110] w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-all text-lg"
+        className="fixed top-24 right-8 z-[200] w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 hover:scale-110 transition-all duration-200 cursor-pointer"
+        aria-label="关闭"
       >
-        ✕
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
       </button>
 
-      <div className="absolute top-6 left-6 z-[110] text-white/60 text-sm font-mono">
-        {currentPage === 0 ? "封面" : `${currentPage} / ${totalPages - 1}`}
-      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center"
+        onClick={onClose}
+      >
+        <div className="absolute top-6 left-6 z-[110] text-white/60 text-sm font-mono">
+          {currentPage === 0 ? "封面" : `${currentPage} / ${totalPages - 1}`}
+        </div>
 
-      <div className="relative" style={{ perspective: "1200px" }} onClick={(e) => e.stopPropagation()}>
-        <div
-          className="relative overflow-hidden rounded-2xl"
-          style={{ width: "min(80vw, 800px)", height: "min(60vh, 600px)" }}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-        >
-          {Array.from({ length: totalPages }).map((_, i) => {
-            const pageStyle = getPageStyle(i);
-            const isFlippingThis = flippingPage === i;
-
-            return (
-              <div key={i} style={pageStyle}>
-                {/* Front face */}
-                <div
-                  className="absolute inset-0"
-                  style={{ backfaceVisibility: "hidden" }}
-                >
-                  {renderPageContent(i)}
-                </div>
-
-                {/* Back face (what this page shows when flipped) */}
-                <div
-                  className="absolute inset-0"
-                  style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
-                >
-                  {renderBackFace(i)}
-                </div>
-
-                {/* Page curl shadow during flip */}
-                {isFlippingThis && (
-                  <div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                      background: "linear-gradient(to right, rgba(0,0,0,0.15) 0%, transparent 15%)",
-                    }}
-                  />
-                )}
-              </div>
-            );
-          })}
-
-          {/* Book spine shadow */}
+        <div className="relative" style={{ perspective: "1200px" }} onClick={(e) => e.stopPropagation()}>
           <div
-            className="absolute top-0 bottom-0 left-0 w-4 pointer-events-none z-[998]"
-            style={{
-              background: "linear-gradient(to right, rgba(0,0,0,0.3) 0%, transparent 100%)",
-            }}
-          />
+            className="relative overflow-hidden rounded-2xl"
+            style={{ width: "min(80vw, 800px)", height: "min(60vh, 600px)" }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            {Array.from({ length: totalPages }).map((_, i) => {
+              const pageStyle = getPageStyle(i);
+              const isFlippingThis = flippingPage === i;
 
-          {/* Page edge shadow */}
-          {isFlipping && (
+              return (
+                <div key={i} style={pageStyle}>
+                  {/* Front face */}
+                  <div
+                    className="absolute inset-0"
+                    style={{ backfaceVisibility: "hidden" }}
+                  >
+                    {renderPageContent(i)}
+                  </div>
+
+                  {/* Back face (what this page shows when flipped) */}
+                  <div
+                    className="absolute inset-0"
+                    style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                  >
+                    {renderBackFace(i)}
+                  </div>
+
+                  {/* Page curl shadow during flip */}
+                  {isFlippingThis && (
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background: "linear-gradient(to right, rgba(0,0,0,0.15) 0%, transparent 15%)",
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Book spine shadow */}
             <div
-              className="absolute inset-0 pointer-events-none z-[997]"
+              className="absolute top-0 bottom-0 left-0 w-4 pointer-events-none z-[998]"
               style={{
-                background: "linear-gradient(to left, rgba(0,0,0,0.1) 0%, transparent 5%)",
+                background: "linear-gradient(to right, rgba(0,0,0,0.3) 0%, transparent 100%)",
               }}
             />
-          )}
-        </div>
-      </div>
 
-      <button
-        onClick={(e) => { e.stopPropagation(); flipPrev(); }}
-        disabled={currentPage <= 0}
-        className="absolute left-4 md:left-8 z-[110] w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-      >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); flipNext(); }}
-        disabled={currentPage >= totalPages - 1}
-        className="absolute right-4 md:right-8 z-[110] w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-      >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-    </motion.div>
+            {/* Page edge shadow */}
+            {isFlipping && (
+              <div
+                className="absolute inset-0 pointer-events-none z-[997]"
+                style={{
+                  background: "linear-gradient(to left, rgba(0,0,0,0.1) 0%, transparent 5%)",
+                }}
+              />
+            )}
+          </div>
+        </div>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); flipPrev(); }}
+          disabled={currentPage <= 0}
+          className="absolute left-4 md:left-8 z-[110] w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-all disabled:cursor-not-allowed"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); flipNext(); }}
+          disabled={currentPage >= totalPages - 1}
+          className="absolute right-4 md:right-8 z-[110] w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-all disabled:cursor-not-allowed"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </motion.div>
+    </>
   );
 }

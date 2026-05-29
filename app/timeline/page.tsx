@@ -1,23 +1,10 @@
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
 import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import TimelineClient from '../../components/TimelineClient';
+import { getAllPosts } from '../../lib/posts';
 
 export default function TimelinePage() {
-  const postsDir = path.join(process.cwd(), 'posts');
-  let posts: any[] = [];
-  try {
-    if (fs.existsSync(postsDir)) {
-      const files = fs.readdirSync(postsDir).filter(f => f.endsWith('.md'));
-      posts = files.map(f => {
-        const content = fs.readFileSync(path.join(postsDir, f), 'utf8');
-        const { data } = matter(content);
-        return { slug: f.replace(/\.md$/, ''), title: data.title || '无标题', date: data.date || '', tags: data.tags || [] };
-      }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }
-  } catch (e) {}
+  const posts = getAllPosts();
 
   return (
     <div className="min-h-screen relative pb-20">

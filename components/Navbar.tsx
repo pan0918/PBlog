@@ -5,12 +5,14 @@ import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, PanInfo } from 'framer-motion';
 import { siteConfig } from '../siteConfig';
+import { useTheme } from './ThemeProvider';
 
 export default function Navbar() {
   const [showNav, setShowNav] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { isDark, toggleTheme } = useTheme();
 
   const wheelRef = useRef<HTMLDivElement>(null);
   const rawRotation = useMotionValue(0);
@@ -84,6 +86,7 @@ export default function Navbar() {
             <span className="text-indigo-500 mx-1">{siteConfig.navSuffix || 'の'}</span>
             {siteConfig.navAfter || '宝藏之地'}
           </Link>
+          <div className="flex items-center gap-4">
           <nav className="flex gap-8 text-sm font-bold">
             {navLinks.map((link) => {
               const isActive = pathname === link.href || pathname === `${link.href}/`;
@@ -95,6 +98,18 @@ export default function Navbar() {
               );
             })}
           </nav>
+          <button
+            onClick={toggleTheme}
+            className="w-9 h-9 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-300"
+            title={isDark ? '切换到日间模式' : '切换到夜间模式'}
+          >
+            {isDark ? (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            )}
+          </button>
+          </div>
         </div>
       </header>
 
