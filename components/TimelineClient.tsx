@@ -7,6 +7,7 @@ interface Post { slug: string; title: string; date: string; tags: string[]; cate
 
 export default function TimelineClient({ posts }: { posts: Post[] }) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
 
   const categories = useMemo(() => {
     const catSet = new Set<string>();
@@ -15,9 +16,18 @@ export default function TimelineClient({ posts }: { posts: Post[] }) {
   }, [posts]);
 
   const filteredPosts = useMemo(() => {
-    if (!selectedCategory) return posts;
-    return posts.filter(p => p.category === selectedCategory);
-  }, [posts, selectedCategory]);
+    let result = posts;
+    if (selectedCategory) result = result.filter(p => p.category === selectedCategory);
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      result = result.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        p.tags.some(t => t.toLowerCase().includes(q)) ||
+        (p.category && p.category.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [posts, selectedCategory, query]);
 
   const groupedByYear = useMemo(() => {
     const groups: Record<string, Post[]> = {};
@@ -31,6 +41,21 @@ export default function TimelineClient({ posts }: { posts: Post[] }) {
 
   return (
     <div>
+      {/* Search Bar */}
+      <div className="relative mb-6">
+        <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          placeholder="搜寻被封存的知识..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full h-12 pl-12 pr-4 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/50 dark:border-white/10 rounded-2xl text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all duration-300"
+        />
+      </div>
+
+      {/* Category Filter */}
       {categories.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-8">
           <button onClick={() => setSelectedCategory(null)} className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${!selectedCategory ? 'bg-indigo-500 text-white' : 'bg-white/40 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border border-white/40 dark:border-white/10'}`}>全部</button>
@@ -40,9 +65,10 @@ export default function TimelineClient({ posts }: { posts: Post[] }) {
         </div>
       )}
 
+      {/* Timeline */}
       <div className="relative">
         <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500 to-purple-500"></div>
-        {groupedByYear.map(([year, yearPosts]) => (
+        {groupedByYear.length > 0 ? groupedByYear.map(([year, yearPosts]) => (
           <div key={year} className="mb-10">
             <div className="flex items-center gap-3 mb-6 ml-2">
               <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white font-black text-sm shadow-lg z-10">{year.slice(2)}</div>
@@ -70,7 +96,11 @@ export default function TimelineClient({ posts }: { posts: Post[] }) {
               ))}
             </div>
           </div>
-        ))}
+        )) : (
+          <div className="text-center py-16 text-slate-400 dark:text-slate-500 font-bold ml-16">
+            没有找到匹配的文章
+          </div>
+        )}
       </div>
     </div>
   );

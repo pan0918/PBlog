@@ -1,37 +1,72 @@
 "use client";
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 interface Moment { id: string; title: string; date: string; mood: string; weather: string; content: string; }
 
 export default function MomentList({ moments }: { moments: Moment[] }) {
+  const [query, setQuery] = useState('');
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return moments;
+    const q = query.toLowerCase();
+    return moments.filter(m =>
+      m.title.toLowerCase().includes(q) ||
+      m.content.toLowerCase().includes(q) ||
+      m.mood.toLowerCase().includes(q) ||
+      m.weather.toLowerCase().includes(q)
+    );
+  }, [moments, query]);
+
   if (!moments.length) {
     return <div className="text-center py-20 text-slate-400 dark:text-slate-500 font-bold">暂无说说</div>;
   }
 
   return (
-    <div className="relative">
-      <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500 to-purple-500 hidden md:block"></div>
-      <div className="space-y-6">
-        {moments.map((moment, i) => (
-          <motion.div
-            key={moment.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="md:ml-16 relative"
-          >
-            <div className="absolute -left-[41px] top-6 w-3 h-3 bg-indigo-500 rounded-full border-2 border-white dark:border-slate-900 hidden md:block"></div>
-            <div className="rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 transition-all duration-500 hover:scale-[1.01]">
-              <div className="flex items-center gap-3 mb-3 flex-wrap">
-                <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{moment.date}</span>
-                {moment.mood && <span className="text-xs px-2 py-0.5 rounded-full bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 font-bold">{moment.mood}</span>}
-                {moment.weather && <span className="text-xs px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 font-bold">{moment.weather}</span>}
+    <div>
+      {/* Search Bar */}
+      <div className="relative mb-8">
+        <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          placeholder="搜索说说内容..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full h-12 pl-12 pr-4 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/50 dark:border-white/10 rounded-2xl text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all duration-300"
+        />
+      </div>
+
+      {/* Timeline */}
+      <div className="relative">
+        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500 to-purple-500 hidden md:block"></div>
+        <div className="space-y-6">
+          {filtered.length > 0 ? filtered.map((moment, i) => (
+            <motion.div
+              key={moment.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="md:ml-16 relative"
+            >
+              <div className="absolute -left-[41px] top-6 w-3 h-3 bg-indigo-500 rounded-full border-2 border-white dark:border-slate-900 hidden md:block"></div>
+              <div className="rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 transition-all duration-500 hover:scale-[1.01]">
+                <div className="flex items-center gap-3 mb-3 flex-wrap">
+                  <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{moment.date}</span>
+                  {moment.mood && <span className="text-xs px-2 py-0.5 rounded-full bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 font-bold">{moment.mood}</span>}
+                  {moment.weather && <span className="text-xs px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 font-bold">{moment.weather}</span>}
+                </div>
+                {moment.title && <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{moment.title}</h3>}
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{moment.content}</p>
               </div>
-              {moment.title && <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{moment.title}</h3>}
-              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{moment.content}</p>
+            </motion.div>
+          )) : (
+            <div className="md:ml-16 text-center py-16 text-slate-400 dark:text-slate-500 font-bold">
+              没有找到匹配的说说
             </div>
-          </motion.div>
-        ))}
+          )}
+        </div>
       </div>
     </div>
   );

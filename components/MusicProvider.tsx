@@ -254,6 +254,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         URL.revokeObjectURL(blobUrlRef.current);
         blobUrlRef.current = null;
       }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
     };
   }, []);
 
@@ -262,21 +266,23 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (currentSong) setParsedLyrics(parseLrc(currentSong.lrc));
   }, [currentIndex]);
 
-  // Sync volume
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = isMuted ? 0 : volume;
-  }, [volume, isMuted]);
-
-  // Fetch audio as blob when song changes — ensures seeking works regardless of CDN range request support
+  // Fetch audio as blob — ensures seeking works regardless of CDN range request support
   useEffect(() => {
     if (!currentSong) return;
     let cancelled = false;
+    // Reset display states immediately on song change
+    setDuration(0);
+    setCurrentTime(0);
+    setProgress(0);
+    setCurrentLyric("♪ 正在缓冲 ♪");
     // Clean up old blob URL
     if (blobUrlRef.current) {
       URL.revokeObjectURL(blobUrlRef.current);
       blobUrlRef.current = null;
     }
-    setAudioSrc(currentSong.url); // Use direct URL initially for fast start
+    // Phase 1: use direct URL for fast initial playback
+    setAudioSrc(currentSong.url);
+    // Phase 2: fetch full file in background for reliable seeking
     fetch(currentSong.url)
       .then(res => res.blob())
       .then(blob => {
@@ -289,7 +295,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, [currentIndex]);
 
-  // Time update & lyric sync (using inline JSX handlers instead of addEventListener)
+  // Sync volume
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = isMuted ? 0 : volume;
+  }, [volume, isMuted]);
+
+  // Time update & lyric sync
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -304,9 +315,21 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
     for (let i = parsedLyrics.length - 1; i >= 0; i--) {
       if (t >= parsedLyrics[i].time) {
-        setCurrentLyric(parsedLyrics[i].text);
+        if (parsedLyrics[i].text !== currentLyric) {
+          setCurrentLyric(parsedLyrics[i].text);
+        }
         break;
       }
+    }
+  };
+
+  // Get duration immediately when metadata loads (faster than timeupdate)
+  const handleLoadedMetadata = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const dur = audio.duration;
+    if (dur && isFinite(dur)) {
+      setDuration(dur);
     }
   };
 
@@ -394,7 +417,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           src={audioSrc}
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleEnded}
-          onLoadedMetadata={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
           onCanPlay={() => { if (isPlaying && audioRef.current) audioRef.current.play().catch(() => {}); }}
         />
       )}
