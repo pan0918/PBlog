@@ -6,6 +6,7 @@ import React, {
   useState,
   useRef,
   useEffect,
+  useCallback,
   type ReactNode,
 } from "react";
 
@@ -301,6 +302,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   }, [volume, isMuted]);
 
   // Time update & lyric sync
+  const endedRef = useRef(false);
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -311,6 +313,22 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       setDuration(dur);
       if (dur > 0) {
         setProgress((t / dur) * 100);
+      }
+      // Detect song end manually (more reliable than onEnded)
+      if (dur > 0 && t >= dur - 0.3 && !endedRef.current) {
+        endedRef.current = true;
+        if (playMode === "single") {
+          audio.currentTime = 0;
+          audio.play();
+        } else if (playMode === "random") {
+          setCurrentIndex(Math.floor(Math.random() * SONGS.length));
+        } else {
+          setCurrentIndex((prev) => (prev + 1) % SONGS.length);
+        }
+        return;
+      }
+      if (t < dur - 1) {
+        endedRef.current = false;
       }
     }
     for (let i = parsedLyrics.length - 1; i >= 0; i--) {
@@ -333,7 +351,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const handleEnded = () => {
+  const handleEnded = useCallback(() => {
     const audio = audioRef.current;
     if (playMode === "single" && audio) {
       audio.currentTime = 0;
@@ -343,7 +361,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     } else {
       setCurrentIndex((prev) => (prev + 1) % SONGS.length);
     }
-  };
+  }, [playMode]);
 
   // Controls
   const togglePlay = () => {
@@ -357,8 +375,28 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const nextSong = () => setCurrentIndex((prev) => (prev + 1) % SONGS.length);
-  const prevSong = () => setCurrentIndex((prev) => (prev - 1 + SONGS.length) % SONGS.length);
+  const nextSong = () => {
+    if (playMode === 'single') {
+      // Single repeat: restart current song
+      const audio = audioRef.current;
+      if (audio) { audio.currentTime = 0; audio.play(); }
+    } else if (playMode === 'random') {
+      setCurrentIndex(Math.floor(Math.random() * SONGS.length));
+    } else {
+      setCurrentIndex((prev) => (prev + 1) % SONGS.length);
+    }
+  };
+  const prevSong = () => {
+    if (playMode === 'single') {
+      // Single repeat: restart current song
+      const audio = audioRef.current;
+      if (audio) { audio.currentTime = 0; audio.play(); }
+    } else if (playMode === 'random') {
+      setCurrentIndex(Math.floor(Math.random() * SONGS.length));
+    } else {
+      setCurrentIndex((prev) => (prev - 1 + SONGS.length) % SONGS.length);
+    }
+  };
 
   const handleSeek = (time: number) => {
     const audio = audioRef.current;
@@ -416,7 +454,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           ref={audioRef}
           src={audioSrc}
           onTimeUpdate={handleTimeUpdate}
-          onEnded={handleEnded}
           onLoadedMetadata={handleLoadedMetadata}
           onCanPlay={() => { if (isPlaying && audioRef.current) audioRef.current.play().catch(() => {}); }}
         />

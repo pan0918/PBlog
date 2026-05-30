@@ -72,9 +72,32 @@ export default function MusicClient() {
   }, [playlist, searchQuery]);
 
   const getModeIcon = () => {
-    if (playMode === 'single') return <svg className="w-4 h-4 md:w-5 md:h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>;
-    if (playMode === 'random') return <svg className="w-4 h-4 md:w-5 md:h-5 text-slate-500 hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h4l3 8-3 8H4m4-16h4l3 8-3 8h-4m4-16h4l-3 8 3 8h-4" /></svg>;
-    return <svg className="w-4 h-4 md:w-5 md:h-5 text-slate-500 hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>;
+    if (playMode === 'single') return (
+      <svg className="w-4 h-4 md:w-5 md:h-5 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <path d="M17 2l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M3 11v-1a4 4 0 014-4h14" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7 22l-4-4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M21 13v1a4 4 0 01-4 4H3" strokeLinecap="round" strokeLinejoin="round" />
+        <text x="12" y="14.5" textAnchor="middle" fill="currentColor" stroke="none" fontSize="8" fontWeight="900" fontFamily="sans-serif">1</text>
+      </svg>
+    );
+    if (playMode === 'random') return (
+      <svg className="w-4 h-4 md:w-5 md:h-5 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <path d="M16 3h5v5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M4 20L21 3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M21 16v5h-5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M15 15l6 6" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M4 4l5 5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+    return (
+      <svg className="w-4 h-4 md:w-5 md:h-5 text-slate-500 hover:text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <path d="M17 2l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M3 11v-1a4 4 0 014-4h14" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7 22l-4-4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M21 13v1a4 4 0 01-4 4H3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
   };
 
   if (isLoading || !currentSong) {

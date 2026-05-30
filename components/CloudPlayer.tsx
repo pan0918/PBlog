@@ -11,8 +11,9 @@ const formatTime = (time: number) => {
 };
 
 export default function CloudPlayer() {
-  const { playlist, currentSong, isPlaying, progress, currentTime, duration, currentLyric, isLoading, togglePlay, nextSong, prevSong, handleSeek } = useMusic();
+  const { playlist, currentSong, isPlaying, progress, currentTime, duration, currentLyric, isLoading, togglePlay, nextSong, prevSong, handleSeek, playMode, togglePlayMode, volume, setVolume, isMuted, toggleMute } = useMusic();
   const [displayedLyric, setDisplayedLyric] = useState("");
+  const [showVolume, setShowVolume] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -51,6 +52,37 @@ export default function CloudPlayer() {
   const safePrevSong = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); prevSong(); };
   const safeNextSong = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); nextSong(); };
   const safeHandleSeek = (e: React.ChangeEvent<HTMLInputElement>) => { e.stopPropagation(); handleSeek(Number(e.target.value)); };
+  const safeTogglePlayMode = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); togglePlayMode(); };
+  const safeSetVolume = (e: React.ChangeEvent<HTMLInputElement>) => { e.stopPropagation(); setVolume(Number(e.target.value)); };
+
+  const getModeIcon = () => {
+    if (playMode === 'single') return (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <path d="M17 2l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M3 11v-1a4 4 0 014-4h14" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7 22l-4-4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M21 13v1a4 4 0 01-4 4H3" strokeLinecap="round" strokeLinejoin="round" />
+        <text x="12" y="14.5" textAnchor="middle" fill="currentColor" stroke="none" fontSize="8" fontWeight="900" fontFamily="sans-serif">1</text>
+      </svg>
+    );
+    if (playMode === 'random') return (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <path d="M16 3h5v5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M4 20L21 3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M21 16v5h-5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M15 15l6 6" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M4 4l5 5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+    return (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+        <path d="M17 2l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M3 11v-1a4 4 0 014-4h14" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7 22l-4-4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M21 13v1a4 4 0 01-4 4H3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  };
 
   return (
     <div
@@ -82,16 +114,39 @@ export default function CloudPlayer() {
           <input type="range" min="0" max="100" value={progress} onChange={safeHandleSeek} className="flex-1 h-1.5 bg-white/40 dark:bg-slate-700/50 rounded-full appearance-none outline-none cursor-pointer shadow-inner" style={{ background: `linear-gradient(to right, #818cf8 ${progress}%, rgba(148,163,184,0.4) ${progress}%)` }} />
           <span className="w-10">{formatTime(duration)}</span>
         </div>
-        <div className="flex items-center justify-center gap-6">
-          <button onClick={safePrevSong} className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative z-20">
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+        <div className="flex items-center justify-between px-2">
+          {/* Play Mode */}
+          <button onClick={safeTogglePlayMode} className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative z-20 p-1" title={playMode === 'loop' ? '顺序播放' : playMode === 'single' ? '单曲循环' : '随机播放'}>
+            {getModeIcon()}
           </button>
-          <button onClick={safeTogglePlay} className="w-12 h-12 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:scale-110 transition-all border-2 border-white/50 dark:border-slate-600 relative z-20">
-            {isPlaying ? <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> : <svg className="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>}
-          </button>
-          <button onClick={safeNextSong} className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative z-20">
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-          </button>
+
+          {/* Prev / Play / Next */}
+          <div className="flex items-center gap-5">
+            <button onClick={safePrevSong} className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative z-20">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            </button>
+            <button onClick={safeTogglePlay} className="w-12 h-12 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:scale-110 transition-all border-2 border-white/50 dark:border-slate-600 relative z-20">
+              {isPlaying ? <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> : <svg className="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>}
+            </button>
+            <button onClick={safeNextSong} className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative z-20">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+            </button>
+          </div>
+
+          {/* Volume */}
+          <div className="flex items-center relative z-20" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+            {showVolume && (
+              <div className="absolute bottom-full right-0 mb-2 w-24 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md rounded-full px-3 py-2 border border-white/30 dark:border-white/10 shadow-lg" onMouseLeave={() => setShowVolume(false)}>
+                <input type="range" min="0" max="1" step="0.01" value={isMuted ? 0 : volume} onChange={safeSetVolume} className="w-full h-1 appearance-none rounded-full cursor-pointer" style={{ background: `linear-gradient(to right, #6366f1 ${(isMuted ? 0 : volume) * 100}%, rgba(148,163,184,0.4) ${(isMuted ? 0 : volume) * 100}%)` }} />
+              </div>
+            )}
+            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowVolume(!showVolume); }} onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMute(); }} className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors p-1">
+              {isMuted || volume === 0
+                ? <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+                : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+              }
+            </button>
+          </div>
         </div>
       </div>
     </div>
