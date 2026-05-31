@@ -14,11 +14,11 @@ import Link from 'next/link';
 import Navbar from '../../../components/Navbar';
 import PageTransition from '../../../components/PageTransition';
 import { siteConfig } from '../../../siteConfig';
-import ClientSocials from '../../../components/ClientSocials';
 import ClientTOC from '../../../components/ClientTOC';
 import BackButton from '../../../components/BackButton';
 import Comments from '../../../components/Comments';
 import SidebarLyric from '../../../components/SidebarLyric';
+import ProfileCard from '../../../components/ProfileCard';
 import { getAllPosts } from '../../../lib/posts';
 
 export async function generateStaticParams() {
@@ -151,14 +151,7 @@ export default async function Post({ params }: { params: Promise<{ slug?: string
           </article>
 
           <aside className="w-full lg:w-[320px] flex flex-col gap-6 flex-shrink-0">
-            <div className="bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl p-6 border border-white/40 dark:border-white/10 shadow-xl text-center">
-              <div className="w-20 h-20 mx-auto rounded-full p-1 bg-gradient-to-tr from-indigo-500 to-purple-500 shadow-md mb-4 transition-transform duration-500 hover:rotate-3">
-                <img src={siteConfig.avatarUrl} alt="avatar" className="w-full h-full rounded-full object-cover bg-white" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{siteConfig.authorName}</h3>
-              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium mb-4">{siteConfig.bio}</p>
-              <ClientSocials />
-            </div>
+            <ProfileCard showStats={false} />
             <SidebarLyric />
             <div className="bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl p-6 border border-white/40 dark:border-white/10 shadow-xl">
               <h3 className="font-black text-slate-900 dark:text-white mb-4 border-l-4 border-indigo-500 pl-2 text-sm">RECOMMENDED</h3>

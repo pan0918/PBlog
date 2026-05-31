@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { siteConfig } from '../siteConfig';
 import { useToast } from './ToastProvider';
 
-export default function ProfileCard({ postCount, momentCount, photoCount }: { postCount: number; momentCount: number; photoCount: number }) {
+export default function ProfileCard({ postCount, momentCount, photoCount, showStats = true }: { postCount?: number; momentCount?: number; photoCount?: number; showStats?: boolean }) {
   const router = useRouter();
   const { showToast } = useToast();
 
@@ -43,13 +43,15 @@ export default function ProfileCard({ postCount, momentCount, photoCount }: { po
       </div>
 
       {/* Stats */}
-      <div className="flex items-center gap-3 w-full justify-center pt-3 border-t border-slate-200/50 dark:border-slate-700/50">
-        <StatItem count={postCount} label="文章" color="text-indigo-600 dark:text-indigo-400" />
-        <div className="w-px h-6 bg-slate-300/50 dark:bg-slate-700"></div>
-        <StatItem count={momentCount} label="说说" color="text-purple-600 dark:text-purple-400" />
-        <div className="w-px h-6 bg-slate-300/50 dark:bg-slate-700"></div>
-        <StatItem count={photoCount} label="照片" color="text-pink-600 dark:text-pink-400" />
-      </div>
+      {showStats && (
+        <div className="flex items-center gap-3 w-full justify-center pt-3 border-t border-slate-200/50 dark:border-slate-700/50">
+          <StatItem count={postCount || 0} label="文章" color="text-indigo-600 dark:text-indigo-400" />
+          <div className="w-px h-6 bg-slate-300/50 dark:bg-slate-700"></div>
+          <StatItem count={momentCount || 0} label="说说" color="text-purple-600 dark:text-purple-400" />
+          <div className="w-px h-6 bg-slate-300/50 dark:bg-slate-700"></div>
+          <StatItem count={photoCount || 0} label="照片" color="text-pink-600 dark:text-pink-400" />
+        </div>
+      )}
     </div>
   );
 }

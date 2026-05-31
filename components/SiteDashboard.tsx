@@ -15,13 +15,12 @@ export default function SiteDashboard() {
   const seconds = time ? String(time.getSeconds()).padStart(2, '0') : '--';
 
   return (
-    <div className="w-full rounded-3xl bg-slate-900 dark:bg-slate-950 shadow-xl p-6 flex items-center justify-center transition-all duration-700 overflow-hidden relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-800/50 to-transparent"></div>
-      <div className="relative z-10 flex items-baseline gap-1 font-mono font-black text-white/90 tracking-widest">
+    <div className="w-full rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 flex items-center justify-center transition-all duration-700 overflow-hidden relative">
+      <div className="relative z-10 flex items-baseline gap-1 font-mono font-black text-slate-800 dark:text-white/90 tracking-widest">
         <span className="text-3xl md:text-4xl">{hours}</span>
-        <span className="text-3xl md:text-4xl text-white/40 animate-pulse">:</span>
+        <span className="text-3xl md:text-4xl text-slate-400 dark:text-white/40 animate-pulse">:</span>
         <span className="text-3xl md:text-4xl">{minutes}</span>
-        <span className="text-3xl md:text-4xl text-white/40 animate-pulse">:</span>
+        <span className="text-3xl md:text-4xl text-slate-400 dark:text-white/40 animate-pulse">:</span>
         <span className="text-3xl md:text-4xl">{seconds}</span>
       </div>
     </div>

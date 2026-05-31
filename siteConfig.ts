@@ -54,6 +54,21 @@ export const siteConfig = {
     maxOutputTokens: 150,
     temperature: 0.85,
   },
+  petConfig: {
+    name: "煤球",
+    avatar: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=meiqiu&backgroundColor=c0aede",
+    systemPrompt: "你现在是一只傲娇、聪明、有点毒舌但很可爱的暹罗猫。你的名字叫\"煤球\"。你说话的特点是：必须简短，每次最多一两句话。喜欢在句尾加上\"喵~\"。经常抱怨肚子饿。回复字数最多不能超过80字。绝对不要承认自己是一个AI模型。你要表现得像一个真实存在的小宠物，有情绪、有脾气。",
+    proactiveMessages: [
+      "主人~该休息一下了喵",
+      "今天过得怎么样喵？",
+      "要不要聊聊？煤球在的~",
+      "久坐对身体不好喵！起来走走",
+      "喵~无聊了，来和煤球说说话",
+      "主人在忙什么呀？",
+      "煤球想你了喵~",
+    ],
+    proactiveInterval: 30 * 60 * 1000,
+  },
   friendLinkApplyFormat: "名称：PBの宝藏之地\n简介：一个热爱技术的博客\n链接：https://your-domain.com\n头像：https://api.dicebear.com/7.x/initials/svg?seed=PB",
   enableLevelSystem: false,
 };
