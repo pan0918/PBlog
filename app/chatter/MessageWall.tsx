@@ -1,83 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-
-/* ─── Theme detection ─── */
-function useIsDark() {
-  const [dark, setDark] = useState(false);
-  useEffect(() => {
-    const el = document.documentElement;
-    setDark(el.classList.contains("dark"));
-    const obs = new MutationObserver(() => setDark(el.classList.contains("dark")));
-    obs.observe(el, { attributes: true, attributeFilter: ["class"] });
-    return () => obs.disconnect();
-  }, []);
-  return dark;
-}
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 const STORAGE_KEY = "pb_message_wall";
-const NOTES_PER_PAGE = 12;
-
-/* ─── Warm post-it note palette with richer tones ─── */
-const NOTE_COLORS = [
-  { bg: "#fef9c3", text: "#713f12", shadow: "#eab308", tape: "rgba(200,180,140,0.45)" },   // 淡黄
-  { bg: "#dcfce7", text: "#14532d", shadow: "#22c55e", tape: "rgba(160,200,170,0.45)" },   // 浅绿
-  { bg: "#fff7ed", text: "#7c2d12", shadow: "#f97316", tape: "rgba(220,190,150,0.45)" },   // 奶橙
-  { bg: "#e0f2fe", text: "#0c4a6e", shadow: "#38bdf8", tape: "rgba(170,200,220,0.45)" },   // 天蓝
-  { bg: "#fce7f3", text: "#831843", shadow: "#ec4899", tape: "rgba(220,180,190,0.45)" },   // 粉色
-  { bg: "#f5f5f4", text: "#44403c", shadow: "#a8a29e", tape: "rgba(190,185,180,0.45)" },   // 米灰
-  { bg: "#ecfccb", text: "#365314", shadow: "#84cc16", tape: "rgba(180,210,150,0.45)" },   // 嫩绿
-  { bg: "#fef3c7", text: "#92400e", shadow: "#f59e0b", tape: "rgba(220,195,140,0.45)" },   // 暖黄
-];
-
-/* ─── Deterministic organic scatter layout with overlap ─── */
-function computeLayout(count: number) {
-  const items: { x: number; y: number; rotation: number; zIndex: number; scale: number; tapeRotation: number }[] = [];
-  if (count === 0) return items;
-
-  for (let i = 0; i < count; i++) {
-    const s = (i * 2654435761) >>> 0;
-    const r1 = (s % 997) / 997;
-    const r2 = (((s * 7 + 13) >>> 0) % 997) / 997;
-    const r3 = (((s * 11 + 3) >>> 0) % 997) / 997;
-    const r4 = (((s * 17 + 7) >>> 0) % 997) / 997;
-    const r5 = (((s * 23 + 19) >>> 0) % 997) / 997;
-
-    // Tighter grid with heavy organic offset for natural scatter
-    const cols = count <= 3 ? 2 : count <= 6 ? 3 : 4;
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const colWidth = 100 / cols;
-
-    // More aggressive random offsets for overlap
-    const x = colWidth * col + colWidth * 0.5 + (r1 - 0.5) * colWidth * 0.55;
-    const baseRowHeight = 26;
-    const y = row * baseRowHeight + 10 + (r2 - 0.5) * baseRowHeight * 0.55;
-
-    // Wider rotation
-    const rotation = (r3 - 0.5) * 28; // -14 to +14 degrees
-
-    // Varied scale for depth
-    const scale = 0.92 + r4 * 0.16; // 0.92 to 1.08
-
-    // z-index with more variation for overlap
-    const zIndex = 10 + Math.floor(r5 * 8);
-
-    // Tape angle
-    const tapeRotation = (r1 - 0.5) * 30;
-
-    items.push({
-      x: Math.max(5, Math.min(95, x)),
-      y: Math.max(2, Math.min(88, y)),
-      rotation,
-      zIndex,
-      scale,
-      tapeRotation,
-    });
-  }
-  return items;
-}
+const MIGRATION_KEY = "pb_message_wall_migrated_v2";
+const MAX_MESSAGE_LENGTH = 200;
 
 interface WallMessage {
   id: string;
@@ -87,498 +15,472 @@ interface WallMessage {
   createdAt: string;
 }
 
-function loadMessages(): WallMessage[] {
+const NOTE_COLORS = [
+  { bg: "#f8edff", text: "#3c3154", pin: "#8f82ce", accent: "#d9ceff" },
+  { bg: "#fff4dd", text: "#534533", pin: "#d6ad74", accent: "#f2d5a5" },
+  { bg: "#e9f6ff", text: "#2d4f67", pin: "#72a9ce", accent: "#b5dcf2" },
+  { bg: "#ffe9ed", text: "#5e3941", pin: "#dc7e8d", accent: "#f5bec8" },
+  { bg: "#fff8ea", text: "#574a39", pin: "#e7b972", accent: "#f3d8ad" },
+  { bg: "#edf8ee", text: "#31543b", pin: "#88b88b", accent: "#bee1c1" },
+  { bg: "#ffe7e6", text: "#633f3b", pin: "#d98787", accent: "#f3bebe" },
+  { bg: "#fff0cf", text: "#5a472f", pin: "#c79a4e", accent: "#efd28f" },
+  { bg: "#eee9ff", text: "#3f3764", pin: "#9182d5", accent: "#ccc2fa" },
+  { bg: "#e5f5ff", text: "#31536c", pin: "#79add1", accent: "#b7dff6" },
+];
+
+const SCATTER = [
+  { rotate: -5, y: 4, tape: false },
+  { rotate: 0, y: 13, tape: false },
+  { rotate: -12, y: -6, tape: false },
+  { rotate: 0, y: 16, tape: false },
+  { rotate: 6, y: 8, tape: true },
+  { rotate: -5, y: -3, tape: false },
+  { rotate: -4, y: 10, tape: true },
+  { rotate: 7, y: 0, tape: false },
+  { rotate: -3, y: 13, tape: false },
+  { rotate: 1, y: 2, tape: true },
+];
+
+const DECORATIONS = [
+  <Flower key="flower" />,
+  <Leaf key="leaf" />,
+  <Cloud key="cloud" />,
+  <Heart key="heart" />,
+  <Sprout key="sprout" />,
+  <Star key="star" />,
+];
+
+function loadLegacyMessages(): WallMessage[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((item) => item && typeof item.content === "string")
+      .map((item, index) => ({
+        id: typeof item.id === "string" ? item.id : crypto.randomUUID(),
+        content: item.content.slice(0, MAX_MESSAGE_LENGTH),
+        author: typeof item.author === "string" ? item.author.slice(0, 20) : "匿名",
+        colorIndex: Number.isInteger(item.colorIndex) ? item.colorIndex : index,
+        createdAt: typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString(),
+      }));
   } catch {
     return [];
   }
 }
 
-function saveMessages(msgs: WallMessage[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs));
-}
-
-function fmtDate(iso: string): string {
+function fmtDate(iso: string) {
   const d = new Date(iso);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}.${m}.${day}`;
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 }
 
-/* ─── Washi Tape decoration ─── */
-function WashiTape({ color, rotation }: { color: string; rotation: number }) {
+function fmtTime(iso: string) {
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+async function fetchMessages() {
+  const res = await fetch("/api/messages", { cache: "no-store" });
+  if (!res.ok) throw new Error("留言加载失败");
+  const data = await res.json();
+  return Array.isArray(data.messages) ? data.messages as WallMessage[] : [];
+}
+
+async function postMessage(payload: { content?: string; author?: string; messages?: WallMessage[] }) {
+  const res = await fetch("/api/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("留言提交失败");
+  return await res.json() as { message?: WallMessage; messages?: WallMessage[] };
+}
+
+function Pin({ color }: { color: string }) {
+  const gradientId = `pin-${color.replace("#", "")}`;
+  return (
+    <svg className="absolute -top-5 left-1/2 z-20 h-10 w-8 -translate-x-1/2 drop-shadow-[0_6px_5px_rgba(70,88,120,0.24)]" viewBox="0 0 32 40" fill="none" aria-hidden="true">
+      <ellipse cx="16" cy="35" rx="6" ry="2.2" fill="rgba(70,70,70,0.18)" />
+      <rect x="14.4" y="23" width="3.2" height="10" rx="1.6" fill="#9da9ae" opacity="0.55" />
+      <circle cx="16" cy="13" r="10.5" fill={color} />
+      <circle cx="16" cy="13" r="10.5" fill={`url(#${gradientId})`} />
+      <ellipse cx="12" cy="8.5" rx="4.5" ry="3.1" fill="white" opacity="0.32" />
+      <defs>
+        <radialGradient id={gradientId} cx="0" cy="0" r="1" gradientTransform="translate(12 8) rotate(48) scale(19)">
+          <stop stopColor="white" stopOpacity="0.22" />
+          <stop offset="1" stopColor="#22314b" stopOpacity="0.3" />
+        </radialGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function Tape({ color }: { color: string }) {
   return (
     <div
-      className="absolute -top-[3px] left-1/2 -translate-x-1/2 z-20 pointer-events-none select-none"
-      style={{ transform: `translateX(-50%) rotate(${rotation}deg)` }}
-    >
-      <div
-        className="w-[50px] h-[14px] rounded-[1px]"
-        style={{
-          background: color,
-          boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-          // Subtle torn edge effect via gradient
-          backgroundImage: `
-            linear-gradient(90deg,
-              transparent 0%, ${color} 3%, ${color} 97%, transparent 100%
-            )
-          `,
-        }}
-      />
-    </div>
-  );
-}
-
-/* ─── Realistic Red Pushpin ─── */
-function PushPin() {
-  return (
-    <div className="absolute -top-[8px] left-1/2 -translate-x-1/2 z-20 pointer-events-none select-none">
-      <svg width="28" height="34" viewBox="0 0 28 34" fill="none">
-        {/* Drop shadow */}
-        <ellipse cx="14" cy="32" rx="5" ry="2" fill="rgba(0,0,0,0.15)" />
-        {/* Pin shaft */}
-        <rect x="13" y="23" width="2" height="8" rx="1" fill="#a0a0a0" opacity="0.5" />
-        {/* Pin head */}
-        <circle cx="14" cy="14" r="9" fill="#dc2626" />
-        <circle cx="14" cy="14" r="9" fill="url(#pinGrad2)" />
-        {/* Glossy highlight */}
-        <ellipse cx="11" cy="11" rx="4" ry="3" fill="white" opacity="0.3" />
-        <ellipse cx="10" cy="9.5" rx="2" ry="1.5" fill="white" opacity="0.2" />
-        <defs>
-          <radialGradient id="pinGrad2" cx="0.35" cy="0.3" r="0.65">
-            <stop offset="0%" stopColor="white" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#991b1b" stopOpacity="0.5" />
-          </radialGradient>
-        </defs>
-      </svg>
-    </div>
-  );
-}
-
-/* ─── Corner fold effect ─── */
-function CornerFold({ color }: { color: string }) {
-  return (
-    <div className="absolute bottom-0 right-0 z-[2] pointer-events-none select-none">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M20 0 L20 20 L0 20 Z" fill={color} opacity="0.15" />
-        <path d="M20 0 L20 20 L0 20 Z" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="0.5" />
-      </svg>
-    </div>
-  );
-}
-
-/* ─── Decorative stamp mark ─── */
-function StampMark({ rotation }: { rotation: number }) {
-  return (
-    <div
-      className="absolute bottom-2 left-2 pointer-events-none select-none z-[2]"
-      style={{ transform: `rotate(${rotation}deg)` }}
-    >
-      <div className="w-[28px] h-[28px] rounded-full border-[1.5px] border-red-800/10 flex items-center justify-center">
-        <span className="text-[7px] font-bold text-red-800/10 tracking-wider" style={{ fontFamily: "'Georgia', serif" }}>
-          PB
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/* ─── StickyNote ─── */
-function StickyNote({ msg, color, layout, index }: {
-  msg: WallMessage;
-  color: typeof NOTE_COLORS[number];
-  layout: { x: number; y: number; rotation: number; zIndex: number; scale: number; tapeRotation: number };
-  index: number;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.3, y: 30 }}
-      animate={{ opacity: 1, scale: layout.scale, y: 0 }}
-      exit={{ opacity: 0, scale: 0.2, y: -30 }}
-      transition={{ type: "spring", stiffness: 180, damping: 16, delay: index * 0.04 }}
-      className="absolute"
+      className="absolute -top-4 left-1/2 z-20 h-8 w-20 -translate-x-1/2 rotate-[-4deg] opacity-75 shadow-sm"
       style={{
-        left: `${layout.x}%`,
-        top: `${layout.y}%`,
-        transform: `translate(-50%, -50%) rotate(${layout.rotation}deg)`,
-        width: "min(230px, 44vw)",
-        zIndex: layout.zIndex,
+        background: `repeating-linear-gradient(90deg, ${color} 0 8px, rgba(255,255,255,0.34) 8px 10px)`,
+        clipPath: "polygon(4% 0, 96% 6%, 100% 100%, 0 92%)",
       }}
+      aria-hidden="true"
+    />
+  );
+}
+
+function StickyNote({ msg, index }: { msg: WallMessage; index: number }) {
+  const color = NOTE_COLORS[msg.colorIndex % NOTE_COLORS.length];
+  const scatter = SCATTER[index % SCATTER.length];
+  const decoration = DECORATIONS[index % DECORATIONS.length];
+
+  return (
+    <motion.article
+      layout
+      initial={{ opacity: 0, y: 24, scale: 0.92, rotate: scatter.rotate - 2 }}
+      animate={{ opacity: 1, y: scatter.y, scale: 1, rotate: scatter.rotate }}
+      exit={{ opacity: 0, y: -16, scale: 0.86 }}
+      transition={{ type: "spring", stiffness: 160, damping: 18, delay: Math.min(index * 0.035, 0.25) }}
+      className="relative mx-auto h-[168px] w-[178px] sm:h-[178px] sm:w-[184px]"
     >
-      <div className="relative cursor-default group">
-        {/* Pushpin on top */}
-        <PushPin />
-
-        {/* Washi tape decoration (alternates with pin) */}
-        {index % 3 === 1 && (
-          <WashiTape color={color.tape} rotation={layout.tapeRotation} />
-        )}
-
-        {/* Note card — physical paper */}
+      {scatter.tape ? <Tape color={color.accent} /> : <Pin color={color.pin} />}
+      <div
+        className="relative flex h-full flex-col overflow-hidden px-7 pb-5 pt-8 ring-1 ring-white/65 dark:ring-white/35"
+        style={{
+          backgroundColor: color.bg,
+          color: color.text,
+          boxShadow: "0 18px 24px rgba(12, 20, 44, 0.24), 0 3px 6px rgba(61, 76, 108, 0.1), inset 0 1px 0 rgba(255,255,255,0.72)",
+        }}
+      >
         <div
-          className="rounded-[2px] p-5 pt-6 min-h-[130px] flex flex-col justify-between relative transition-all duration-300 group-hover:scale-[1.04] group-hover:shadow-lg"
+          className="pointer-events-none absolute inset-0 opacity-[0.11]"
           style={{
-            backgroundColor: color.bg,
-            color: color.text,
-            boxShadow: `
-              3px 4px 12px rgba(0,0,0,0.15),
-              1px 2px 4px rgba(0,0,0,0.1),
-              inset 0 -3px 0 rgba(0,0,0,0.04),
-              inset 0 1px 0 rgba(255,255,255,0.4)
-            `,
+            backgroundImage: "linear-gradient(rgba(94,111,145,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(94,111,145,0.14) 1px, transparent 1px)",
+            backgroundSize: "22px 22px",
           }}
+        />
+        <div className="pointer-events-none absolute bottom-0 right-0 h-14 w-14 bg-white/45 shadow-[-8px_-8px_18px_rgba(97,116,150,0.12)]" style={{ clipPath: "polygon(100% 0, 0 100%, 100% 100%)" }} />
+        <p
+          className="relative z-10 min-h-[74px] whitespace-pre-wrap break-words text-[19px] leading-[1.8] tracking-[0.08em] line-clamp-3 sm:text-[20px]"
+          style={{ fontFamily: "var(--font-handwriting), var(--font-serif), serif" }}
         >
-          {/* Paper grain texture */}
-          <div className="absolute inset-0 rounded-[2px] opacity-[0.03] pointer-events-none" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 128 128' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E")`,
-          }} />
-
-          {/* Horizontal fold line */}
-          <div
-            className="absolute top-[45%] left-[8%] right-[8%] h-[0.5px] pointer-events-none opacity-[0.06]"
-            style={{ background: `linear-gradient(90deg, transparent, ${color.text}, transparent)` }}
-          />
-
-          {/* Decorative dotted line at top */}
-          <div
-            className="absolute top-[18px] left-[12px] right-[12px] h-[1px] pointer-events-none opacity-[0.08]"
-            style={{ backgroundImage: `repeating-linear-gradient(90deg, ${color.text} 0, ${color.text} 3px, transparent 3px, transparent 7px)` }}
-          />
-
-          {/* Watermark */}
-          <div
-            className="absolute bottom-3 right-3 text-[30px] font-black pointer-events-none select-none leading-none tracking-tighter"
-            style={{ fontFamily: "'Georgia', 'Times New Roman', serif", color: color.shadow, opacity: 0.06 }}
-          >
-            PBLOG
+          {msg.content}
+        </p>
+        <div className="relative z-10 mt-auto h-px w-full bg-slate-500/10" />
+        <div className="relative z-10 mt-3 space-y-1.5 text-[12px] leading-none text-slate-600/70" style={{ fontFamily: "var(--font-serif), serif" }}>
+          <div className="flex items-center gap-2">
+            <CalendarIcon />
+            <span>{fmtDate(msg.createdAt)}</span>
           </div>
-
-          {/* Stamp mark (on some notes) */}
-          {index % 4 === 0 && <StampMark rotation={(index * 17) % 30 - 15} />}
-
-          {/* Corner fold (on some notes) */}
-          {index % 3 === 2 && <CornerFold color={color.shadow} />}
-
-          {/* Content */}
-          <p
-            className="text-[14px] leading-[2] whitespace-pre-wrap break-words line-clamp-5 relative z-[1]"
-            style={{ fontFamily: "'Noto Serif SC', 'STSong', 'SimSun', serif" }}
-          >
-            {msg.content}
-          </p>
-
-          {/* Footer: author + date */}
-          <div className="mt-4 pt-2 relative z-[1]">
-            {/* Dashed separator */}
-            <div
-              className="mb-2 h-[0.5px] opacity-[0.1]"
-              style={{ backgroundImage: `repeating-linear-gradient(90deg, ${color.text} 0, ${color.text} 4px, transparent 4px, transparent 8px)` }}
-            />
-            <p
-              className="text-[12px] font-bold opacity-45 tracking-wide"
-              style={{ fontFamily: "'Noto Serif SC', 'STSong', serif" }}
-            >
-              ——{msg.author}
-            </p>
-            <p
-              className="text-[10px] opacity-25 mt-0.5"
-              style={{ fontFamily: "'Noto Serif SC', 'STSong', serif" }}
-            >
-              {fmtDate(msg.createdAt)}
-            </p>
+          <div className="flex items-center gap-2">
+            <ClockIcon />
+            <span>{fmtTime(msg.createdAt)}</span>
           </div>
         </div>
+        <div className="pointer-events-none absolute bottom-4 right-4 z-10 opacity-55">{decoration}</div>
       </div>
-    </motion.div>
+    </motion.article>
   );
 }
 
-/* ═══════════════ MAIN ═══════════════ */
 export default function MessageWall() {
   const [messages, setMessages] = useState<WallMessage[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [page, setPage] = useState(1);
   const [authorName, setAuthorName] = useState("");
   const [messageText, setMessageText] = useState("");
+  const [isLoaded, setIsLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const wallRef = useRef<HTMLDivElement>(null);
-  const isDark = useIsDark();
+  const [error, setError] = useState("");
+
+  const visibleMessages = useMemo(() => messages.slice(0, 10), [messages]);
 
   useEffect(() => {
-    setMessages(loadMessages());
-    setIsLoaded(true);
+    let alive = true;
+
+    async function load() {
+      try {
+        const serverMessages = await fetchMessages();
+        if (!alive) return;
+        setMessages(serverMessages);
+
+        const legacy = loadLegacyMessages();
+        const migrated = localStorage.getItem(MIGRATION_KEY);
+        if (!migrated && legacy.length > 0) {
+          const data = await postMessage({ messages: legacy });
+          if (!alive) return;
+          if (Array.isArray(data.messages)) setMessages(data.messages);
+          localStorage.setItem(MIGRATION_KEY, "true");
+        }
+      } catch {
+        const fallback = loadLegacyMessages();
+        if (alive) {
+          setMessages(fallback);
+          setError("后台留言暂时连接不上，已显示本机缓存");
+        }
+      } finally {
+        if (alive) setIsLoaded(true);
+      }
+    }
+
+    load();
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  useEffect(() => {
-    if (isLoaded) saveMessages(messages);
-  }, [messages, isLoaded]);
-
-  const totalPages = Math.ceil(messages.length / NOTES_PER_PAGE);
-  const cur = messages.slice((page - 1) * NOTES_PER_PAGE, page * NOTES_PER_PAGE);
-  const layouts = useMemo(() => computeLayout(cur.length), [cur.length]);
-
-  const submit = () => {
-    const t = messageText.trim();
-    if (!t) return;
+  const submit = async () => {
+    const content = messageText.trim();
+    if (!content || isSubmitting) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      setMessages((p) => [{
-        id: crypto.randomUUID(),
-        content: t,
-        author: authorName.trim() || "匿名",
-        colorIndex: Math.floor(Math.random() * NOTE_COLORS.length),
-        createdAt: new Date().toISOString(),
-      }, ...p]);
-      setMessageText("");
-      setPage(1);
+    setError("");
+
+    try {
+      const data = await postMessage({ content, author: authorName.trim() || "匿名" });
+      if (data.message) {
+        setMessages((current) => [data.message!, ...current.filter((item) => item.id !== data.message!.id)]);
+        setMessageText("");
+      }
+    } catch {
+      setError("留言没有钉上去，稍后再试一次");
+    } finally {
       setIsSubmitting(false);
-    }, 350);
+    }
   };
 
   if (!isLoaded) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 gap-4">
-        <div className="w-10 h-10 border-[3px] border-amber-400/30 border-t-amber-500 rounded-full animate-spin" />
-        <span className="font-bold text-slate-400 text-sm tracking-wide" style={{ fontFamily: "'Noto Serif SC', serif" }}>
-          加载留言墙...
-        </span>
+      <div className="flex flex-col items-center justify-center gap-4 py-32 text-[#526b94]">
+        <div className="h-10 w-10 rounded-full border-[3px] border-white/60 border-t-[#8aa3dd] shadow-[0_0_18px_rgba(255,255,255,0.65)] animate-spin" />
+        <span className="text-sm font-bold tracking-[0.2em]">加载留言墙...</span>
       </div>
     );
   }
 
-  const wallMinH = messages.length === 0 ? 320 : Math.max(380, Math.ceil(cur.length / (cur.length <= 3 ? 2 : cur.length <= 6 ? 3 : 4)) * 190 + 60);
-
   return (
-    <div ref={wallRef} className="flex flex-col gap-6">
-      {/* ══════ WALL — Frosted glass board ══════ */}
-      <div
-        className="relative rounded-[20px] overflow-hidden backdrop-blur-xl"
-        style={{
-          minHeight: wallMinH,
-          backgroundColor: isDark ? "rgba(30,26,20,0.55)" : "rgba(255,255,255,0.35)",
-        }}
-      >
-        {/* Warm frosted glass tint */}
-        <div className="absolute inset-0 rounded-[20px]" style={{
-          background: isDark
-            ? `radial-gradient(ellipse at 20% 20%, rgba(180,140,60,0.08) 0%, transparent 50%),
-               radial-gradient(ellipse at 80% 80%, rgba(160,120,50,0.06) 0%, transparent 50%)`
-            : `radial-gradient(ellipse at 20% 20%, rgba(217,191,146,0.15) 0%, transparent 50%),
-               radial-gradient(ellipse at 80% 80%, rgba(200,175,130,0.1) 0%, transparent 50%)`,
-        }} />
+    <section className="flex flex-col gap-5 text-[#284467] dark:text-[#dbe8ff]">
+      <div className="relative overflow-hidden rounded-[2rem] border border-white/[0.65] bg-[#eaf3ff]/[0.35] px-4 py-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_24px_60px_rgba(42,64,104,0.18)] backdrop-blur-2xl dark:border-[#dce8ff]/40 dark:bg-[#0c1630]/55 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_28px_70px_rgba(0,0,0,0.34),0_0_42px_rgba(120,150,220,0.16)] sm:px-8 md:px-11">
+        <div className="pointer-events-none absolute inset-[7px] rounded-[1.65rem] border border-white/[0.45] dark:border-white/20" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.66),transparent_31%),radial-gradient(circle_at_86%_28%,rgba(196,222,255,0.32),transparent_36%),linear-gradient(135deg,rgba(255,255,255,0.36),rgba(209,225,247,0.18))] dark:hidden" />
+        <div className="pointer-events-none absolute inset-0 hidden bg-[radial-gradient(circle_at_18%_12%,rgba(176,196,255,0.18),transparent_34%),radial-gradient(circle_at_82%_32%,rgba(111,137,205,0.18),transparent_40%),linear-gradient(135deg,rgba(202,218,255,0.12),rgba(40,55,95,0.18))] dark:block" />
+        <DoodleTrail />
 
-        {/* Subtle noise texture */}
-        <div className="absolute inset-0 opacity-[0.06] rounded-[20px] mix-blend-soft-light pointer-events-none" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.0' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-        }} />
-
-        {/* Glass border — double edge */}
-        <div className="absolute inset-0 rounded-[20px] border border-white/30 dark:border-white/[0.08] z-[3] pointer-events-none" />
-        <div className="absolute inset-[1px] rounded-[19px] border border-white/15 dark:border-white/[0.04] z-[3] pointer-events-none" />
-
-        {/* Inner glow */}
-        <div className="absolute inset-0 rounded-[20px] z-[3] pointer-events-none" style={{
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.03)",
-        }} />
-
-        {/* ── Empty state ── */}
-        {messages.length === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center z-[4]">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-              className="flex flex-col items-center"
-            >
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 border backdrop-blur-sm ${isDark ? "bg-white/[0.06] border-white/[0.08]" : "bg-white/40 border-white/50"}`}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={isDark ? "text-amber-400/50" : "text-amber-700/50"}>
-                  <path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z" />
-                  <path d="M14 3v4a2 2 0 0 0 2 2h4" />
-                  <path d="M8 13h8" />
-                  <path d="M8 17h8" />
-                </svg>
-              </div>
-              <p className={`font-bold text-lg tracking-tight ${isDark ? "text-amber-300/40" : "text-amber-800/50"}`} style={{ fontFamily: "'Noto Serif SC', serif" }}>
-                这面墙还很安静
-              </p>
-              <p className={`text-xs mt-1.5 font-medium ${isDark ? "text-amber-400/25" : "text-amber-700/30"}`} style={{ fontFamily: "'Noto Serif SC', serif" }}>
-                在下方写下你的第一张便签吧
-              </p>
-            </motion.div>
+        {visibleMessages.length === 0 ? (
+          <div className="relative z-10 flex min-h-[330px] flex-col items-center justify-center text-center">
+            <div className="mb-4 rounded-full border border-white/70 bg-white/[0.35] px-5 py-2 text-sm font-bold text-[#6b83ad] shadow-sm backdrop-blur-md dark:border-white/20 dark:bg-white/10 dark:text-[#dbe8ff]">这面墙还很安静</div>
+            <p className="text-sm text-[#7b8fb2] dark:text-[#b5c7ef]">在下方写下第一张便签吧</p>
           </div>
-        )}
-
-        {/* ── Notes ── */}
-        {messages.length > 0 && (
-          <div className="absolute inset-0 z-[4]">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={page}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="relative w-full h-full"
-                style={{ minHeight: wallMinH }}
-              >
-                {cur.map((msg, i) => (
-                  <StickyNote
-                    key={msg.id}
-                    msg={msg}
-                    color={NOTE_COLORS[msg.colorIndex % NOTE_COLORS.length]}
-                    layout={layouts[i]}
-                    index={i}
-                  />
-                ))}
-              </motion.div>
+        ) : (
+          <div className="relative z-10 grid min-h-[390px] grid-cols-1 gap-x-7 gap-y-10 px-1 py-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+            <AnimatePresence mode="popLayout">
+              {visibleMessages.map((msg, index) => (
+                <StickyNote key={msg.id} msg={msg} index={index} />
+              ))}
             </AnimatePresence>
           </div>
         )}
       </div>
 
-      {/* ══════ PAGINATION ══════ */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1.5">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            onClick={() => { setPage((p) => Math.max(1, p - 1)); wallRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
-            disabled={page === 1}
-            className={`w-8 h-8 rounded-full border disabled:opacity-25 transition-colors flex items-center justify-center ${
-              isDark
-                ? "bg-amber-900/30 border-amber-700/30 text-amber-400/60"
-                : "bg-amber-100/60 border-amber-200/50 text-amber-700/60"
-            }`}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-          </motion.button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <motion.button
-              key={p}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              onClick={() => { setPage(p); wallRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
-              className={`w-8 h-8 rounded-full text-[11px] font-bold transition-colors duration-200 flex items-center justify-center ${
-                p === page
-                  ? "bg-amber-600 text-white shadow-md shadow-amber-600/20"
-                  : isDark
-                    ? "bg-amber-900/30 border border-amber-700/30 text-amber-400/60"
-                    : "bg-amber-100/60 border border-amber-200/50 text-amber-700/60"
-              }`}
-              style={{ fontFamily: "'Noto Serif SC', serif" }}
-            >
-              {p}
-            </motion.button>
-          ))}
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); wallRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
-            disabled={page === totalPages}
-            className={`w-8 h-8 rounded-full border disabled:opacity-25 transition-colors flex items-center justify-center ${
-              isDark
-                ? "bg-amber-900/30 border-amber-700/30 text-amber-400/60"
-                : "bg-amber-100/60 border border-amber-200/50 text-amber-700/60"
-            }`}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-          </motion.button>
-        </div>
-      )}
-
-      {/* ══════ INPUT — Frosted glass form ══════ */}
-      <div
-        className="rounded-[20px] backdrop-blur-xl p-5 sm:p-6 transition-colors duration-500"
-        style={{
-          backgroundColor: isDark ? "rgba(30,26,20,0.5)" : "rgba(255,255,255,0.35)",
-          boxShadow: `
-            0 4px 24px rgba(0,0,0,${isDark ? "0.15" : "0.06"}),
-            inset 0 1px 0 ${isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.5)"}
-          `,
-        }}
-      >
-        <h3
-          className={`text-base font-bold mb-4 flex items-center gap-2.5 ${isDark ? "text-amber-200/80" : "text-amber-900/80"}`}
-          style={{ fontFamily: "'Noto Serif SC', serif" }}
-        >
-          <div className="w-7 h-7 rounded-md bg-amber-600 flex items-center justify-center shadow-sm shadow-amber-600/20">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 17v5" />
-              <path d="M9 2h6l-1 7H10L9 2Z" />
-              <circle cx="12" cy="9" r="6" />
-            </svg>
+      <div className="relative overflow-hidden rounded-[1.75rem] border border-white/60 bg-[#eaf3ff]/[0.30] px-4 pb-5 pt-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.76),0_18px_44px_rgba(42,64,104,0.14)] backdrop-blur-2xl dark:border-[#dce8ff]/35 dark:bg-[#0b142c]/60 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_22px_56px_rgba(0,0,0,0.32),0_0_34px_rgba(120,150,220,0.12)] sm:px-8 sm:pb-6">
+        <div className="pointer-events-none absolute inset-[6px] rounded-[1.45rem] border border-white/[0.35] dark:border-white/15" />
+        <div className="relative z-10 mb-4 flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#7894cf]/70 bg-white/20 text-[#46689d] dark:border-[#91a9e7]/70 dark:bg-white/10 dark:text-[#aec0f5]">
+            <PenIcon />
           </div>
-          写一张便签
-        </h3>
-
-        <div className="flex flex-col md:grid md:grid-cols-4 gap-3 mb-3">
-          <input
-            type="text"
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            placeholder="你的名字（可选）"
-            maxLength={20}
-            className={`md:col-span-1 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400/50 transition-all ${
-              isDark
-                ? "bg-white/5 border border-white/[0.08] text-amber-100 placeholder-amber-500/50"
-                : "bg-white/40 border border-white/50 text-amber-900 placeholder-amber-400/60"
-            }`}
-            style={{ fontFamily: "'Noto Serif SC', serif", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
-          />
-          <textarea
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            placeholder="写下你想说的话..."
-            maxLength={200}
-            rows={3}
-            className={`md:col-span-3 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400/50 transition-all resize-none leading-relaxed ${
-              isDark
-                ? "bg-white/5 border border-white/[0.08] text-amber-100 placeholder-amber-500/50"
-                : "bg-white/40 border border-white/50 text-amber-900 placeholder-amber-400/60"
-            }`}
-            style={{ fontFamily: "'Noto Serif SC', serif", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
-          />
+          <h2 className="shrink-0 text-lg font-black tracking-[0.14em] text-[#29466b] dark:text-[#dce8ff]">写一张便签</h2>
+          <div className="h-px flex-1 border-t border-dashed border-white/[0.55] dark:border-[#cbd8ff]/30" />
+          <span className="text-lg text-[#f2d68b]">✦</span>
         </div>
 
-        <div className="flex items-center justify-between">
-          <span
-            className="text-[11px] text-amber-600/40 font-medium tabular-nums"
-            style={{ fontFamily: "'Noto Serif SC', serif" }}
-          >
-            {messageText.length}/200
-          </span>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            onClick={submit}
-            disabled={!messageText.trim() || isSubmitting}
-            className="px-5 py-2 rounded-md bg-amber-600 text-white text-sm font-bold shadow-md shadow-amber-600/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
-            style={{ fontFamily: "'Noto Serif SC', serif" }}
-          >
-            {isSubmitting ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-              />
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m22 2-7 20-4-9-9-4Z" />
-                <path d="M22 2 11 13" />
-              </svg>
-            )}
-            {isSubmitting ? "钉上中..." : "钉上便签"}
-          </motion.button>
+        <div className="relative z-10 grid gap-3 lg:grid-cols-[280px_1fr]">
+          <div className="relative">
+            <label htmlFor="message-author" className="sr-only">你的名字</label>
+            <UserIcon />
+            <input
+              id="message-author"
+              value={authorName}
+              onChange={(event) => setAuthorName(event.target.value)}
+              maxLength={20}
+              placeholder="你的名字（可选）"
+              className="h-[74px] w-full rounded-xl border border-white/70 bg-white/[0.42] pl-14 pr-4 text-[15px] text-[#344e73] outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] placeholder:text-[#8ea2c3] focus:border-[#93aee5] focus:bg-white/[0.58] dark:border-[#dce8ff]/35 dark:bg-[#16213e]/70 dark:text-[#edf4ff] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] dark:placeholder:text-[#8fa4d6] dark:focus:border-[#9db7ff] dark:focus:bg-[#1b2849]/80"
+            />
+          </div>
+
+          <div className="relative">
+            <label htmlFor="message-content" className="sr-only">留言内容</label>
+            <PencilIcon />
+            <textarea
+              id="message-content"
+              value={messageText}
+              onChange={(event) => setMessageText(event.target.value)}
+              maxLength={MAX_MESSAGE_LENGTH}
+              rows={2}
+              placeholder="写下你想说的话..."
+              className="min-h-[74px] w-full resize-none rounded-xl border border-white/70 bg-white/[0.42] py-5 pl-14 pr-40 text-[15px] leading-relaxed text-[#344e73] outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] placeholder:text-[#8ea2c3] focus:border-[#93aee5] focus:bg-white/[0.58] dark:border-[#dce8ff]/35 dark:bg-[#16213e]/70 dark:text-[#edf4ff] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] dark:placeholder:text-[#8fa4d6] dark:focus:border-[#9db7ff] dark:focus:bg-[#1b2849]/80 max-sm:pr-14"
+            />
+            <button
+              type="button"
+              aria-label="插入表情"
+              className="absolute right-3 top-4 flex h-9 w-9 items-center justify-center rounded-full text-[#7892bf] transition hover:bg-white/45 hover:text-[#4f6fa8] dark:text-[#9fb3ea] dark:hover:bg-white/10 dark:hover:text-white"
+              onClick={() => setMessageText((current) => `${current}☺`.slice(0, MAX_MESSAGE_LENGTH))}
+            >
+              <SmileIcon />
+            </button>
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              disabled={!messageText.trim() || isSubmitting}
+              onClick={submit}
+              className="absolute bottom-3 right-14 flex h-11 items-center gap-2 rounded-xl bg-[#879bdd] px-6 text-[15px] font-black tracking-[0.14em] text-white shadow-[0_10px_20px_rgba(89,111,183,0.28)] transition hover:bg-[#748bd4] disabled:cursor-not-allowed disabled:opacity-45 dark:bg-[#7793e8] dark:shadow-[0_10px_24px_rgba(89,122,229,0.28)] dark:hover:bg-[#88a2f3] max-sm:static max-sm:mt-3 max-sm:w-full max-sm:justify-center"
+            >
+              {isSubmitting ? <Spinner /> : <PinIcon />}
+              {isSubmitting ? "钉上中" : "钉上便签"}
+            </motion.button>
+          </div>
+        </div>
+
+        <div className="relative z-10 mt-3 flex items-center justify-between gap-3 text-xs text-[#6d83ab] dark:text-[#aebff0]">
+          <span>{messageText.length}/{MAX_MESSAGE_LENGTH}</span>
+          {error ? <span className="text-[#ffb0bd]">{error}</span> : <span>感谢你的到来，愿你在这里遇见美好</span>}
         </div>
       </div>
-    </div>
+
+      <p className="text-center text-xs tracking-[0.18em] text-white/80 drop-shadow-sm dark:text-[#dbe8ff]/75">
+        ♡ 感谢你的到来，愿你在这里遇见美好 ♡
+      </p>
+    </section>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  );
+}
+
+function PenIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20 3c-2.8 1.6-5.8 4-9 7L4 17l-2 5 5-2 7-7c3-3.2 5.4-6.2 7-9Z" />
+      <path d="M13 6l5 5" />
+    </svg>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#7892bf] dark:text-[#9fb3ea]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M5 21a7 7 0 0 1 14 0" />
+    </svg>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg className="pointer-events-none absolute left-5 top-6 h-5 w-5 text-[#7892bf] dark:text-[#9fb3ea]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    </svg>
+  );
+}
+
+function SmileIcon() {
+  return (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+      <path d="M9 9h.01M15 9h.01" />
+    </svg>
+  );
+}
+
+function PinIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m14 4 6 6-4 1-5 5v4l-2 2-3-7 5-5 1-4Z" />
+    </svg>
+  );
+}
+
+function Spinner() {
+  return <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />;
+}
+
+function DoodleTrail() {
+  return (
+    <svg className="pointer-events-none absolute right-12 top-6 hidden h-20 w-80 text-white/55 md:block" viewBox="0 0 360 90" fill="none" aria-hidden="true">
+      <path d="M2 62c56-30 113-41 174-20 45 15 82 10 115-16 21-17 43-20 66-11" stroke="currentColor" strokeWidth="1.5" strokeDasharray="6 7" />
+      <path d="M258 24c13-12 28 3 17 15-6 7-18 10-26 14 4-10 3-20 9-29Z" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M323 8 357 20l-27 12-7 22-5-27-24-9Z" stroke="currentColor" strokeWidth="1.2" />
+    </svg>
+  );
+}
+
+function Flower() {
+  return (
+    <svg className="h-12 w-12" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <path d="M25 43V26" stroke="#8da181" strokeWidth="1.5" />
+      <path d="M25 34c-4-5-8-6-12-4 3 5 7 6 12 4ZM25 37c5-5 9-6 12-3-4 5-8 6-12 3Z" fill="#9fbd8f" opacity=".7" />
+      <circle cx="24" cy="19" r="4" fill="#efc1ce" />
+      <circle cx="18" cy="22" r="4" fill="#f4d1da" />
+      <circle cx="30" cy="22" r="4" fill="#f4d1da" />
+      <circle cx="24" cy="25" r="4" fill="#efc1ce" />
+      <circle cx="24" cy="22" r="2.5" fill="#f3cf74" />
+    </svg>
+  );
+}
+
+function Leaf() {
+  return (
+    <svg className="h-12 w-12" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <path d="M12 36c11-3 19-12 23-25" stroke="#8ca17c" strokeWidth="1.4" />
+      <path d="M17 30c-6-5-10-5-13-1 4 5 8 5 13 1ZM25 22c-2-7 0-11 5-14 3 6 1 10-5 14ZM20 27c7-1 11 1 13 6-7 2-11 0-13-6Z" fill="#9db98d" opacity=".65" />
+    </svg>
+  );
+}
+
+function Cloud() {
+  return (
+    <svg className="h-10 w-12" viewBox="0 0 48 40" fill="none" aria-hidden="true">
+      <path d="M13 29h23a7 7 0 0 0 0-14h-1A11 11 0 0 0 14 18h-1a5.5 5.5 0 0 0 0 11Z" stroke="#84acd1" strokeWidth="1.5" fill="#cfe8fb" opacity=".65" />
+    </svg>
+  );
+}
+
+function Heart() {
+  return (
+    <svg className="h-10 w-10" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <path d="M20 32S7 24 7 14c0-4 3-7 7-7 3 0 5 2 6 4 1-2 3-4 6-4 4 0 7 3 7 7 0 10-13 18-13 18Z" fill="#f0a9bf" opacity=".72" />
+    </svg>
+  );
+}
+
+function Sprout() {
+  return (
+    <svg className="h-12 w-12" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <path d="M24 41V22" stroke="#87a67d" strokeWidth="1.5" />
+      <path d="M24 24c-9-7-14-7-17-2 6 8 12 8 17 2ZM24 29c7-8 13-9 17-5-4 8-10 10-17 5Z" stroke="#9db98d" strokeWidth="1.5" fill="none" />
+      <circle cx="16" cy="18" r="2" fill="#efc1ce" />
+      <circle cx="35" cy="22" r="2" fill="#efc1ce" />
+    </svg>
+  );
+}
+
+function Star() {
+  return (
+    <svg className="h-11 w-11" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+      <path d="m22 5 4 12 12 1-9 8 3 12-10-7-10 7 3-12-9-8 12-1 4-12Z" stroke="#e4b55f" strokeWidth="1.6" fill="#f8dc8d" opacity=".65" />
+    </svg>
   );
 }

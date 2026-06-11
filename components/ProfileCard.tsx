@@ -29,7 +29,7 @@ export default function ProfileCard({ postCount, momentCount, photoCount, showSt
       </h1>
 
       {/* Bio */}
-      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-4 line-clamp-2">
+      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-4">
         {siteConfig.bio}
       </p>
 

@@ -1,12 +1,12 @@
 export const siteConfig = {
-  title: "PB の 宝藏之地",
-  faviconUrl: "https://api.dicebear.com/7.x/initials/svg?seed=PB&backgroundColor=6366f1",
-  authorName: "PB",
-  bio: "一个热爱技术与生活的普通人，用代码记录世界的美好。",
-  navTitle: "PB",
-  navSuffix: "の",
-  navAfter: "宝藏之地",
-  avatarUrl: "https://api.dicebear.com/7.x/initials/svg?seed=PB&backgroundColor=6366f1",
+  title: "Frud's Blog",
+  faviconUrl: "/static/icon.png",
+  authorName: "Frud_",
+  bio: "在数据与Agent之间搭桥，用代码训练会思考的系统，也用文字记录一个研究生的好奇与温度。",
+  navTitle: "Frud",
+  navSuffix: "'s ",
+  navAfter: "Blog",
+  avatarUrl: "/static/圣诞猫猫.jpg",
   useGradient: false,
   themeColors: ["#a18cd1", "#fbc2eb", "#a1c4fd", "#c2e9fb"],
   bgImages: [
@@ -69,6 +69,6 @@ export const siteConfig = {
     ],
     proactiveInterval: 30 * 60 * 1000,
   },
-  friendLinkApplyFormat: "名称：PBの宝藏之地\n简介：一个热爱技术的博客\n链接：https://your-domain.com\n头像：https://api.dicebear.com/7.x/initials/svg?seed=PB",
+  friendLinkApplyFormat: "名称：Frud's Blog\n简介：一个热爱技术的博客\n链接：https://your-domain.com\n头像：https://your-avatar-url.jpg",
   enableLevelSystem: false,
 };

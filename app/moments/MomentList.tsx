@@ -4,19 +4,49 @@ import { motion } from 'framer-motion';
 
 interface Moment { id: string; title: string; date: string; mood: string; weather: string; content: string; }
 
+function getMonthKey(dateStr: string): string {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  return `${y}-${String(m).padStart(2, '0')}`;
+}
+
+function formatMonthLabel(key: string): string {
+  const [y, m] = key.split('-');
+  return `${y.slice(2)}年${parseInt(m)}月`;
+}
+
 export default function MomentList({ moments }: { moments: Moment[] }) {
   const [query, setQuery] = useState('');
+  const [activeMonth, setActiveMonth] = useState('all');
+
+  const monthKeys = useMemo(() => {
+    const set = new Set<string>();
+    moments.forEach(m => {
+      const k = getMonthKey(m.date);
+      if (k) set.add(k);
+    });
+    return Array.from(set).sort().reverse();
+  }, [moments]);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return moments;
-    const q = query.toLowerCase();
-    return moments.filter(m =>
-      m.title.toLowerCase().includes(q) ||
-      m.content.toLowerCase().includes(q) ||
-      m.mood.toLowerCase().includes(q) ||
-      m.weather.toLowerCase().includes(q)
-    );
-  }, [moments, query]);
+    let list = moments;
+    if (activeMonth !== 'all') {
+      list = list.filter(m => getMonthKey(m.date) === activeMonth);
+    }
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      list = list.filter(m =>
+        m.title.toLowerCase().includes(q) ||
+        m.content.toLowerCase().includes(q) ||
+        m.mood.toLowerCase().includes(q) ||
+        m.weather.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [moments, query, activeMonth]);
 
   if (!moments.length) {
     return <div className="text-center py-20 text-slate-400 dark:text-slate-500 font-bold">暂无说说</div>;
@@ -36,6 +66,33 @@ export default function MomentList({ moments }: { moments: Moment[] }) {
           onChange={(e) => setQuery(e.target.value)}
           className="w-full h-12 pl-12 pr-4 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/50 dark:border-white/10 rounded-full text-sm text-slate-800 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all duration-300"
         />
+      </div>
+
+      {/* Month Filter Tabs */}
+      <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        <button
+          onClick={() => setActiveMonth('all')}
+          className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 ${
+            activeMonth === 'all'
+              ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25'
+              : 'bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/50'
+          }`}
+        >
+          全部
+        </button>
+        {monthKeys.map(key => (
+          <button
+            key={key}
+            onClick={() => setActiveMonth(key)}
+            className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 ${
+              activeMonth === key
+                ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25'
+                : 'bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/50'
+            }`}
+          >
+            {formatMonthLabel(key)}
+          </button>
+        ))}
       </div>
 
       {/* Timeline */}
