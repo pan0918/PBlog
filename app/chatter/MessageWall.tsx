@@ -50,12 +50,23 @@ const DECORATIONS = [
   <Star key="star" />,
 ];
 
-function loadLegacyMessages(): WallMessage[] {
-  if (typeof window === "undefined") return [];
+const DEFAULT_MESSAGES: WallMessage[] = [
+  { id: "1", content: "功不唐捐", author: "匿名", colorIndex: 0, createdAt: "2026-06-09T03:10:48.125Z" },
+  { id: "2", content: "凡是过往，皆为序章", author: "zet", colorIndex: 5, createdAt: "2026-05-22T13:42:23.359Z" },
+  { id: "3", content: "Never say never", author: "Frud_", colorIndex: 3, createdAt: "2026-05-22T13:41:55.278Z" },
+  { id: "4", content: "帮顶！", author: "ttdk", colorIndex: 2, createdAt: "2026-05-21T12:37:20.541Z" },
+  { id: "5", content: "好久不见", author: "zzz", colorIndex: 6, createdAt: "2026-05-21T12:23:23.480Z" },
+  { id: "6", content: "不错！", author: "wex", colorIndex: 3, createdAt: "2026-05-21T12:02:23.737Z" },
+  { id: "7", content: "好耶！", author: "aura", colorIndex: 4, createdAt: "2026-05-21T11:53:50.622Z" },
+  { id: "8", content: "测试一下", author: "cc", colorIndex: 0, createdAt: "2026-05-21T11:53:29.707Z" },
+];
+
+function loadMessages(): WallMessage[] {
+  if (typeof window === "undefined") return DEFAULT_MESSAGES;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(parsed)) return [];
+    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_MESSAGES;
     return parsed
       .filter((item) => item && typeof item.content === "string")
       .map((item, index) => ({
@@ -66,8 +77,12 @@ function loadLegacyMessages(): WallMessage[] {
         createdAt: typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString(),
       }));
   } catch {
-    return [];
+    return DEFAULT_MESSAGES;
   }
+}
+
+function saveMessages(msgs: WallMessage[]) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs)); } catch {}
 }
 
 function fmtDate(iso: string) {
@@ -78,23 +93,6 @@ function fmtDate(iso: string) {
 function fmtTime(iso: string) {
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-
-async function fetchMessages() {
-  const res = await fetch("/api/messages", { cache: "no-store" });
-  if (!res.ok) throw new Error("留言加载失败");
-  const data = await res.json();
-  return Array.isArray(data.messages) ? data.messages as WallMessage[] : [];
-}
-
-async function postMessage(payload: { content?: string; author?: string; messages?: WallMessage[] }) {
-  const res = await fetch("/api/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("留言提交失败");
-  return await res.json() as { message?: WallMessage; messages?: WallMessage[] };
 }
 
 function Pin({ color }: { color: string }) {
@@ -194,56 +192,33 @@ export default function MessageWall() {
   const visibleMessages = useMemo(() => messages.slice(0, 10), [messages]);
 
   useEffect(() => {
-    let alive = true;
-
-    async function load() {
-      try {
-        const serverMessages = await fetchMessages();
-        if (!alive) return;
-        setMessages(serverMessages);
-
-        const legacy = loadLegacyMessages();
-        const migrated = localStorage.getItem(MIGRATION_KEY);
-        if (!migrated && legacy.length > 0) {
-          const data = await postMessage({ messages: legacy });
-          if (!alive) return;
-          if (Array.isArray(data.messages)) setMessages(data.messages);
-          localStorage.setItem(MIGRATION_KEY, "true");
-        }
-      } catch {
-        const fallback = loadLegacyMessages();
-        if (alive) {
-          setMessages(fallback);
-          setError("后台留言暂时连接不上，已显示本机缓存");
-        }
-      } finally {
-        if (alive) setIsLoaded(true);
-      }
-    }
-
-    load();
-    return () => {
-      alive = false;
-    };
+    setMessages(loadMessages());
+    setIsLoaded(true);
   }, []);
 
-  const submit = async () => {
+  const submit = () => {
     const content = messageText.trim();
     if (!content || isSubmitting) return;
     setIsSubmitting(true);
     setError("");
 
-    try {
-      const data = await postMessage({ content, author: authorName.trim() || "匿名" });
-      if (data.message) {
-        setMessages((current) => [data.message!, ...current.filter((item) => item.id !== data.message!.id)]);
-        setMessageText("");
-      }
-    } catch {
-      setError("留言没有钉上去，稍后再试一次");
-    } finally {
+    const newMsg: WallMessage = {
+      id: crypto.randomUUID(),
+      content: content.slice(0, MAX_MESSAGE_LENGTH),
+      author: authorName.trim().slice(0, 20) || "匿名",
+      colorIndex: Math.floor(Math.random() * 10),
+      createdAt: new Date().toISOString(),
+    };
+
+    setTimeout(() => {
+      setMessages((current) => {
+        const updated = [newMsg, ...current];
+        saveMessages(updated);
+        return updated;
+      });
+      setMessageText("");
       setIsSubmitting(false);
-    }
+    }, 300);
   };
 
   if (!isLoaded) {
