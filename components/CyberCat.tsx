@@ -162,7 +162,9 @@ export default function CyberCat() {
     setIsTyping(false);
   }, [input, isTyping, messages, config]);
 
-  const hasApiKey = !!(config.apiKey || process.env.PET_API_KEY || process.env.GEMINI_API_KEY);
+  // BYO-key mode: the server keeps no key, so availability is purely the client-provided key.
+  // (process.env.* is undefined in client components unless NEXT_PUBLIC_-prefixed.)
+  const hasApiKey = !!config.apiKey;
 
   return (
     <>

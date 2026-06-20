@@ -68,6 +68,9 @@ export const siteConfig = {
       "煤球想你了喵~",
     ],
     proactiveInterval: 30 * 60 * 1000,
+    // Hosts the /api/chat relay is allowed to call (prevents open-relay / SSRF).
+    // Add your own OpenAI-compatible endpoints here if you self-host a proxy.
+    allowedApiHosts: ["generativelanguage.googleapis.com", "api.openai.com"],
   },
   friendLinkApplyFormat: "名称：Frud's Blog\n简介：一个热爱技术的博客\n链接：https://your-domain.com\n头像：https://your-avatar-url.jpg",
   enableLevelSystem: false,

@@ -30,13 +30,19 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="zh-CN" className={`${geistSans.variable} ${geistMono.variable} ${notoSerif.variable} ${zcoolKuaiLe.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
-        <style suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `#app-mount-root { opacity: 0; visibility: hidden; pointer-events: none; } html.splash-seen #app-mount-root { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }` }} />
+        {/* Set the theme class before first paint to avoid flash — WITHOUT hiding the whole app */}
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('blog-theme');var d=document.documentElement;if(t==='light'){d.classList.remove('dark');}else{d.classList.add('dark');}}catch(e){document.documentElement.classList.add('dark');}})();`,
+          }}
+        />
       </head>
       <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-1000 bg-slate-50 dark:bg-slate-950 font-serif">
         <ThemeProvider>
           <SplashScreen />
           <MusicProvider>
-            <div id="app-mount-root" className="flex-1 flex flex-col transition-opacity duration-1000">
+            <div id="app-mount-root" className="flex-1 flex flex-col">
               <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
                 {!siteConfig.useGradient && <BackgroundSlider />}
                 <div className="absolute inset-0 z-[-9] bg-white/30 dark:bg-slate-900/40 backdrop-blur-md transition-colors duration-1000"></div>

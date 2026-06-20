@@ -7,15 +7,14 @@ export default function SplashScreen() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
+    // Pure decorative overlay: the app underneath is always visible (no app-wide gate).
     if (sessionStorage.getItem('hasSeenSplash') === 'true') {
-      document.documentElement.classList.add('splash-seen');
       setShow(false);
       return;
     }
     setShow(true);
     const timer = setTimeout(() => {
       sessionStorage.setItem('hasSeenSplash', 'true');
-      document.documentElement.classList.add('splash-seen');
       setShow(false);
     }, 2000);
     return () => clearTimeout(timer);

@@ -4,41 +4,26 @@ import { createContext, useContext, useEffect, useState } from 'react';
 const ThemeContext = createContext({ isDark: true, toggleTheme: () => {} });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  // The inline <head> script already applied the `dark` class before first paint,
+  // so we NEVER hide content here. We just sync state and handle toggles.
   const [isDark, setIsDark] = useState(true);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    const savedTheme = localStorage.getItem('blog-theme');
-    const isDarkMode = savedTheme !== 'light';
-    setIsDark(isDarkMode);
-    const root = document.documentElement;
-    if (isDarkMode) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    setIsDark(document.documentElement.classList.contains('dark'));
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-  }, [isDark, mounted]);
-
   const toggleTheme = () => {
-    const newDark = !isDark;
-    setIsDark(newDark);
-    localStorage.setItem('blog-theme', newDark ? 'dark' : 'light');
+    setIsDark((prev) => {
+      const next = !prev;
+      const root = document.documentElement;
+      if (next) root.classList.add('dark');
+      else root.classList.remove('dark');
+      try {
+        localStorage.setItem('blog-theme', next ? 'dark' : 'light');
+      } catch {}
+      return next;
+    });
   };
-
-  if (!mounted) {
-    return <div className="invisible">{children}</div>;
-  }
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
