@@ -1,12 +1,12 @@
 export const siteConfig = {
   title: "Frud's Blog",
-  faviconUrl: "/static/icon.png",
+  faviconUrl: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782456852356_icon.png",
   authorName: "Frud_",
   bio: "在数据与Agent之间搭桥，用代码训练会思考的系统，也用文字记录一个研究生的好奇与温度。",
   navTitle: "Frud",
   navSuffix: "'s ",
   navAfter: "Blog",
-  avatarUrl: "/static/圣诞猫猫.jpg",
+  avatarUrl: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782456681130_圣诞猫猫.jpg",
   useGradient: false,
   themeColors: ["#a18cd1", "#fbc2eb", "#a1c4fd", "#c2e9fb"],
   bgImages: [

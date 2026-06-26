@@ -29,8 +29,8 @@ export default function MusicPlayer() {
               <span className="text-xs text-slate-500 font-mono w-12">{formatTime(duration)}</span>
             </div>
             <div className="flex items-center justify-center md:justify-start gap-4">
-              <button onClick={() => setPlayMode(playMode === 'list' ? 'random' : playMode === 'random' ? 'single' : 'list')} className="text-sm font-bold text-slate-500 hover:text-indigo-500 transition-colors px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800">
-                {playMode === 'list' ? '列表循环' : playMode === 'random' ? '随机播放' : '单曲循环'}
+              <button onClick={togglePlayMode} className="text-sm font-bold text-slate-500 hover:text-indigo-500 transition-colors px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800">
+                {playMode === 'loop' ? '列表循环' : playMode === 'random' ? '随机播放' : '单曲循环'}
               </button>
               <button onClick={prevSong} className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-indigo-500 hover:text-white transition-all">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
@@ -53,7 +53,7 @@ export default function MusicPlayer() {
           {playlist.map((song, i) => (
             <button
               key={song.id}
-              onClick={() => playSong(song)}
+              onClick={() => playSong(i)}
               className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all duration-300 text-left ${
                 currentSong?.id === song.id ? 'bg-indigo-500/10 border border-indigo-500/30' : 'hover:bg-slate-100/50 dark:hover:bg-slate-700/30 border border-transparent'
               }`}
