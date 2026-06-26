@@ -4,29 +4,53 @@
 
 @layer base {
   :root {
-    --font-serif: var(--font-serif), "Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif;
+    --font-serif-stack: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+    --font-sans-stack: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono-stack: "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", monospace;
+    --font-handwriting: "ZCOOL KuaiLe", "KaiTi", "STKaiti", cursive;
+    --bg-cream: #f7efe7;
+    --bg-cream-soft: #fffaf4;
+    --bg-cream-warm: #ead8ca;
+    --bg-cream-dark: #241b17;
+    --page-bg: linear-gradient(180deg, #fffaf4 0%, #f7efe7 34%, #efe0d4 100%);
+    --page-bg-dark: linear-gradient(180deg, #2a211c 0%, #241b17 46%, #1b1411 100%);
+    --text-warm: #3f352e;
+    --text-muted-warm: #82746a;
+    --accent-warm: #b86f2b;
+    --accent-gold: #d68a3a;
+    --surface-glass: rgba(255, 250, 244, 0.68);
+    --surface-glass-strong: rgba(255, 252, 247, 0.8);
+    --surface-border: rgba(255, 255, 255, 0.72);
+    --shadow-soft: 0 22px 70px rgba(126, 91, 64, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.58);
   }
 
   body {
-    font-family: var(--font-serif);
-    @apply transition-colors duration-1000 text-slate-900 bg-slate-50;
+    font-family: var(--font-serif-stack);
+    @apply transition-colors duration-300;
+    background: var(--page-bg);
+    color: var(--text-warm);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
+  html.dark,
+  html.dark body,
   .dark body {
-    @apply text-slate-100 bg-slate-950;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(130, 91, 64, 0.22), transparent 38%),
+      var(--page-bg-dark);
+    color: #eee9e4;
   }
 
   h1, h2, h3, h4 {
     font-weight: 900;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
   }
 
   .dark .prose {
-    --tw-prose-body: var(--color-slate-200);
-    --tw-prose-headings: var(--color-white);
-    --tw-prose-links: var(--color-indigo-400);
+    --tw-prose-body: #d6d3d1;
+    --tw-prose-headings: #fafaf9;
+    --tw-prose-links: #d97706;
   }
 
   [class*="backdrop-blur-"] {
@@ -39,12 +63,54 @@
   }
 }
 
+.soft-glass-panel {
+  background: var(--surface-glass);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+}
+
+.soft-glass-panel-strong {
+  background: var(--surface-glass-strong);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+}
+
+.dark .soft-glass-panel {
+  background: rgba(64, 52, 45, 0.46);
+  border-color: rgba(255, 246, 235, 0.14);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.dark .soft-glass-panel-strong {
+  background: rgba(52, 42, 36, 0.48);
+  border-color: rgba(255, 246, 235, 0.16);
+  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.warm-page-surface {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.72), transparent 26rem),
+    radial-gradient(circle at 84% 8%, rgba(244, 212, 181, 0.42), transparent 24rem),
+    var(--page-bg);
+}
+
+.dark .warm-page-surface {
+  background:
+    radial-gradient(circle at 20% 2%, rgba(150, 104, 72, 0.2), transparent 27rem),
+    radial-gradient(circle at 84% 10%, rgba(196, 125, 64, 0.12), transparent 24rem),
+    var(--page-bg-dark);
+}
+
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 12px; height: 12px;
   border-radius: 50%;
-  background: #6366f1;
+  background: #b45309;
   cursor: pointer;
 }
 
@@ -70,16 +136,16 @@ input[type=range]::-webkit-slider-thumb {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.3);
+  background: rgba(180, 83, 9, 0.3);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.8);
+  background: rgba(180, 83, 9, 0.8);
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
+  scrollbar-color: rgba(180, 83, 9, 0.3) transparent;
 }
 
 .scrollbar-hide {

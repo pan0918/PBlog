@@ -16,20 +16,20 @@ export default function ProfileCard({ postCount, momentCount, photoCount, showSt
   return (
     <div
       onClick={() => router.push('/about')}
-      className="rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 flex flex-col items-center text-center transition-all duration-700 hover:scale-[1.02] cursor-pointer group relative overflow-hidden"
+      className="soft-glass-panel group relative flex cursor-pointer flex-col items-center overflow-hidden rounded-3xl p-6 text-center transition-all duration-700 hover:scale-[1.02]"
     >
       {/* Avatar */}
-      <div className="w-24 h-24 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 p-1 shadow-lg mb-4 transition-transform duration-500 group-hover:rotate-3 group-hover:scale-105">
+      <div className="mb-4 w-24 h-24 rounded-2xl bg-gradient-to-tr from-amber-300 to-orange-300 p-1 shadow-[0_14px_34px_rgba(184,111,43,0.24)] transition-transform duration-500 group-hover:rotate-3 group-hover:scale-105">
         <img src={siteConfig.avatarUrl} alt="avatar" className="w-full h-full rounded-xl object-cover bg-white" />
       </div>
 
       {/* Name */}
-      <h1 className="text-xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
+      <h1 className="text-xl font-black text-stone-800 dark:text-stone-100 mb-1 tracking-tight">
         {siteConfig.authorName}
       </h1>
 
       {/* Bio */}
-      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-4">
+      <p className="text-xs text-stone-500 dark:text-stone-400 font-medium leading-relaxed mb-4">
         {siteConfig.bio}
       </p>
 
@@ -44,12 +44,12 @@ export default function ProfileCard({ postCount, momentCount, photoCount, showSt
 
       {/* Stats */}
       {showStats && (
-        <div className="flex items-center gap-3 w-full justify-center pt-3 border-t border-slate-200/50 dark:border-slate-700/50">
-          <StatItem count={postCount || 0} label="文章" color="text-indigo-600 dark:text-indigo-400" />
-          <div className="w-px h-6 bg-slate-300/50 dark:bg-slate-700"></div>
-          <StatItem count={momentCount || 0} label="说说" color="text-purple-600 dark:text-purple-400" />
-          <div className="w-px h-6 bg-slate-300/50 dark:bg-slate-700"></div>
-          <StatItem count={photoCount || 0} label="照片" color="text-pink-600 dark:text-pink-400" />
+        <div className="flex items-center gap-3 w-full justify-center pt-3 border-t border-stone-200/50 dark:border-stone-700/50">
+          <StatItem count={postCount || 0} label="文章" color="text-amber-600 dark:text-amber-400" />
+          <div className="w-px h-6 bg-stone-300/50 dark:bg-stone-700"></div>
+          <StatItem count={momentCount || 0} label="说说" color="text-orange-600 dark:text-orange-400" />
+          <div className="w-px h-6 bg-stone-300/50 dark:bg-stone-700"></div>
+          <StatItem count={photoCount || 0} label="照片" color="text-rose-600 dark:text-rose-400" />
         </div>
       )}
     </div>
@@ -60,7 +60,7 @@ function StatItem({ count, label, color }: { count: number; label: string; color
   return (
     <div className="text-center group/stat px-1">
       <div className={`text-lg font-black ${color} transition-transform group-hover/stat:scale-110`}>{count}</div>
-      <div className="text-[9px] font-bold text-slate-500 dark:text-slate-400 tracking-wider mt-0.5">{label}</div>
+      <div className="text-[9px] font-bold text-stone-500 dark:text-stone-400 tracking-wider mt-0.5">{label}</div>
     </div>
   );
 }
@@ -83,7 +83,7 @@ function SocialBtn({ type, onClick }: { type: string; onClick?: () => void }) {
     }
   };
   const content = (
-    <div onClick={onClick} className="w-9 h-9 rounded-xl bg-white/50 dark:bg-slate-700/50 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white transition-all duration-300 border border-white/40 dark:border-white/10 shadow-sm" title={type}>
+    <div onClick={onClick} className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/55 bg-white/55 text-stone-600 shadow-sm transition-all duration-300 hover:bg-amber-500 hover:text-white dark:border-white/10 dark:bg-stone-700/50 dark:text-stone-400 dark:hover:bg-amber-600 dark:hover:text-white" title={type}>
       {getIcon()}
     </div>
   );

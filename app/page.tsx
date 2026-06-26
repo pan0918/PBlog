@@ -16,6 +16,8 @@ import SiteDashboard from '../components/SiteDashboard';
 import { albums } from '../data/albums';
 import { ToastProvider } from '../components/ToastProvider';
 import { getAllPosts } from '../lib/posts';
+import HeroBanner from '../components/HeroBanner';
+import WindyGrass from '../components/WindyGrass';
 
 function formatUpdateTime(dateString: string) {
   if (!dateString || dateString === '1970-01-01') return '刚刚更新';
@@ -52,10 +54,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
 
   return (
     <ToastProvider>
-    <div className="min-h-screen relative pb-10">
+    <div className="min-h-screen relative pb-12 warm-page-surface">
       <Navbar />
+      <HeroBanner />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-[8] h-20 overflow-hidden opacity-45 dark:opacity-25"
+      >
+        <WindyGrass />
+      </div>
       <PageTransition>
-        <div className="w-full max-w-7xl mx-auto mt-24 sm:mt-28 px-4 sm:px-6 lg:px-10 relative z-10">
+        <div className="w-full max-w-7xl mx-auto -mt-12 md:-mt-14 px-4 sm:px-6 lg:px-10 relative z-10">
           {/* Top Search */}
           <SearchBar posts={allPosts} />
 
@@ -74,7 +83,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
               {posts.length > 0 ? posts.map((post: any) => (
                 <ArticleCard key={post.slug} post={post} />
               )) : (
-                <div className="rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-12 text-center">
+                <div className="soft-glass-panel rounded-3xl p-12 text-center">
                   <p className="text-slate-400 dark:text-slate-500 font-bold">暂无文章</p>
                 </div>
               )}
@@ -83,7 +92,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-3 mt-4">
                   {safePage > 1 ? (
-                    <Link href={`/?page=${safePage - 1}`} className="px-4 py-2 rounded-full bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 transition-all shadow-md">
+                    <Link href={`/?page=${safePage - 1}`} className="soft-glass-panel px-4 py-2 rounded-full text-sm font-bold text-stone-600 dark:text-stone-300 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all">
                       上一页
                     </Link>
                   ) : (
@@ -95,7 +104,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
                     {safePage} / {totalPages}
                   </span>
                   {safePage < totalPages ? (
-                    <Link href={`/?page=${safePage + 1}`} className="px-4 py-2 rounded-full bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 transition-all shadow-md">
+                    <Link href={`/?page=${safePage + 1}`} className="soft-glass-panel px-4 py-2 rounded-full text-sm font-bold text-stone-600 dark:text-stone-300 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all">
                       下一页
                     </Link>
                   ) : (

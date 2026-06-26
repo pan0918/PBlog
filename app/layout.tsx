@@ -1,6 +1,5 @@
 import 'katex/dist/katex.min.css';
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Noto_Serif_SC, ZCOOL_KuaiLe } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeProvider";
 import BackgroundEffects from "../components/BackgroundEffects";
@@ -15,11 +14,6 @@ import CyberCat from '../components/CyberCat';
 import DanmakuBackground from '../components/DanmakuBackground';
 import MobileBackButton from '../components/MobileBackButton';
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-const notoSerif = Noto_Serif_SC({ subsets: ["latin"], weight: ["400", "700", "900"], variable: "--font-serif", display: 'swap' });
-const zcoolKuaiLe = ZCOOL_KuaiLe({ weight: "400", subsets: ["latin"], variable: "--font-handwriting", display: 'swap' });
-
 export const metadata: Metadata = {
   title: siteConfig.title,
   description: siteConfig.bio,
@@ -28,27 +22,27 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="zh-CN" className={`${geistSans.variable} ${geistMono.variable} ${notoSerif.variable} ${zcoolKuaiLe.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
       <head>
         {/* Set the theme class before first paint to avoid flash — WITHOUT hiding the whole app */}
         <script
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('blog-theme');var d=document.documentElement;if(t==='light'){d.classList.remove('dark');}else{d.classList.add('dark');}}catch(e){document.documentElement.classList.add('dark');}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('blog-theme');var d=document.documentElement;if(t==='dark'){d.classList.add('dark');}else{d.classList.remove('dark');}}catch(e){document.documentElement.classList.remove('dark');}})();`,
           }}
         />
       </head>
-      <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-1000 bg-slate-50 dark:bg-slate-950 font-serif">
+      <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-300 font-serif">
         <ThemeProvider>
           <SplashScreen />
           <MusicProvider>
-            <div id="app-mount-root" className="flex-1 flex flex-col">
+            <div id="app-mount-root" className="flex-1 flex flex-col warm-page-surface">
               <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
                 {!siteConfig.useGradient && <BackgroundSlider />}
-                <div className="absolute inset-0 z-[-9] bg-white/30 dark:bg-slate-900/40 backdrop-blur-md transition-colors duration-1000"></div>
-                <div className="absolute inset-0 z-[-8] opacity-60 dark:opacity-20 mix-blend-color transition-opacity duration-1000 transform-gpu" style={{ background: `linear-gradient(-45deg, ${siteConfig.themeColors.join(', ')})`, backgroundSize: '400% 400%', animation: 'gradientMove 15s ease infinite' }}></div>
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/40 dark:bg-indigo-900/20 blur-[100px] rounded-full z-[-7] md:mix-blend-overlay"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-400/30 dark:bg-purple-900/30 blur-[100px] rounded-full z-[-7] md:mix-blend-overlay"></div>
+                <div className="absolute inset-0 z-[-9] bg-[#fff8f1]/70 dark:bg-stone-950/35 backdrop-blur-md transition-colors duration-300"></div>
+                <div className="absolute inset-0 z-[-8] opacity-55 dark:opacity-10 transition-opacity duration-300 transform-gpu" style={{ background: `linear-gradient(-45deg, ${siteConfig.themeColors.join(', ')})`, backgroundSize: '400% 400%', animation: 'gradientMove 18s ease infinite' }}></div>
+                <div className="absolute top-[-12%] left-[-10%] w-[44%] h-[44%] bg-white/55 dark:bg-amber-900/10 blur-[110px] rounded-full z-[-7]"></div>
+                <div className="absolute bottom-[-12%] right-[-10%] w-[44%] h-[44%] bg-[#f0cdb0]/28 dark:bg-orange-900/10 blur-[120px] rounded-full z-[-7]"></div>
                 <div className="hidden md:block absolute inset-0 w-full h-full"><BackgroundEffects /></div>
               </div>
               <div className="hidden md:block"><DanmakuBackground /></div>

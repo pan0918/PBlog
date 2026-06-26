@@ -160,12 +160,12 @@ function StickyNote({ msg, index }: { msg: WallMessage; index: number }) {
         <div className="pointer-events-none absolute bottom-0 right-0 h-14 w-14 bg-white/45 shadow-[-8px_-8px_18px_rgba(97,116,150,0.12)]" style={{ clipPath: "polygon(100% 0, 0 100%, 100% 100%)" }} />
         <p
           className="relative z-10 min-h-[74px] whitespace-pre-wrap break-words text-[19px] leading-[1.8] tracking-[0.08em] line-clamp-3 sm:text-[20px]"
-          style={{ fontFamily: "var(--font-handwriting), var(--font-serif), serif" }}
+          style={{ fontFamily: "var(--font-handwriting), var(--font-serif-stack), serif" }}
         >
           {msg.content}
         </p>
         <div className="relative z-10 mt-auto h-px w-full bg-slate-500/10" />
-        <div className="relative z-10 mt-3 space-y-1.5 text-[12px] leading-none text-slate-600/70" style={{ fontFamily: "var(--font-serif), serif" }}>
+        <div className="relative z-10 mt-3 space-y-1.5 text-[12px] leading-none text-slate-600/70" style={{ fontFamily: "var(--font-serif-stack), serif" }}>
           <div className="flex items-center gap-2">
             <CalendarIcon />
             <span>{fmtDate(msg.createdAt)}</span>

@@ -1,39 +1,26 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 export default function Sakura() {
-  const [particles, setParticles] = useState<any[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const petals = Array.from({ length: 40 }, (_, i) => {
+    setMounted(true);
+  }, []);
+
+  const petals = useMemo(() => {
+    if (!mounted) return [];
+    return Array.from({ length: 20 }, (_, i) => {
       const x = Math.random() * 100;
       const size = 8 + Math.random() * 12;
       const duration = 8 + Math.random() * 7;
       const delay = Math.random() * 10;
       const rotate = Math.random() * 360;
-      return { x, size, duration, delay, rotate };
+      return { x, size, duration, delay, rotate, key: i };
     });
-    setParticles(petals);
-  }, []);
+  }, [mounted]);
 
-  const petals = particles.map((p, i) => (
-    <div
-      key={i}
-      className="absolute"
-      style={{
-        left: `${p.x}%`,
-        top: '-20px',
-        width: `${p.size}px`,
-        height: `${p.size * 0.6}px`,
-        background: `linear-gradient(135deg, #fbb6ce 0%, #f687b3 50%, #ed64a6 100%)`,
-        borderRadius: '100% 0 100% 0',
-        opacity: 0.7,
-        transform: `rotate(${p.rotate}deg)`,
-        animation: `sakuraFall ${p.duration}s linear ${p.delay}s infinite`,
-        filter: 'blur(0.5px)',
-      }}
-    />
-  ));
+  if (!mounted) return null;
 
   return (
     <>
@@ -46,7 +33,24 @@ export default function Sakura() {
         }
       `}</style>
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
-        {petals}
+        {petals.map((p) => (
+          <div
+            key={p.key}
+            className="absolute will-change-transform"
+            style={{
+              left: `${p.x}%`,
+              top: '-20px',
+              width: `${p.size}px`,
+              height: `${p.size * 0.6}px`,
+              background: `linear-gradient(135deg, #fbb6ce 0%, #f687b3 50%, #ed64a6 100%)`,
+              borderRadius: '100% 0 100% 0',
+              opacity: 0.7,
+              transform: `rotate(${p.rotate}deg)`,
+              animation: `sakuraFall ${p.duration}s linear ${p.delay}s infinite`,
+              filter: 'blur(0.5px)',
+            }}
+          />
+        ))}
       </div>
     </>
   );

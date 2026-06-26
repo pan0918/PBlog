@@ -1,11 +1,16 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 export default function Fireflies() {
-  const [particles, setParticles] = useState<any[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const fireflies = Array.from({ length: 50 }, (_, i) => {
+    setMounted(true);
+  }, []);
+
+  const fireflies = useMemo(() => {
+    if (!mounted) return [];
+    return Array.from({ length: 25 }, (_, i) => {
       const x = Math.random() * 100;
       const y = Math.random() * 100;
       const size = 2 + Math.random() * 4;
@@ -13,26 +18,11 @@ export default function Fireflies() {
       const delay = Math.random() * 5;
       const path = Math.floor(Math.random() * 4);
       const driftDuration = 10 + Math.random() * 10;
-      return { x, y, size, duration, delay, path, driftDuration };
+      return { x, y, size, duration, delay, path, driftDuration, key: i };
     });
-    setParticles(fireflies);
-  }, []);
+  }, [mounted]);
 
-  const fireflies = particles.map((p, i) => (
-    <div
-      key={i}
-      className="absolute rounded-full"
-      style={{
-        left: `${p.x}%`,
-        top: `${p.y}%`,
-        width: `${p.size}px`,
-        height: `${p.size}px`,
-        background: 'radial-gradient(circle, #fde68a 0%, #f59e0b 30%, transparent 70%)',
-        boxShadow: `0 0 ${p.size * 3}px ${p.size}px rgba(251, 191, 36, 0.4)`,
-        animation: `fireflyBreath ${p.duration}s ease-in-out infinite ${p.delay}s, fireflyPath${p.path} ${p.driftDuration}s ease-in-out infinite ${p.delay}s`,
-      }}
-    />
-  ));
+  if (!mounted) return null;
 
   return (
     <>
@@ -64,7 +54,21 @@ export default function Fireflies() {
         }
       `}</style>
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
-        {fireflies}
+        {fireflies.map((p) => (
+          <div
+            key={p.key}
+            className="absolute rounded-full will-change-transform"
+            style={{
+              left: `${p.x}%`,
+              top: `${p.y}%`,
+              width: `${p.size}px`,
+              height: `${p.size}px`,
+              background: 'radial-gradient(circle, #fde68a 0%, #f59e0b 30%, transparent 70%)',
+              boxShadow: `0 0 ${p.size * 3}px ${p.size}px rgba(251, 191, 36, 0.4)`,
+              animation: `fireflyBreath ${p.duration}s ease-in-out infinite ${p.delay}s, fireflyPath${p.path} ${p.driftDuration}s ease-in-out infinite ${p.delay}s`,
+            }}
+          />
+        ))}
       </div>
     </>
   );

@@ -15,7 +15,7 @@ export default function CalendarCard() {
   for (let i = 1; i <= daysInMonth; i++) days.push(i);
 
   return (
-    <div className="rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-5 transition-all duration-700">
+    <div className="soft-glass-panel rounded-3xl p-5 transition-all duration-700">
       <h3 className="text-sm font-black text-slate-900 dark:text-white mb-4 tracking-tight">
         {year}年 {monthNames[month]}
       </h3>
@@ -28,7 +28,7 @@ export default function CalendarCard() {
             key={i}
             className={`text-xs py-1.5 rounded-lg transition-all ${
               d === today
-                ? "bg-indigo-500 text-white font-black shadow-md shadow-indigo-500/30"
+                ? "bg-amber-500 text-white font-black shadow-md shadow-amber-500/25"
                 : d
                 ? "text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50"
                 : ""

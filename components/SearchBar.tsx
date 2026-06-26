@@ -52,7 +52,7 @@ export default function SearchBar({ posts = [] }: { posts?: Post[] }) {
       <form className="relative group" onSubmit={(e) => e.preventDefault()}>
         <input
           type="text"
-          className="w-full pl-14 pr-6 py-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-3xl shadow-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-800 dark:text-slate-200 transition-all placeholder-slate-500 dark:placeholder-slate-400 font-medium text-lg relative z-0"
+          className="soft-glass-panel-strong relative z-0 w-full rounded-3xl py-4 pl-14 pr-6 text-lg font-medium text-stone-800 placeholder-stone-400 transition-all focus:outline-none focus:ring-2 focus:ring-amber-500/35 dark:text-stone-200 dark:placeholder-stone-500"
           placeholder="搜寻标题、描述或标签..."
           value={searchQuery}
           onChange={(e) => { setSearchQuery(e.target.value); setIsOpen(true); }}
@@ -61,7 +61,7 @@ export default function SearchBar({ posts = [] }: { posts?: Post[] }) {
           spellCheck="false"
         />
         <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none select-none z-10">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors drop-shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-stone-400 group-focus-within:text-amber-500 transition-colors drop-shadow-sm">
             <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
         </div>
@@ -74,25 +74,25 @@ export default function SearchBar({ posts = [] }: { posts?: Post[] }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-0 right-0 mt-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl border border-white/50 dark:border-slate-700/50 rounded-3xl shadow-2xl overflow-hidden max-h-[450px] overflow-y-auto z-20"
+            className="soft-glass-panel-strong absolute left-0 right-0 top-full z-20 mt-4 max-h-[450px] overflow-hidden overflow-y-auto rounded-3xl"
           >
             {searchResults.length > 0 ? (
               <div className="flex flex-col py-3">
                 {searchResults.map((post) => (
-                  <Link key={post.slug} href={`/posts/${post.slug}`} onClick={() => setIsOpen(false)} className="px-6 py-5 hover:bg-indigo-50/80 dark:hover:bg-indigo-500/10 transition-colors group border-b border-slate-100/50 dark:border-slate-800/50 last:border-0 flex flex-col gap-2">
+                  <Link key={post.slug} href={`/posts/${post.slug}`} onClick={() => setIsOpen(false)} className="px-6 py-5 hover:bg-amber-50/80 dark:hover:bg-amber-500/10 transition-colors group border-b border-stone-100/50 dark:border-stone-800/50 last:border-0 flex flex-col gap-2">
                     <div className="flex items-start justify-between gap-4">
-                      <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200 transition-colors line-clamp-1">
+                      <h4 className="text-lg font-bold text-stone-800 dark:text-stone-200 transition-colors line-clamp-1">
                         <Highlight text={post.title} query={searchQuery} />
                       </h4>
-                      {post.date && <span className="text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2 py-1 rounded-md shrink-0 mt-1">{post.date.split(' ')[0]}</span>}
+                      {post.date && <span className="text-[10px] font-mono text-stone-400 bg-stone-100 dark:bg-stone-800/80 px-2 py-1 rounded-md shrink-0 mt-1">{post.date.split(' ')[0]}</span>}
                     </div>
-                    {post.description && <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed"><Highlight text={post.description} query={searchQuery} /></p>}
+                    {post.description && <p className="text-sm text-stone-500 dark:text-stone-400 line-clamp-2 leading-relaxed"><Highlight text={post.description} query={searchQuery} /></p>}
                   </Link>
                 ))}
               </div>
             ) : (
               <div className="px-6 py-12 text-center flex flex-col items-center gap-3">
-                <p className="text-slate-500 dark:text-slate-400 font-medium">数据海中未发现关于 &quot;<span className="text-indigo-500 font-bold">{searchQuery}</span>&quot; 的踪迹</p>
+                <p className="text-stone-500 dark:text-stone-400 font-medium">数据海中未发现关于 &quot;<span className="text-amber-500 font-bold">{searchQuery}</span>&quot; 的踪迹</p>
               </div>
             )}
           </motion.div>

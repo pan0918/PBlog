@@ -111,9 +111,9 @@ export default function WeatherCard() {
 
   if (error) {
     return (
-      <div className="rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-5 transition-all duration-700">
+      <div className="soft-glass-panel rounded-3xl p-5 transition-all duration-700">
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
+          <div className="h-4 w-1 rounded-full bg-amber-500"></div>
           <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">天气</h3>
         </div>
         <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-4">天气服务暂时不可用</p>
@@ -123,13 +123,13 @@ export default function WeatherCard() {
 
   if (loading) {
     return (
-      <div className="rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-5 transition-all duration-700">
+      <div className="soft-glass-panel rounded-3xl p-5 transition-all duration-700">
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
+          <div className="h-4 w-1 rounded-full bg-amber-500"></div>
           <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">天气</h3>
         </div>
         <div className="flex flex-col items-center gap-2 py-4">
-          <div className="w-6 h-6 border-2 border-indigo-500/40 border-t-transparent rounded-full animate-spin"></div>
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-500/40 border-t-transparent"></div>
           <p className="text-xs text-slate-400 dark:text-slate-500">获取天气中...</p>
         </div>
       </div>
@@ -139,9 +139,9 @@ export default function WeatherCard() {
   if (!weather) return null;
 
   return (
-    <div className="rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-5 transition-all duration-700">
+    <div className="soft-glass-panel rounded-3xl p-5 transition-all duration-700">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
+        <div className="h-4 w-1 rounded-full bg-amber-500"></div>
         <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">天气</h3>
       </div>
 
@@ -172,7 +172,7 @@ export default function WeatherCard() {
       {weather.hourly.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
           {weather.hourly.map((h, i) => (
-            <div key={i} className="flex flex-col items-center gap-1 min-w-[48px] py-2 rounded-xl bg-white/30 dark:bg-slate-700/30">
+            <div key={i} className="flex min-w-[48px] flex-col items-center gap-1 rounded-xl bg-white/38 py-2 dark:bg-stone-700/30">
               <span className="text-[9px] text-slate-500 dark:text-slate-400 font-medium">{h.time}</span>
               <span className="text-sm">{weatherIcons[h.icon] || "☀️"}</span>
               <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">{h.temp}°</span>

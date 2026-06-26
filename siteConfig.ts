@@ -7,8 +7,8 @@ export const siteConfig = {
   navSuffix: "'s ",
   navAfter: "Blog",
   avatarUrl: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782456681130_圣诞猫猫.jpg",
-  useGradient: false,
-  themeColors: ["#a18cd1", "#fbc2eb", "#a1c4fd", "#c2e9fb"],
+  useGradient: true,
+  themeColors: ["#fffaf4", "#f7efe7", "#ead8ca", "#f4e7dc"],
   bgImages: [
     "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2000&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2000&auto=format&fit=crop",

@@ -9,10 +9,10 @@ export default function BackgroundEffects() {
 
   return (
     <>
-      <div className={`transition-opacity duration-1000 ${isDark ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`transition-opacity duration-300 ${isDark ? 'opacity-100' : 'opacity-0'}`}>
         <Fireflies />
       </div>
-      <div className={`transition-opacity duration-1000 ${isDark ? 'opacity-0' : 'opacity-100'}`}>
+      <div className={`transition-opacity duration-300 ${isDark ? 'opacity-0' : 'opacity-100'}`}>
         <Sakura />
       </div>
       <WindyGrass />

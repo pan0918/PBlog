@@ -12,16 +12,16 @@ const navItems = [
 
 export default function NavigationCard() {
   return (
-    <div className="rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-5 transition-all duration-700">
-      <h3 className="text-sm font-black text-slate-900 dark:text-white mb-3 tracking-tight">导航</h3>
+    <div className="soft-glass-panel rounded-3xl p-5 transition-all duration-700">
+      <h3 className="text-sm font-black text-stone-800 dark:text-stone-100 mb-3 tracking-tight">导航</h3>
       <div className="flex flex-col gap-1.5">
         {navItems.map(item => (
           <Link
             key={item.href}
             href={item.href}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-300 group"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-stone-600 dark:text-stone-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-300 group"
           >
-            <span className="text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 transition-colors">{item.icon}</span>
+            <span className="text-stone-400 dark:text-stone-500 group-hover:text-amber-500 transition-colors">{item.icon}</span>
             <span className="text-xs font-bold">{item.label}</span>
           </Link>
         ))}

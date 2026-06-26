@@ -1,0 +1,36 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+test("homepage uses soft cream background and wave tokens", async () => {
+  const [globals, hero, page, layout, danmaku, projects, timeline] = await Promise.all([
+    readFile("app/globals.css", "utf8"),
+    readFile("components/HeroBanner.tsx", "utf8"),
+    readFile("app/page.tsx", "utf8"),
+    readFile("app/layout.tsx", "utf8"),
+    readFile("components/DanmakuBackground.tsx", "utf8"),
+    readFile("app/projects/ProjectsBoard.tsx", "utf8"),
+    readFile("components/TimelineClient.tsx", "utf8"),
+  ]);
+
+  assert.match(globals, /--bg-cream:\s*#f7efe7/i);
+  assert.match(globals, /--surface-glass:\s*rgba\(255,\s*250,\s*244,\s*0\.68\)/i);
+  assert.match(globals, /--page-bg-dark:\s*linear-gradient\(180deg,\s*#2a211c\s*0%,\s*#241b17\s*46%,\s*#1b1411\s*100%\)/i);
+  assert.match(globals, /html\.dark body/i);
+  assert.match(hero, /WAVE_COLORS/);
+  assert.match(hero, /const WAVE_HEIGHT = 126/);
+  assert.match(hero, /#f7efe7/i);
+  assert.match(hero, /#241b17/i);
+  assert.doesNotMatch(hero, /#d4a574/i);
+  assert.match(page, /<WindyGrass \/>/);
+  assert.match(page, /fixed inset-x-0 bottom-0 z-\[8\]/);
+  assert.match(layout, /id="app-mount-root" className="flex-1 flex flex-col warm-page-surface"/);
+  assert.doesNotMatch(layout, /style=\{\{\s*background:\s*'var\(--page-bg\)'\s*\}\}/);
+  assert.match(danmaku, /MAX_DANMAKU_ITEMS = 6/);
+  assert.match(danmaku, /onAnimationEnd=\{\(\) => removeDanmaku\(item\.id\)\}/);
+  assert.match(danmaku, /left:\s*'100vw'/);
+  assert.match(projects, /soft-glass-panel-strong/);
+  assert.match(projects, /from-amber-400 to-orange-500/);
+  assert.match(timeline, /from-amber-500 to-orange-400/);
+  assert.match(timeline, /soft-glass-panel block rounded-2xl/);
+});

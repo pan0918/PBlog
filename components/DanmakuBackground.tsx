@@ -7,8 +7,9 @@ interface DanmakuItem {
   text: string;
   top: number;
   duration: number;
-  delay: number;
 }
+
+const MAX_DANMAKU_ITEMS = 6;
 
 export default function DanmakuBackground() {
   const [items, setItems] = useState<DanmakuItem[]>([]);
@@ -17,6 +18,7 @@ export default function DanmakuBackground() {
   useEffect(() => {
     const list = siteConfig.danmakuList;
     if (!list.length) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const addDanmaku = () => {
       const id = ++counterRef.current;
@@ -24,35 +26,46 @@ export default function DanmakuBackground() {
       const newItem: DanmakuItem = {
         id,
         text,
-        top: 5 + Math.random() * 25,
-        duration: 15 + Math.random() * 10,
-        delay: 0,
+        top: 18 + Math.random() * 52,
+        duration: 24 + Math.random() * 10,
       };
-      setItems(prev => [...prev.slice(-15), newItem]);
+      setItems(prev => [...prev.slice(-(MAX_DANMAKU_ITEMS - 1)), newItem]);
     };
 
-    addDanmaku();
-    const interval = setInterval(addDanmaku, 3000);
-    return () => clearInterval(interval);
+    const initialTimer = window.setTimeout(addDanmaku, 1200);
+    const interval = window.setInterval(addDanmaku, 6500);
+    return () => {
+      window.clearTimeout(initialTimer);
+      window.clearInterval(interval);
+    };
   }, []);
+
+  const removeDanmaku = (id: number) => {
+    setItems(prev => prev.filter(item => item.id !== id));
+  };
 
   return (
     <>
       <style>{`
         @keyframes danmakuFloat {
-          0% { transform: translateX(100vw); }
-          100% { transform: translateX(-100%); }
+          0% { transform: translate3d(0, 0, 0); opacity: 0; }
+          12% { opacity: 0.72; }
+          86% { opacity: 0.72; }
+          100% { transform: translate3d(calc(-100vw - 100%), 0, 0); opacity: 0; }
         }
       `}</style>
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-[1]">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-[1]" aria-hidden="true">
         {items.map(item => (
           <div
             key={item.id}
-            className="absolute whitespace-nowrap text-slate-400/20 dark:text-slate-500/15 font-bold text-lg select-none"
+            className="absolute whitespace-nowrap text-[rgba(130,116,106,0.11)] dark:text-[rgba(238,233,228,0.055)] font-black text-sm md:text-base select-none will-change-transform"
             style={{
+              left: '100vw',
               top: `${item.top}%`,
               animation: `danmakuFloat ${item.duration}s linear`,
+              animationFillMode: 'forwards',
             }}
+            onAnimationEnd={() => removeDanmaku(item.id)}
           >
             {item.text}
           </div>
