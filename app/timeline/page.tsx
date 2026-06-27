@@ -7,7 +7,7 @@ export default function TimelinePage() {
   const posts = getAllPosts();
 
   return (
-    <div className="min-h-screen relative pb-20 warm-page-surface">
+    <div className="min-h-screen relative pb-20">
       <Navbar />
       <PageTransition>
         <main className="w-[95%] md:w-[90%] max-w-4xl mx-auto mt-24 md:mt-28 relative z-10">

@@ -17,7 +17,6 @@ import { albums } from '../data/albums';
 import { ToastProvider } from '../components/ToastProvider';
 import { getAllPosts } from '../lib/posts';
 import HeroBanner from '../components/HeroBanner';
-import WindyGrass from '../components/WindyGrass';
 
 function formatUpdateTime(dateString: string) {
   if (!dateString || dateString === '1970-01-01') return '刚刚更新';
@@ -54,15 +53,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
 
   return (
     <ToastProvider>
-    <div className="min-h-screen relative pb-12 warm-page-surface">
+    <div className="min-h-screen relative pb-12">
       <Navbar />
       <HeroBanner />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-[8] h-20 overflow-hidden opacity-45 dark:opacity-25"
-      >
-        <WindyGrass />
-      </div>
       <PageTransition>
         <div className="w-full max-w-7xl mx-auto -mt-12 md:-mt-14 px-4 sm:px-6 lg:px-10 relative z-10">
           {/* Top Search */}

@@ -32,20 +32,21 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           }}
         />
       </head>
-      <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-300 font-serif">
+      <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-300 font-serif warm-page-surface">
         <ThemeProvider>
           <SplashScreen />
           <MusicProvider>
-            <div id="app-mount-root" className="flex-1 flex flex-col warm-page-surface">
+            <div id="app-mount-root" className="flex-1 flex flex-col min-h-screen">
               <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
                 {!siteConfig.useGradient && <BackgroundSlider />}
                 <div className="absolute inset-0 z-[-9] bg-[#fff8f1]/70 dark:bg-stone-950/35 backdrop-blur-md transition-colors duration-300"></div>
                 <div className="absolute inset-0 z-[-8] opacity-55 dark:opacity-10 transition-opacity duration-300 transform-gpu" style={{ background: `linear-gradient(-45deg, ${siteConfig.themeColors.join(', ')})`, backgroundSize: '400% 400%', animation: 'gradientMove 18s ease infinite' }}></div>
                 <div className="absolute top-[-12%] left-[-10%] w-[44%] h-[44%] bg-white/55 dark:bg-amber-900/10 blur-[110px] rounded-full z-[-7]"></div>
                 <div className="absolute bottom-[-12%] right-[-10%] w-[44%] h-[44%] bg-[#f0cdb0]/28 dark:bg-orange-900/10 blur-[120px] rounded-full z-[-7]"></div>
-                <div className="hidden md:block absolute inset-0 w-full h-full"><BackgroundEffects /></div>
               </div>
+              <div className="hidden md:block"><BackgroundEffects /></div>
               <div className="hidden md:block"><DanmakuBackground /></div>
+
               <div className="relative z-10 flex-1 flex flex-col">{children}</div>
               <div className="hidden md:block"><FloatingPlayer /></div>
               <div className="hidden md:block"><GlobalToolbox /></div>

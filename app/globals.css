@@ -27,7 +27,6 @@
   body {
     font-family: var(--font-serif-stack);
     @apply transition-colors duration-300;
-    background: var(--page-bg);
     color: var(--text-warm);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -36,9 +35,6 @@
   html.dark,
   html.dark body,
   .dark body {
-    background:
-      radial-gradient(circle at 50% 0%, rgba(130, 91, 64, 0.22), transparent 38%),
-      var(--page-bg-dark);
     color: #eee9e4;
   }
 
@@ -103,6 +99,19 @@
     radial-gradient(circle at 20% 2%, rgba(150, 104, 72, 0.2), transparent 27rem),
     radial-gradient(circle at 84% 10%, rgba(196, 125, 64, 0.12), transparent 24rem),
     var(--page-bg-dark);
+}
+
+html {
+  background: var(--page-bg);
+}
+
+html.dark {
+  background: var(--page-bg-dark);
+}
+
+html,
+body {
+  overscroll-behavior-y: none;
 }
 
 input[type=range]::-webkit-slider-thumb {

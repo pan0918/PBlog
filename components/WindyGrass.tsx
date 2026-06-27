@@ -33,7 +33,7 @@ export default function WindyGrass() {
         }
       `}</style>
       <div
-        className="absolute bottom-0 left-0 right-0 h-24 overflow-hidden pointer-events-none"
+        className="fixed bottom-0 left-0 right-0 h-24 overflow-hidden pointer-events-none z-[5]"
         style={{
           WebkitMaskImage: 'linear-gradient(to top, black 12%, rgba(0,0,0,0.78) 52%, transparent 100%)',
           maskImage: 'linear-gradient(to top, black 12%, rgba(0,0,0,0.78) 52%, transparent 100%)',
