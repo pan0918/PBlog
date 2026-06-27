@@ -13,6 +13,7 @@ import ArticleCard from '../components/ArticleCard';
 import WeatherCard from '../components/WeatherCard';
 import CalendarCard from '../components/CalendarCard';
 import SiteDashboard from '../components/SiteDashboard';
+import SiteStats from '../components/SiteStats';
 import { albums } from '../data/albums';
 import { ToastProvider } from '../components/ToastProvider';
 import { getAllPosts } from '../lib/posts';
@@ -69,6 +70,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
               <ProfileCard postCount={allPosts.length} momentCount={momentCount} photoCount={realPhotoCount} />
               <NavigationCard />
               <SiteDashboard />
+              <SiteStats lastPostDate={allPosts[0]?.date || siteConfig.buildDate} />
             </aside>
 
             {/* Center Column */}

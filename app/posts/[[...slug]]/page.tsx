@@ -16,7 +16,6 @@ import Navbar from '../../../components/Navbar';
 import PageTransition from '../../../components/PageTransition';
 import { siteConfig } from '../../../siteConfig';
 import ClientTOC from '../../../components/ClientTOC';
-import BackButton from '../../../components/BackButton';
 import Comments from '../../../components/Comments';
 import SidebarLyric from '../../../components/SidebarLyric';
 import ProfileCard from '../../../components/ProfileCard';
@@ -103,7 +102,10 @@ export default async function Post({ params }: { params: Promise<{ slug?: string
               <img src={postData.cover} alt="封面" className="w-full h-full object-cover opacity-90 transition-transform duration-1000 group-hover:scale-105" />
             </div>
             <div className="p-5 md:p-12 relative">
-              <BackButton />
+              <Link href="/timeline" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-700/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/40 dark:border-white/10 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 transition-all duration-300 shadow-sm mb-4">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                返回上一级
+              </Link>
               <header className="mb-6 md:mb-8 border-b border-slate-300/50 dark:border-slate-700 pb-5 md:pb-6 relative">
                 <h1 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight transition-colors duration-700 pr-16 md:pr-24 leading-snug">{postData.title}</h1>
                 <div className="flex flex-wrap items-center gap-2 md:gap-3">
@@ -120,9 +122,9 @@ export default async function Post({ params }: { params: Promise<{ slug?: string
               </header>
               <div className="relative">
                 <style dangerouslySetInnerHTML={{ __html: `
-                  .prose h1 { font-size: 1.8rem !important; font-weight: 900 !important; margin-bottom: 1.2rem !important; margin-top: 2rem !important; line-height: 1.3 !important; color: inherit !important; }
-                  .prose h2 { font-size: 1.5rem !important; font-weight: 800 !important; margin-bottom: 1rem !important; margin-top: 1.5rem !important; color: inherit !important; }
-                  .prose h3 { font-size: 1.2rem !important; font-weight: 700 !important; margin-bottom: 0.8rem !important; color: inherit !important; }
+                  .prose h1 { font-size: 1.8rem !important; font-weight: 900 !important; margin-bottom: 1.2rem !important; margin-top: 2rem !important; line-height: 1.3 !important; color: inherit !important; scroll-margin-top: 6rem; }
+                  .prose h2 { font-size: 1.5rem !important; font-weight: 800 !important; margin-bottom: 1rem !important; margin-top: 1.5rem !important; color: inherit !important; scroll-margin-top: 6rem; }
+                  .prose h3 { font-size: 1.2rem !important; font-weight: 700 !important; margin-bottom: 0.8rem !important; color: inherit !important; scroll-margin-top: 6rem; }
                   .prose p { font-size: 0.95rem !important; line-height: 1.75 !important; color: inherit !important; }
                   .prose a { color: #6366f1 !important; text-decoration: none !important; font-weight: 600 !important; border-bottom: 1px dashed #6366f1 !important; }
                   .prose a:hover { color: #4f46e5 !important; border-bottom-style: solid !important; }
@@ -164,7 +166,7 @@ export default async function Post({ params }: { params: Promise<{ slug?: string
                     .prose p { font-size: 1.15rem !important; line-height: 1.85 !important; }
                   }
                 `}} />
-                <div id="article-content" className="prose prose-slate dark:prose-invert prose-base md:prose-lg max-w-none text-slate-800 dark:text-slate-200 transition-colors duration-700 scroll-smooth" dangerouslySetInnerHTML={{ __html: postData.contentHtml }} />
+                <div id="article-content" className="prose prose-slate dark:prose-invert prose-base md:prose-lg max-w-none text-slate-800 dark:text-slate-200 transition-colors duration-700 scroll-smooth scroll-mt-24" dangerouslySetInnerHTML={{ __html: postData.contentHtml }} />
               </div>
               <div className="mt-12 md:mt-16"><Comments /></div>
             </div>
@@ -184,7 +186,11 @@ export default async function Post({ params }: { params: Promise<{ slug?: string
                 ))}
               </div>
             </div>
-            {postData.toc.length > 0 && <ClientTOC toc={postData.toc} />}
+            {postData.toc.length > 0 && (
+              <div className="sticky top-24">
+                <ClientTOC toc={postData.toc} />
+              </div>
+            )}
           </aside>
         </main>
       </PageTransition>

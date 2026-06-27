@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface TocItem { level: number; text: string; id: string; }
 
@@ -24,6 +24,14 @@ export default function ClientTOC({ toc }: { toc: TocItem[] }) {
     return () => observer.disconnect();
   }, [toc]);
 
+  const handleClick = useCallback((e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
   return (
     <div className="bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl p-6 border border-white/40 dark:border-white/10 shadow-xl">
       <h3 className="font-black text-slate-900 dark:text-white mb-4 border-l-4 border-indigo-500 pl-2 text-sm">TABLE OF CONTENTS</h3>
@@ -32,10 +40,11 @@ export default function ClientTOC({ toc }: { toc: TocItem[] }) {
           <a
             key={i}
             href={`#${encodeURIComponent(item.id)}`}
-            className={`block text-xs font-bold transition-colors duration-300 truncate ${
+            onClick={(e) => handleClick(e, item.id)}
+            className={`block text-xs font-bold transition-all duration-300 truncate ${
               activeId === item.id
-                ? 'text-indigo-600 dark:text-indigo-400'
-                : 'text-slate-500 dark:text-slate-400 hover:text-indigo-500'
+                ? 'text-indigo-600 dark:text-indigo-400 translate-x-1'
+                : 'text-slate-500 dark:text-slate-400 hover:text-indigo-500 hover:translate-x-0.5'
             }`}
             style={{ paddingLeft: `${(item.level - 1) * 12}px` }}
           >

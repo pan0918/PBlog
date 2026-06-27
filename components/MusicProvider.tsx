@@ -22,8 +22,6 @@ interface Song {
   pic: string;
   url: string;
   lrc: string;
-  lyric?: string;
-  lyrics?: LyricLine[];
 }
 
 interface LyricLine {
@@ -68,7 +66,7 @@ const SONGS: Song[] = [
     artist: "许嵩",
     album: "呼吸之野",
     pic: "https://p3.music.126.net/m2PS8jiSCytmliJF27trKA==/109951168113919773.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457772009_%E4%B9%8C%E9%B8%A6.mp3",
+    url: "https://blog-music.pages.dev/%E4%B9%8C%E9%B8%A6.mp3",
     lrc: "[00:00.000] 作词 : 许嵩\n[00:01.000] 作曲 : 许嵩\n[00:02.000] 编曲 : 郑楠\n[00:03.000] 制作人 : 许嵩\n[00:28.137]怀揣汹涌喷薄的热情\n[00:34.358]可与生俱来无法讨喜\n[00:40.887]纯黑的外形隐忍冷静\n[00:47.500]月落时怎么会啼\n[00:53.896]你的存在是一个奇迹\n[01:00.030]造物的安排神秘无形\n[01:06.359]只为了再一眼的相遇\n[01:12.796]竟让我忘记了天敌\n[01:21.176]当我又飞到这里\n[01:24.180]俯瞰着模糊山顶\n[01:27.253]孤身藏在夜空里等你的回音\n[01:32.959]就当作是我不吉利\n[01:36.522]不能拥有美好幸运\n[01:40.182]只愿你 远方能感应\n[01:46.581]当我又降落这里\n[01:49.738]穿行在蛮荒森林\n[01:52.913]扑腾着倔强却又分叉的羽翼\n[01:58.465]飞上枝头的都风趣\n[02:02.099]占了巢的都在窃喜\n[02:05.622]但想到你 就不会勉强合群\n[02:39.323]你的存在是一个奇迹\n[02:45.776]造物的安排神秘无形\n[02:52.090]只为了再一眼的相遇\n[02:58.479]竟让我抗拒了宿命\n[03:06.614]当我又飞到这里\n[03:09.657]俯瞰着模糊山顶\n[03:12.861]孤身藏在夜空里等你的回音\n[03:18.459]就当作是我不吉利\n[03:22.038]不能拥有美好幸运\n[03:25.608]只愿你 远方能感应\n[03:32.079]当我又降落这里\n[03:35.096]穿行在蛮荒森林\n[03:38.484]扑腾着倔强却又分叉的羽翼\n[03:43.878]飞上枝头的都风趣\n[03:47.616]占了巢的都在窃喜\n[03:51.317]但想到你 就不会勉强合群\n[04:10.561]当我又飞到这里\n[04:13.604]俯瞰着模糊山顶\n[04:16.836]孤身藏在夜空里等你的回音\n[04:22.615]就当作是我不吉利\n[04:26.005]不能拥有美好幸运\n[04:29.651]只愿你 远方能感应\n[04:36.067]当我又降落这里\n[04:39.091]穿行在蛮荒森林\n[04:42.509]消解了莫须有的光环和罪名\n[04:48.175]转眼就谈不上年轻\n[04:51.709]也嚼透了一些道理\n[04:55.166]才相信 许多事没有道理\n[05:08.497]等到你 喂我些反转\n[05:16.249]喂我些反转剧情\n",
   },
   {
@@ -77,7 +75,7 @@ const SONGS: Song[] = [
     artist: "许嵩",
     album: "自定义",
     pic: "https://p3.music.126.net/Zg4XDfsiRi5vawjSWPP8Ng==/109951172899966259.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457769429_%E5%86%85%E7%BA%BF.mp3",
+    url: "https://blog-music.pages.dev/%E5%86%85%E7%BA%BF.mp3",
     lrc: "[00:00.00] 作词 : 许嵩\n[00:01.00] 作曲 : 许嵩\n[00:02.00] 编曲 : 许嵩\n[00:10.26]\n[00:16.31]血腥的风放肆嘲笑漫天的黄叶\n[00:23.87]这大街已横尸遍野\n[00:29.76]\n[00:30.72]而你却消失在蒙面执行任务杀气腾腾的夜\n[00:38.09]我听见有人猜 你是\n[00:40.06]敌人潜伏的内线\n[00:44.41]\n[00:45.86]和你相知多年\n[00:47.70]我确信对你的了解\n[00:53.64]你舍命救我画面\n[00:55.40]一一在眼前浮现\n[01:00.96]司空见惯了鲜血\n[01:02.94]你忘记你本是娇娆的红颜\n[01:08.60]感觉你我彼此都那么依恋\n[01:14.73]\n[01:17.26]你落入封闭的地牢\n[01:21.08]发不出求救的讯号\n[01:24.95]我折返这古堡 提着刀\n[01:28.56]杀红了眼 不依不饶\n[01:31.84]\n[01:32.54]你落入封闭的地牢\n[01:36.34]发不出求救的讯号\n[01:40.15]我却能感应到\n[01:42.94]打开锁链 你浅浅笑和我拥抱\n[01:48.65]\n[01:50.49]血腥的风放肆嘲笑漫天的黄叶\n[01:59.15]这大街已横尸遍野\n[02:04.53]\n[02:06.01]而你却消失在蒙面执行任务杀气腾腾的夜\n[02:13.26]我听见有人猜\n[02:15.24]你是潜伏的内线\n[02:19.31]\n[02:21.11]和你相知多年\n[02:22.94]我确信对你的了解\n[02:28.49]你舍命救我画面\n[02:30.49]一一在眼前浮现\n[02:36.18]司空见惯了鲜血\n[02:38.15]你忘记你本是娇娆的红颜\n[02:43.91]感觉你我彼此都那么依恋\n[02:50.40]\n[02:52.54]你落入封闭的地牢\n[02:56.32]发不出求救的讯号\n[03:00.11]我折返这古堡 提着刀\n[03:03.87]杀红了眼 不依不饶\n[03:06.69]\n[03:07.80]你落入封闭的地牢\n[03:11.60]发不出求救的讯号\n[03:15.37]我却能感应到\n[03:18.00]打开锁链 你浅浅笑和我拥抱\n[03:23.22]\n[03:27.39]我从来没有想到的是\n[03:29.60]\n[03:29.98]这是你我第一次拥抱 带着浅浅笑\n[03:37.32]你说会陪我一直到老 远离这尘嚣\n[03:44.89]我闭着眼感受幸福的微妙\n[03:49.68]把刀剑扔掉\n[03:51.64]你突然转身 匕首刺进我的心脏\n[03:56.66]带着浅浅笑\n[03:59.94]\n",
   },
   {
@@ -86,7 +84,7 @@ const SONGS: Song[] = [
     artist: "许嵩",
     album: "千古",
     pic: "https://p3.music.126.net/Vz19rSkD6IBTK4XvmgH4Yw==/7765850628155791.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457764948_%E5%8D%83%E5%8F%A4.mp3",
+    url: "https://blog-music.pages.dev/%E5%8D%83%E5%8F%A4.mp3",
     lrc: "[00:00.000] 作词 : 许嵩\n[00:01.000] 作曲 : 许嵩\n[00:02.000] 编曲 : Adam Lee\n[00:30.210]夏蝉冬雪\n[00:32.260]不过轮回一瞥\n[00:36.330]悟道修炼\n[00:38.510]不问一生缘劫\n[00:42.420]白纸画卷\n[00:44.730]寥寥几笔绘江湖深浅\n[00:48.890]难绘你\n[00:50.320]不染纤尘的容颜\n[00:55.270]夜不成眠\n[00:57.210]心还为谁萦牵\n[01:00.999]灯火竹帘\n[01:03.389]梦里随风摇曳\n[01:07.379]月华似练\n[01:09.620]遥看万载沧海成桑田\n[01:13.510]它不言\n[01:15.450]不言命途的明灭\n[01:19.430]若流芳千古\n[01:21.909]爱的人却反目\n[01:25.340]错过了幸福\n[01:28.709]谁又为我在乎\n[01:31.540]若贻笑千古\n[01:34.400]因为爱得执迷又糊涂\n[01:39.310]也不悔做你的信徒\n[01:57.000]夜不成眠\n[01:59.250]心还为谁萦牵\n[02:03.099]灯火竹帘\n[02:05.590]梦里随风摇曳\n[02:09.379]月华似练\n[02:11.619]遥看万载沧海成桑田\n[02:15.560]它不言\n[02:17.179]不言命途的明灭\n[02:21.220]若流芳千古\n[02:23.959]爱的人却反目\n[02:27.250]错过了幸福\n[02:30.239]谁又为我在乎\n[02:33.970]若贻笑千古\n[02:36.459]因为爱得执迷又糊涂\n[02:41.489]也不悔做你的信徒\n[02:49.280]若流芳千古\n[02:51.910]爱的人却反目\n[02:55.589]错过了幸福\n[02:58.149]谁又为我在乎\n[03:01.629]若贻笑千古\n[03:04.239]因为爱得执迷又糊涂\n[03:09.899]也不悔做你的信徒\n[03:16.019]也不悔做你的信徒\n",
   },
   {
@@ -95,7 +93,7 @@ const SONGS: Song[] = [
     artist: "许嵩",
     album: "寻雾启示",
     pic: "https://p4.music.126.net/ZVHx7BNaaMCJcgg8wQHOBw==/109951172202579057.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457768338_%E5%8D%95%E4%BA%BA%E6%97%85%E9%80%94.mp3",
+    url: "https://blog-music.pages.dev/%E5%8D%95%E4%BA%BA%E6%97%85%E9%80%94.mp3",
     lrc: "[00:00.000] 作词 : 许嵩\n[00:01.000] 作曲 : 许嵩\n[00:02.000] 编曲 : 覃桢\n[00:27.400]黄昏骤雨过后\n[00:29.100]濛濛的水边\n[00:31.250]有蓝色的蝴蝶\n[00:33.700]画翩翩的弧线\n[00:37.100]多么缠绵\n[00:39.310]酝酿着的诺言\n[00:41.820]保存期又有几年\n[00:45.310]\n[00:47.400]夕阳如血\n[00:49.790]彼岸花开得妖艳\n[00:52.000]当美景都重叠\n[00:54.550]视线丢了焦点\n[00:58.300]车窗外面\n[01:00.110]泥土清香沁入心田\n[01:02.880]情绪一点一点沉淀\n[01:06.370]\n[01:07.890]松 松 松\n[01:09.840]松开了你的手\n[01:12.800]没有觉得一个人的旅途有何寂寞\n[01:18.300]你有离开的理由\n[01:20.690]我有闲适的理由\n[01:23.380]你 我\n[01:25.700]太多的不同\n[01:27.980]\n[01:28.980]No No No\n[01:30.580]没什么参不透\n[01:33.680]没有觉得一个人的生活有何不妥\n[01:38.940]你有离开的理由\n[01:41.539]我有闲适的理由\n[01:44.270]你 我\n[01:45.710]太多的不同\n[01:47.780]那就没什么好说\n[01:51.100]\n[02:07.650]\n[02:11.140]黄昏骤雨过后\n[02:13.140]濛濛的水边\n[02:15.430]有蓝色的蝴蝶\n[02:17.990]画翩翩的弧线\n[02:21.380]多么缠绵\n[02:23.570]酝酿着的诺言\n[02:26.120]保存期又有几年\n[02:30.120]\n[02:31.910]夕阳如血\n[02:33.480]彼岸花开得妖艳\n[02:36.280]当美景都重叠\n[02:38.840]视线丢了焦点\n[02:42.240]车窗外面\n[02:44.390]泥土清香沁入心田\n[02:47.190]情绪一点一点沉淀\n[02:51.430]\n[02:52.180]松 松 松\n[02:54.790]松开了你的手\n[02:57.340]没有觉得一个人的旅途有何寂寞\n[03:02.360]你有离开的理由\n[03:04.920]我有闲适的理由\n[03:07.740]你 我\n[03:09.200]太多的不同\n[03:11.920]\n[03:13.700]No No No\n[03:14.990]没什么参不透\n[03:18.900]没有觉得一个人的生活有何不妥\n[03:23.860]你有离开的理由\n[03:26.390]我有闲适的理由\n[03:29.190]你 我\n[03:30.900]太多的不同\n[03:32.770]那就没什么好说\n[03:35.100]松 松 松\n[03:36.410]松开了你的手\n[03:40.300]没有觉得一个人的旅途有何寂寞\n[03:44.800]你有离开的理由\n[03:47.230]我有闲适的理由\n[03:50.170]你 我\n[03:51.480]太多的不同\n[03:54.490]\n[03:56.300]No No No\n[03:59.070]没什么参不透\n[04:01.420]没有觉得一个人的生活有何不妥\n[04:06.460]你有离开的理由\n[04:09.050]我有闲适的理由\n[04:11.870]你 我\n[04:13.210]太多的不同\n[04:15.260]那就没什么好说\n[04:19.680]\n[04:23.390]\n[29:30.380]\n",
   },
   {
@@ -104,7 +102,7 @@ const SONGS: Song[] = [
     artist: "许嵩",
     album: "半城烟沙",
     pic: "https://p4.music.126.net/VUtLfAqLDYMn2dfy0qlRkw==/109951166118678136.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457760351_%E5%8D%97%E5%B1%B1%E5%BF%86.mp3",
+    url: "https://blog-music.pages.dev/%E5%8D%97%E5%B1%B1%E5%BF%86.mp3",
     lrc: "[00:00.00] 作词 : 许嵩\n[00:01.00] 作曲 : 李毅杰\n[00:02.00] 编曲 : 许嵩\n[00:21.43]乘一叶扁舟入景随风望江畔渔火\n[00:28.24]转竹林深处残碑小筑僧侣始复诵\n[00:34.85]苇岸红亭中抖抖绿蓑邀南山对酌\n[00:41.26]纸钱晚风送谁家又添新痛\n[00:46.58]独揽月下萤火照亮一纸寂寞\n[00:53.06]追忆那些什么你说的爱我\n[00:59.72]花开后花又落轮回也没结果\n[01:06.35]苔上雪告诉我你没归来过\n[01:27.48]遥想多年前烟花满天你静静抱着我\n[01:34.15]丝竹声悠悠教人忘忧若南柯一梦\n[01:40.88]星斗青光透时无英雄心猿已深锁\n[01:47.52]可你辞世后我再也没笑过\n[01:52.75]独揽月下萤火照亮一纸寂寞\n[01:59.17]追忆那些什么你说的爱我\n[02:05.96]花开后花又落轮回也没结果\n[02:12.42]苔上雪告诉我你没归来过\n[02:32.40]独揽月下萤火照亮一纸寂寞\n[02:38.92]追忆那些什么你说的爱我\n[02:45.68]花开后花又落轮回也没结果\n[02:52.30]苔上雪告诉我你没归来过\n[02:59.00]花开后花又落轮回也没结果\n[03:05.47]苔上雪告诉我你没归来过\n",
   },
   {
@@ -113,7 +111,7 @@ const SONGS: Song[] = [
     artist: "许嵩",
     album: "寻雾启示",
     pic: "https://p3.music.126.net/ZVHx7BNaaMCJcgg8wQHOBw==/109951172202579057.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457765729_%E5%8F%B9%E6%9C%8D.mp3",
+    url: "https://blog-music.pages.dev/%E5%8F%B9%E6%9C%8D.mp3",
     lrc: "[00:00.00] 作词 : 许嵩\n[00:01.00] 作曲 : 许嵩\n[00:02.00] 编曲 : 杨阳\n[00:03.00] 制作人 : 许嵩\n[00:25.57]电影院里 你的背影还是那么纯情\n[00:32.11]有种迷人的魅力 隔着陌生的距离\n[00:40.08]昨天分手 你止不住眼泪的决堤\n[00:46.40]还问我为何相爱的人不能在一起\n[00:54.55]你的过去没人知道 想搜索也搜索不到\n[01:01.23]我俩唯一合影 你甜美在笑\n[01:07.65]\n[01:08.74]我叹服你的技巧 把爱情玩转的如此巧妙\n[01:15.46]在你的心里 早已设计好 什么时间把我丢掉\n[01:23.09]我叹服你的技巧 把爱情玩转的如此花哨\n[01:29.81]可你的内心 不配你的外表\n[01:33.66]我该庆幸自己成功地 脱逃\n[01:39.48]\n[01:51.59]昨天分手 你止不住眼泪的决堤\n[01:57.89]还问我为何相爱的人不能在一起\n[02:06.13]你的过去没人知道 想搜索也搜索不到\n[02:12.87]我俩唯一合影 你甜美在笑\n[02:19.92]\n[02:20.42]我叹服你的技巧 把爱情玩转的如此巧妙\n[02:27.32]在你的心里 早已设计好 什么时间把我丢掉\n[02:34.83]我叹服你的技巧 把爱情玩转的如此花哨\n[02:41.51]可你的内心 不配你的外表\n[02:45.41]我该庆幸自己成功地 脱逃\n[02:50.90]\n[02:52.73]我也知道这个世界没有那么多的童话\n[02:56.58]却还总是对那真爱抱有一丝幻想\n[03:00.33]所以活该承受幻想与现实之间的落差\n[03:03.73]虽然在他们的眼里我是一只傻瓜\n[03:07.18]\n[03:07.34]我也知道这个世界没有那么多的童话\n[03:10.98]却还总是对那真爱抱有一丝幻想\n[03:14.57]所以活该承受幻想与现实之间的落差\n[03:18.13]虽然在他们的眼里我是一只傻瓜\n[03:21.36]\n[03:21.49]我叹服你的技巧 把爱情玩转的如此巧妙\n[03:28.37]在你的心里 早已设计好 什么时间把我丢掉\n[03:35.84]我叹服你的技巧 把爱情玩转的如此花哨\n[03:42.53]可你的内心 不配你的外表\n[03:46.21]我该庆幸自己成功 脱逃\n[03:55.75]\n",
   },
   {
@@ -122,7 +120,7 @@ const SONGS: Song[] = [
     artist: "许嵩",
     album: "自定义",
     pic: "https://p3.music.126.net/Zg4XDfsiRi5vawjSWPP8Ng==/109951172899966259.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457767707_%E5%A6%82%E6%9E%9C%E5%BD%93%E6%97%B6.mp3",
+    url: "https://blog-music.pages.dev/%E5%A6%82%E6%9E%9C%E5%BD%93%E6%97%B6.mp3",
     lrc: "[00:00.00] 作词 : 许嵩\n[00:01.00] 作曲 : 许嵩\n[00:02.00] 编曲 : 许嵩\n[00:03.00] 制作人 : 许嵩\n[00:09.82]\n[00:13.65]为什么 你当时对我好\n[00:18.65]又为什么 现在变得冷淡了\n[00:25.98]我知道 爱要走难阻挠\n[00:31.68]反正不是我的 我也不该要\n[00:39.05]你和我 曾经有共同爱好\n[00:44.55]谁的耳边 总有绝句在萦绕\n[00:51.35]我们俩 用文言文对话真的很搞笑\n[00:58.27]还笑那曹操贪慕着小乔\n[01:04.79]天灰了 雨坠了\n[01:08.14]视线要模糊了\n[01:11.13]此时感觉到你的重要\n[01:16.80]爱走了 心走了\n[01:20.54]你说你要走了\n[01:25.43]我为你唱最后的古谣\n[01:31.57]红雨瓢泼泛起了回忆怎么潜\n[01:37.45]你美目如当年\n[01:40.86]流转我心间\n[01:43.83]渡口边最后一面洒下了句点\n[01:49.96]与你若只如初见\n[01:53.38]何须感伤离别\n[01:54.61]\n[02:22.93]你和我 曾经有共同爱好\n[02:29.55]谁的耳边 总有绝句在萦绕\n[02:35.74]我们俩 用文言文对话真的很搞笑\n[02:42.23]还笑那曹操贪慕着小乔\n[02:49.04]天灰了 雨坠了\n[02:52.03]视线要模糊了\n[02:55.12]此时感觉到你的重要\n[03:00.85]爱走了 心走了\n[03:04.54]你说你要走了\n[03:08.02]我为你唱最后的古谣\n[03:14.13]红雨瓢泼泛起了回忆怎么潜\n[03:20.20]你美目如当年\n[03:23.48]流转我心间\n[03:26.39]渡口边最后一面洒下了句点\n[03:32.73]与你若只如初见\n[03:36.03]何须感伤离别\n[03:39.47]红雨瓢泼泛起了回忆怎么潜\n[03:45.28]你美目如当年\n[03:48.84]流转我心间\n[03:51.77]渡口边最后一面洒下了句点\n[03:57.96]与你若只如初见\n[04:01.16]何须感伤离别\n[04:12.07]\n[04:29.16]红雨瓢泼泛起了回忆怎么潜\n[04:35.30]你美目如当年\n[04:39.26]流转我心间\n[04:42.19]渡口边最后一面洒下了句点\n[04:48.77]与你若只如初见\n[04:51.75]何须感伤离别\n[04:55.21]\n",
   },
   {
@@ -131,7 +129,7 @@ const SONGS: Song[] = [
     artist: "许嵩",
     album: "寻宝游戏",
     pic: "https://p4.music.126.net/BUFZLieG5a6E3ZVpkHP6fA==/109951163402069754.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457768075_%E5%A6%82%E7%BA%A6%E8%80%8C%E8%87%B3.mp3",
+    url: "https://blog-music.pages.dev/%E5%A6%82%E7%BA%A6%E8%80%8C%E8%87%B3.mp3",
     lrc: "[00:00.00] 作词 : 许嵩\n[00:01.00] 作曲 : 许嵩\n[00:02.00] 编曲 : Adam Lee\n[00:03.00] 制作人 : 许嵩\n[00:23.66]如果早知道那天是我们最后一面\n[00:29.69]我绝不会和你谈论琐事浪费时间\n[00:35.86]人生里看似偶然却又必经的告别\n[00:41.95]无约而至 无人可免\n[00:46.84]\n[00:51.18]有一回置身某个似曾相识的场景\n[00:57.37]那一刻我忽然感应你就在我身边\n[01:03.62]过去、当下、未来未必确有其界限\n[01:09.64]或许爱能穿越时间 抵达永远\n[01:18.25]\n[01:21.28]等到秋叶终于金黄\n[01:23.84]等到华发悄然苍苍\n[01:27.29]我们相约老地方\n[01:32.04]\n[01:32.95]等到人已不再奔忙\n[01:35.96]等到心也不再轻狂\n[01:39.41]我们相约老地方\n[01:44.33]\n[01:45.75]等到记忆只剩精华\n[01:48.33]等到笑容不掺伪装\n[01:51.90]我们相约老地方\n[01:56.83]\n[01:57.40]等到释怀所有悲伤\n[02:00.69]等到体谅世事无常\n[02:04.42]我们相约老地方\n[02:09.55]\n[02:21.00]有一回置身某个似曾相识的场景\n[02:26.72]那一刻我忽然感应你就在我身边\n[02:32.77]过去、当下、未来未必确有其界限\n[02:38.91]或许爱能穿越时间 抵达永远\n[02:46.22]\n[02:47.01]等到秋叶终于金黄\n[02:49.87]等到华发悄然苍苍\n[02:53.66]我们相约老地方\n[02:57.48]\n[02:59.02]等到人已不再奔忙\n[03:02.09]等到心也不再轻狂\n[03:05.83]我们相约老地方\n[03:10.34]\n[03:11.49]等到记忆只剩精华\n[03:14.43]等到笑容不掺伪装\n[03:18.14]我们相约老地方\n[03:22.79]\n[03:23.60]等到释怀所有悲伤\n[03:26.70]等到体谅世事无常\n[03:30.37]我们相约老地方\n[03:34.63]\n[03:36.02]等到记忆只剩精华\n[03:39.05]等到笑容不掺伪装\n[03:42.79]我们相约老地方\n[03:47.72]\n[03:48.16]等到释怀所有悲伤\n[03:51.28]等到体谅世事无常\n[03:55.11]我们相约老地方\n[04:00.76]\n",
   },
   {
@@ -140,7 +138,7 @@ const SONGS: Song[] = [
     artist: "许嵩",
     album: "不如吃茶去",
     pic: "https://p3.music.126.net/NBjIuSJ7LRugXdATt3j8AA==/109951172321467418.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457770563_%E5%B1%B1%E6%B0%B4%E4%B9%8B%E9%97%B4.mp3",
+    url: "https://blog-music.pages.dev/%E5%B1%B1%E6%B0%B4%E4%B9%8B%E9%97%B4.mp3",
     lrc: "[00:00.00] 作词 : 许嵩\n[00:01.00] 作曲 : 许嵩\n[00:02.00] 编曲 : 许嵩\n[00:03.00] 制作人 : 许嵩\n[00:38.05]昨夜同门云集 推杯又换盏\n[00:43.81]今朝茶凉酒寒 豪言成笑谈\n[00:49.61]半生累 尽徒然 碑文完美有谁看\n[00:55.36]隐居山水之间 誓与浮名散\n[01:03.90]湖畔青石板上 一把油纸伞\n[01:09.79]旅人停步折花 淋湿了绸缎\n[01:15.58]满树玉瓣多傲然 江南烟雨却痴缠\n[01:21.44]花飞雨追一如尘缘理还乱\n[01:27.05]落花雨 你飘摇的美丽\n[01:33.00]花香氤 把往日情勾起\n[01:38.70]我愿意 化浮萍躺湖心\n[01:44.48]只陪你 泛岁月的涟漪\n[02:16.16]古木檀香小筑 经文诵得缓\n[02:22.13]锦服华裳一炬 粗袖如心宽\n[02:27.87]林中抚琴曲委婉 群山听懂我悲欢\n[02:33.70]泪如雨落才知过往剪不断\n[02:39.48]落花雨 你飘摇的美丽\n[02:45.16]花香氤 把往日情勾起\n[02:51.04]我愿意 化浮萍躺湖心\n[02:56.75]只陪你 泛岁月的涟漪\n[03:28.35]落花雨 你飘摇的美丽\n[03:34.45]花香氤 把往日情勾起\n[03:40.16]我愿意 化浮萍躺湖心\n[03:45.91]只陪你 泛岁月的涟漪\n[03:51.76]落花雨 你飘摇在天地\n[03:57.44]晚风急 吹皱芳华太无情\n[04:03.20]我愿意 化流沙躺湖堤\n[04:09.04]只陪你 恭候春夏的轮替\n[04:14.87]落花雨 谁深藏山水里\n[04:20.63]落花雨 谁深藏在我心\n",
   },
   {
@@ -149,7 +147,7 @@ const SONGS: Song[] = [
     artist: "许嵩",
     album: "不如吃茶去",
     pic: "https://p3.music.126.net/NBjIuSJ7LRugXdATt3j8AA==/109951172321467418.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457755152_%E5%BC%B9%E6%8C%87%E4%B8%80%E6%8C%A5%E9%97%B4.mp3",
+    url: "https://blog-music.pages.dev/%E5%BC%B9%E6%8C%87%E4%B8%80%E6%8C%A5%E9%97%B4.mp3",
     lrc: "[00:00.00] 作词 : 许嵩\n[00:01.00] 作曲 : 许嵩\n[00:02.00] 编曲 : 杨阳\n[00:03.27]制作人：许嵩\n[00:04.32]编曲：杨阳\n[00:05.35]弦乐：中国国家交响乐团\n[00:06.44]筝：程皓如\n[00:07.48]箫：陈悦\n[00:08.50]吉他：毕见昊\n[00:09.54]和声：许嵩/胡夏\n[00:10.46]\n[00:40.89]雨掸霜叶 掸落一地过往\n[00:45.44]\n[00:48.68]云遮秋雁 遮住十载月光\n[00:54.02]\n[00:56.39]我推开窗 满手回忆沙沙作响\n[01:02.71]枕簟凉 残烛晃 人惆怅\n[01:09.55]\n[01:11.93]离愁别恨 是心的溃疡\n[01:16.41]\n[01:19.65]戴月披星 是你在流浪\n[01:24.95]\n[01:27.36]你推开窗 花灯随烟波铺江上\n[01:33.70]露水凉 老船晃 人惆怅\n[01:40.53]\n[01:40.89]弹指一挥间 你竟已遥远\n[01:48.70]沧海成荒野 真情永不灭\n[01:56.02]\n[01:56.39]弹指一挥间 红尘已缈远\n[02:04.11]青丝蘸白雪 来路生云烟\n[02:11.52]\n[02:33.16]离愁别恨 是心的溃疡\n[02:37.64]\n[02:40.87]戴月披星 是你在流浪\n[02:47.25]\n[02:48.63]你推开窗 花灯随烟波铺江上\n[02:54.99]露水凉 老船晃 人惆怅\n[03:01.80]\n[03:02.17]弹指一挥间 你竟已遥远\n[03:09.93]沧海成荒野 真情永不灭\n[03:17.26]\n[03:17.61]弹指一挥间 红尘已缈远\n[03:25.36]青丝蘸白雪 来路生云烟\n[03:33.78]\n[03:48.61]弹指一挥间 你竟已遥远\n[03:56.36]沧海成荒野 真情永不灭\n[04:03.75]\n[04:04.05]弹指一挥间 红尘已缈远\n[04:11.84]青丝蘸白雪 来路生云烟\n",
   },
   {
@@ -158,7 +156,7 @@ const SONGS: Song[] = [
     artist: "许嵩",
     album: "许嵩单曲集",
     pic: "https://p4.music.126.net/q6LhHJxJw21aGDN13HcyKg==/109951172188951978.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457769491_%E6%88%91%E6%83%B3%E7%89%B5%E7%9D%80%E4%BD%A0%E7%9A%84%E6%89%8B.mp3",
+    url: "https://blog-music.pages.dev/%E6%88%91%E6%83%B3%E7%89%B5%E7%9D%80%E4%BD%A0%E7%9A%84%E6%89%8B.mp3",
     lrc: "[00:00.00] 作词 : 许嵩\n[00:00.09] 作曲 : 许嵩\n[00:00.19] 编曲 : 许嵩\n[00:00.29]我想牵着你的手 - 许嵩\n[00:01.78]\n[00:03.26]Vae他有一些烦恼\n[00:05.50]反正现在的年轻人\n[00:06.74]都有许多烦恼\n[00:07.97]那么多要思考\n[00:09.29]那么多要寻找\n[00:10.50]诱惑太多 不坚定就犯错了\n[00:13.21]朋友说 尘世被你夸那么美\n[00:15.32]可是现实挺倒霉\n[00:16.67]领导天天要开会\n[00:17.98]上班迟到几分钟就被扣薪水\n[00:20.42]同事就像敌人要小心翼翼防备\n[00:23.34]老师不喜欢男生长头发\n[00:25.66]妈妈不喜欢女儿长指甲\n[00:28.19]什么都被管 什么都看不惯\n[00:30.05]什么都没力量推翻\n[00:31.32]学习生存之道又不安\n[00:33.21]ho 地球太寒冷\n[00:35.80]ho 距离产生美\n[00:38.23]ho 远走八十八万公里\n[00:40.76]ho hoo\n[00:43.18]我想牵着你的手\n[00:46.46]两个人去宇宙\n[00:48.88]没引力左右\n[00:50.74]夜光映出你的温柔\n[00:53.24]我想牵着你的手\n[00:56.38]逃离这颗星球\n[00:58.76]剥落了忧愁\n[01:00.67]快乐就在十指相扣\n[01:06.25]大家好我是Vae 我打一下岔\n[01:09.28]请你和我一起跟着节奏拍拍手\n[01:12.92]拍拍手晚上睡觉就能梦游\n[01:15.79]梦见跟爱的人去公园走走\n[01:18.60]走来走去不知道有什么走头\n[01:21.11]这世界让你和她觉得不爽\n[01:23.24]我想你其实也想离开这星球\n[01:25.86]ho 地球太寒冷\n[01:28.39]ho 距离产生美\n[01:30.74]ho 远走八十八万公里\n[01:33.21]ho hoo\n[01:35.71]我想牵着你的手\n[01:38.96]两个人去宇宙\n[01:41.38]没引力左右\n[01:43.22]夜光映出你的温柔\n[01:45.80]我想牵着你的手\n[01:48.75]逃离这颗星球\n[01:51.34]剥落了忧愁\n[01:53.26]快乐就在十指相扣\n[01:58.28]我想牵着你的手\n[02:01.32]两个人去宇宙\n[02:03.88]没引力左右\n[02:05.70]夜光映出你的温柔\n[02:08.31]我想牵着你的手\n[02:11.28]逃离这颗星球\n[02:13.74]剥落了忧愁\n[02:15.68]快乐就在十指相扣\n[02:18.75]我想牵着你的手\n[02:21.41]两个人去宇宙\n[02:23.86]没引力左右\n[02:25.80]夜光映出你的温柔\n[02:28.27]我想牵着你的手\n[02:31.32]逃离这颗星球\n[02:33.83]剥落了忧愁\n[02:35.63]快乐就在十指相扣\n[02:40.82]我想牵着你的手\n",
   },
   {
@@ -167,7 +165,7 @@ const SONGS: Song[] = [
     artist: "许嵩",
     album: "不如吃茶去",
     pic: "https://p3.music.126.net/NBjIuSJ7LRugXdATt3j8AA==/109951172321467418.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457775127_%E6%A2%A7%E6%A1%90%E7%81%AF.mp3",
+    url: "https://blog-music.pages.dev/%E6%A2%A7%E6%A1%90%E7%81%AF.mp3",
     lrc: "[00:00.000] 作词 : 许嵩\n[00:01.000] 作曲 : 许嵩\n[00:02.000] 编曲 : 蔡庭贵\n[00:22.600]梧桐树荫了整条街\n[00:26.630]\n[00:29.120]灯火穿透了她的叶\n[00:33.670]\n[00:35.220]窗外夜风裹走时间\n[00:39.590]\n[00:41.170]后退的景谁在流连\n[00:45.870]\n[00:48.150]一个人开车去赴宴\n[00:52.720]\n[00:54.010]右座有张烫金喜帖\n[00:58.890]\n[01:00.960]新娘的名字好亲切\n[01:06.040]\n[01:07.450]搞不好曾梦里出现\n[01:11.990]\n[01:13.100]孤单坐进一桌陌生人里面\n[01:19.110]主持人在进行热场的环节\n[01:25.260]你和他含情脉脉对视了一眼\n[01:31.810]回忆陪我躲在角落没露面\n[01:38.130]\n[01:39.070]当时的我想不到今天\n[01:45.120]错过的人回不到从前\n[01:51.340]当时的你静静坐在我的左手边\n[01:57.390]梧桐灯下是你静美的侧脸\n[02:03.100]\n[02:24.270]一个人开车去赴宴\n[02:30.030]右座有张烫金喜帖\n[02:36.410]新娘的名字好亲切\n[02:42.730]搞不好曾梦里出现\n[02:47.600]\n[02:48.930]孤单坐进一桌陌生人里面\n[02:55.310]主持人在进行热场的环节\n[03:01.240]你和他含情脉脉对视了一眼\n[03:08.240]我和回忆缩在角落没露面\n[03:14.740]当时的我想不到今天\n[03:20.810]错过的人回不到从前\n[03:27.500]当时的你静静坐在我的左手边\n[03:33.520]梧桐灯下是你静美的侧脸\n[03:40.120]\n[03:40.670]当时的我想不到今天\n[03:46.220]\n[03:46.770]错过的人回不到从前\n[03:53.350]灰色的我怔怔留在没你的世界\n[03:58.790]梧桐灯下是我熄灯的双眼\n[04:05.280]\n[04:06.500]梧桐树荫了整条街\n[04:11.600]\n[04:12.690]灯火穿透了\n",
   },
   {
@@ -176,7 +174,7 @@ const SONGS: Song[] = [
     artist: "许嵩/刘美麟",
     album: "温泉",
     pic: "https://p3.music.126.net/qOPz7RfFFm-DwAjzbf_MfQ==/109951166118817944.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457768053_%E6%B8%A9%E6%B3%89.mp3",
+    url: "https://blog-music.pages.dev/%E6%B8%A9%E6%B3%89.mp3",
     lrc: "[00:00.000] 作词 : 许嵩\n[00:01.000] 作曲 : 许嵩\n[00:13.101]你用温柔手臂挽住迟钝的我\n[00:18.065]蓝色披风鼓囊着半立方悸动\n[00:22.933]骑行在泉水小镇下坡有点陡\n[00:27.698]正好紧贴我背后\n[00:32.931]和你在一起就会莫名的放松\n[00:37.549]所有阴翳的回忆都一扫而空\n[00:42.565]在深巷小馆品尝当地的果酒\n[00:47.514]像你清新而醇厚\n[00:54.199]喜欢看你的笑容\n[00:56.566]绽放在夏日雨后\n[00:58.999]你融化了多少的忧愁或许只有我能懂\n[01:04.781]你轻轻的问我\n[01:07.531]我有没有点重\n[01:09.749]可抱住你就不想松手\n[01:14.093]喜欢看你的笑容\n[01:16.382]环绕着香甜的风\n[01:19.116]你戳中了我的审美点准确得好像针灸\n[01:24.748]我微微的颤抖\n[01:26.983]那紧张的喉咙\n[01:29.465]认真讲述了没做的梦\n[01:34.182]很生动\n[01:45.585]你用温柔手臂弯住迟钝的我\n[01:50.437]蓝色披风鼓囊着半立方悸动\n[01:55.287]骑行在泉水小镇下坡有点陡\n[02:00.370]正好紧贴我背后\n[02:05.503]和你在一起就会莫名的放松\n[02:10.320]所有阴翳的回忆都一扫而空\n[02:15.202]在深巷小馆品尝当地的果酒\n[02:20.285]像你清新而醇厚\n[02:24.289]喜欢看你的笑容\n[02:26.636]绽放在夏日雨后\n[02:29.069]你融化了多少的忧愁或许只有我能懂\n[02:34.719]你轻轻的问我\n[02:37.755]我有没有点重\n[02:39.853]可抱住你就不想松手\n[02:44.207]喜欢看你的笑容\n[02:46.620]环绕着香甜的风\n[02:49.119]你戳中了我的审美点准确得好像针灸\n[02:54.737]我微微的颤抖\n[02:57.103]那紧张的喉咙\n[02:59.620]认真讲述了没做的梦\n[03:04.304]很生动\n[03:07.924]说实话我可不确定我能够陪你多久\n[03:13.120]没关系能博红颜一笑是我的温柔\n[03:17.786]等我们绕过几轮冬夏和春秋\n[03:22.175]还能不能和你遨游\n[03:29.320]喜欢看你的笑容\n[03:31.370]绽放在夏日雨后\n[03:33.870]你融化了多少的忧愁或许只有我能懂\n[03:39.553]你轻轻的问我\n[03:42.269]我有没有点重\n[03:44.553]可抱住你就不想松手\n[03:51.320]喜欢看你的笑容\n[03:52.036]环绕着香甜的风\n[03:54.087]有泡在丛林里的温泉神奇疗愈的作用\n[03:59.687]我微微的颤抖\n[04:02.070]那紧张的喉咙\n[04:04.503]认真讲述了没做的梦\n[04:08.974]很生动\n[04:14.990]认真讲述了没做的梦\n[04:20.591]很生动\n",
   },
   {
@@ -185,7 +183,7 @@ const SONGS: Song[] = [
     artist: "许嵩",
     album: "许嵩单曲集",
     pic: "https://p4.music.126.net/q6LhHJxJw21aGDN13HcyKg==/109951172188951978.jpg",
-    url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782457756005_%E7%B2%89%E8%89%B2%E4%BF%A1%E7%AC%BA.mp3",
+    url: "https://blog-music.pages.dev/%E7%B2%89%E8%89%B2%E4%BF%A1%E7%AC%BA.mp3",
     lrc: "[00:00.00] 编曲 : Borland\n[00:01.00] 作词 : 许嵩\n[00:02.00] 作曲 : 许嵩\n[00:07.53]粉色的信笺\n[00:10.00]盛满我的思念\n[00:12.55]风掠过的瞬间\n[00:15.15]一转眼就不见\n[00:18.15]粉色的信笺\n[00:20.27]盛满我的思念\n[00:22.81]风掠过的瞬间\n[00:25.48]一转眼\n[00:27.45]一个人\n[00:29.14]冰又凉的季节\n[00:32.21]冷色的世界\n[00:34.79]倒带的画面\n[00:37.31]偷偷走进遇见你的时间\n[00:43.18]在心底举行一场纪念\n[00:46.26]啦啦~~\n[00:47.52]这世界\n[00:49.49]纷纷扰扰流言\n[00:52.68]烦恼和快乐\n[00:55.48]各自在堆叠\n[00:58.04]和你远行去海边\n[01:00.69]暗喜你浅浅酒窝浮现\n[01:03.86]潮起潮落是我指使的表演\n[01:08.37]有些话不敢对你讲\n[01:13.65]又担心错过会遗憾\n[01:18.74]忽然间天空飘起了小雪\n[01:24.19]有勇气给你写留言\n[01:34.33]粉色的信笺\n[01:36.67]盛满我的思念\n[01:39.30]风掠过的瞬间\n[01:41.92]一转眼就不见\n[01:44.28]飘洋过海陪伴在你身边\n[01:49.50]贴着你粉红的笑脸\n[01:55.02]粉色的信笺\n[01:57.34]盛满我的思念\n[01:59.90]雪落掌心里面\n[02:02.58]一转眼化成线\n[02:05.06]不知不觉爱你已一百天\n[02:10.18]好想延续到永远\n[02:16.61]啦啦~~\n[02:26.21]这世界\n[02:27.62]纷纷扰扰流言\n[02:31.05]烦恼和快乐\n[02:33.50]各自在堆叠\n[02:36.50]和你远行去海边\n[02:38.76]暗喜你浅浅酒窝浮现\n[02:41.93]潮起潮落是我指使的表演\n[02:46.31]有些话不敢对你讲\n[02:51.65]又担心错过会遗憾\n[02:56.63]忽然间天空飘起了小雪\n[03:02.23]有勇气给你写留言\n[03:12.49]粉色的信笺\n[03:14.76]盛满我的思念\n[03:17.29]风掠过的瞬间\n[03:19.84]一转眼就不见\n[03:22.37]飘洋过海陪伴在你身边\n[03:27.59]贴着你粉红的笑脸\n[03:32.99]粉色的信笺\n[03:35.34]盛满我的思念\n[03:37.96]雪落掌心里面\n[03:40.54]一转眼化成线\n[03:43.02]不知不觉爱你已一百天\n[03:48.22]好想延续到永远\n[03:55.78]\n[03:59.49]粉色的信笺\n[04:01.21]盛满我的思念\n[04:03.84]风掠过的瞬间\n[04:06.40]一转眼就不见\n[04:08.85]飘洋过海陪伴在你身边\n[04:14.07]贴着你粉红的笑脸\n[04:19.39]粉色的信笺\n[04:21.86]盛满我的思念\n[04:24.60]雪落掌心里面\n[04:26.93]一转眼化成线\n[04:29.51]不知不觉爱你已一百天\n[04:34.63]好想延续到\n[04:37.64]好想延续到永远\n",
   },
 ];
@@ -231,11 +229,6 @@ const MusicContext = createContext<MusicContextValue | null>(null);
 export function MusicProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const blobUrlRef = useRef<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const endedRef = useRef(false);
-  const pendingPlayRef = useRef(false);
-  const loadedIndexRef = useRef<number | null>(null);
-  const loadRequestSeqRef = useRef(0);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -248,173 +241,68 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [isMuted, setIsMuted] = useState(false);
   const [playMode, setPlayMode] = useState<PlayMode>("loop");
   const [parsedLyrics, setParsedLyrics] = useState<LyricLine[]>([]);
-  const [audioSrc, setAudioSrc] = useState("");
-  const [loadRequest, setLoadRequest] = useState<{ index: number; seq: number } | null>(null);
+  const [audioSrc, setAudioSrc] = useState<string>("");
 
   const currentSong = SONGS[currentIndex];
 
   // Clear loading immediately (hardcoded data)
   useEffect(() => { setIsLoading(false); }, []);
 
-  const releaseLoadedAudio = useCallback((resetState = true) => {
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = null;
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.removeAttribute("src");
-      audioRef.current.load();
-    }
-
-    if (blobUrlRef.current) {
-      URL.revokeObjectURL(blobUrlRef.current);
-      blobUrlRef.current = null;
-    }
-
-    loadedIndexRef.current = null;
-    if (resetState) {
-      setAudioSrc("");
-      setDuration(0);
-      setCurrentTime(0);
-      setProgress(0);
-    }
-  }, []);
-
-  // Stop playback and release the in-browser audio blob on unmount.
+  // Clean up blob URL on unmount
   useEffect(() => {
     return () => {
-      releaseLoadedAudio(false);
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
     };
-  }, [releaseLoadedAudio]);
+  }, []);
 
   // Parse lyrics when song changes
   useEffect(() => {
     if (currentSong) setParsedLyrics(parseLrc(currentSong.lrc));
   }, [currentIndex]);
 
-  // Reset display-only playback state when selecting a different song.
+  // Fetch audio as blob — ensures seeking works regardless of CDN range request support
   useEffect(() => {
     if (!currentSong) return;
-    endedRef.current = false;
-    if (loadedIndexRef.current !== currentIndex) {
-      setDuration(0);
-      setCurrentTime(0);
-      setProgress(0);
-      setCurrentLyric("");
+    let cancelled = false;
+    // Reset display states immediately on song change
+    setDuration(0);
+    setCurrentTime(0);
+    setProgress(0);
+    setCurrentLyric("♪ 正在缓冲 ♪");
+    // Clean up old blob URL
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
     }
-  }, [currentIndex, currentSong]);
-
-  // Fully load one requested track into a browser blob before playback.
-  useEffect(() => {
-    if (!loadRequest) return;
-
-    const requestedIndex = loadRequest.index;
-    const requestedSong = SONGS[requestedIndex];
-    if (!requestedSong) return;
-
-    releaseLoadedAudio();
-    setCurrentLyric("♪ 正在加载音频 ♪");
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    fetch(requestedSong.url, { signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Audio request failed: ${response.status}`);
-        }
-        return response.blob();
+    // Phase 1: use direct URL for fast initial playback
+    setAudioSrc(currentSong.url);
+    // Phase 2: fetch full file in background for reliable seeking
+    fetch(currentSong.url)
+      .then(res => res.blob())
+      .then(blob => {
+        if (cancelled) return;
+        const url = URL.createObjectURL(blob);
+        blobUrlRef.current = url;
+        setAudioSrc(url);
       })
-      .then((blob) => {
-        if (controller.signal.aborted) return;
-        const blobUrl = URL.createObjectURL(blob);
-        blobUrlRef.current = blobUrl;
-        loadedIndexRef.current = requestedIndex;
-        setAudioSrc(blobUrl);
-        setCurrentLyric("♪ 加载完成 ♪");
-      })
-      .catch((error) => {
-        if (controller.signal.aborted) return;
-        pendingPlayRef.current = false;
-        setIsPlaying(false);
-        setCurrentLyric("♪ 音频加载失败 ♪");
-        console.warn("Audio load failed", error);
-      });
-
-    return () => {
-      controller.abort();
-    };
-  }, [loadRequest, releaseLoadedAudio]);
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [currentIndex]);
 
   // Sync volume
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = isMuted ? 0 : volume;
   }, [volume, isMuted]);
 
-  const playAudio = useCallback(async () => {
-    const audio = audioRef.current;
-    if (!audio) {
-      pendingPlayRef.current = true;
-      setCurrentLyric("♪ 正在加载音频 ♪");
-      return;
-    }
-
-    try {
-      await audio.play();
-      pendingPlayRef.current = false;
-      setIsPlaying(true);
-    } catch (error) {
-      const errorName = error instanceof DOMException ? error.name : "";
-      if (errorName === "AbortError") {
-        pendingPlayRef.current = true;
-        setCurrentLyric("♪ 正在缓冲 ♪");
-        return;
-      }
-
-      pendingPlayRef.current = false;
-      setIsPlaying(false);
-      setCurrentLyric("♪ 播放失败，请再点一次 ♪");
-      console.warn("Audio playback failed", error);
-    }
-  }, []);
-
-  const requestSongLoad = useCallback((index: number, autoplay: boolean) => {
-    if (index < 0 || index >= SONGS.length) return;
-
-    pendingPlayRef.current = autoplay;
-
-    if (index !== currentIndex) {
-      releaseLoadedAudio();
-      setCurrentIndex(index);
-    }
-
-    if (loadedIndexRef.current === index && audioSrc) {
-      if (autoplay) void playAudio();
-      return;
-    }
-
-    loadRequestSeqRef.current += 1;
-    setLoadRequest({ index, seq: loadRequestSeqRef.current });
-  }, [audioSrc, currentIndex, playAudio, releaseLoadedAudio]);
-
-  const queueSong = useCallback((index: number, autoplay: boolean) => {
-    if (index < 0 || index >= SONGS.length) return;
-
-    if (autoplay) {
-      requestSongLoad(index, true);
-      return;
-    }
-
-    pendingPlayRef.current = false;
-    setIsPlaying(false);
-    setCurrentIndex(index);
-    if (loadedIndexRef.current !== index) {
-      releaseLoadedAudio();
-    }
-    setCurrentLyric("");
-  }, [releaseLoadedAudio, requestSongLoad]);
-
   // Time update & lyric sync
+  const endedRef = useRef(false);
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -431,12 +319,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         endedRef.current = true;
         if (playMode === "single") {
           audio.currentTime = 0;
-          pendingPlayRef.current = true;
-          void playAudio();
+          audio.play();
         } else if (playMode === "random") {
-          queueSong(Math.floor(Math.random() * SONGS.length), true);
+          setCurrentIndex(Math.floor(Math.random() * SONGS.length));
         } else {
-          queueSong((currentIndex + 1) % SONGS.length, true);
+          setCurrentIndex((prev) => (prev + 1) % SONGS.length);
         }
         return;
       }
@@ -468,28 +355,23 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     const audio = audioRef.current;
     if (playMode === "single" && audio) {
       audio.currentTime = 0;
-      pendingPlayRef.current = true;
-      void playAudio();
+      audio.play();
     } else if (playMode === "random") {
-      queueSong(Math.floor(Math.random() * SONGS.length), true);
+      setCurrentIndex(Math.floor(Math.random() * SONGS.length));
     } else {
-      queueSong((currentIndex + 1) % SONGS.length, true);
+      setCurrentIndex((prev) => (prev + 1) % SONGS.length);
     }
-  }, [currentIndex, playAudio, playMode, queueSong]);
+  }, [playMode]);
 
   // Controls
   const togglePlay = () => {
     const audio = audioRef.current;
-    if (!audio || loadedIndexRef.current !== currentIndex) {
-      requestSongLoad(currentIndex, true);
-      return;
-    }
+    if (!audio) return;
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
     } else {
-      pendingPlayRef.current = true;
-      void playAudio();
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
     }
   };
 
@@ -497,30 +379,22 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (playMode === 'single') {
       // Single repeat: restart current song
       const audio = audioRef.current;
-      if (audio) {
-        audio.currentTime = 0;
-        pendingPlayRef.current = true;
-        void playAudio();
-      }
+      if (audio) { audio.currentTime = 0; audio.play(); }
     } else if (playMode === 'random') {
-      queueSong(Math.floor(Math.random() * SONGS.length), isPlaying);
+      setCurrentIndex(Math.floor(Math.random() * SONGS.length));
     } else {
-      queueSong((currentIndex + 1) % SONGS.length, isPlaying);
+      setCurrentIndex((prev) => (prev + 1) % SONGS.length);
     }
   };
   const prevSong = () => {
     if (playMode === 'single') {
       // Single repeat: restart current song
       const audio = audioRef.current;
-      if (audio) {
-        audio.currentTime = 0;
-        pendingPlayRef.current = true;
-        void playAudio();
-      }
+      if (audio) { audio.currentTime = 0; audio.play(); }
     } else if (playMode === 'random') {
-      queueSong(Math.floor(Math.random() * SONGS.length), isPlaying);
+      setCurrentIndex(Math.floor(Math.random() * SONGS.length));
     } else {
-      queueSong((currentIndex - 1 + SONGS.length) % SONGS.length, isPlaying);
+      setCurrentIndex((prev) => (prev - 1 + SONGS.length) % SONGS.length);
     }
   };
 
@@ -529,15 +403,17 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (!audio) return;
     const dur = audio.duration;
     if (!dur || !isFinite(dur)) return;
-    const nextTime = (time / 100) * dur;
     setProgress(time);
-    setCurrentTime(nextTime);
-    audio.currentTime = nextTime;
+    audio.currentTime = (time / 100) * dur;
   };
 
   const playSong = (index: number) => {
     if (index < 0 || index >= SONGS.length) return;
-    requestSongLoad(index, true);
+    setCurrentIndex(index);
+    const audio = audioRef.current;
+    if (audio) {
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
   };
 
   const setVolume = (v: number) => { setVolumeState(Math.min(1, Math.max(0, v))); setIsMuted(false); };
@@ -577,26 +453,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         <audio
           ref={audioRef}
           src={audioSrc}
-          preload="auto"
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
-          onCanPlay={() => { if (pendingPlayRef.current) void playAudio(); }}
-          onPlaying={() => {
-            pendingPlayRef.current = false;
-            setIsPlaying(true);
-          }}
-          onPause={() => {
-            if (!pendingPlayRef.current) setIsPlaying(false);
-          }}
-          onWaiting={() => {
-            if (isPlaying) setCurrentLyric("♪ 正在缓冲 ♪");
-          }}
-          onError={() => {
-            pendingPlayRef.current = false;
-            setIsPlaying(false);
-            setCurrentLyric("♪ 音频加载失败 ♪");
-          }}
-          onEnded={handleEnded}
+          onCanPlay={() => { if (isPlaying && audioRef.current) audioRef.current.play().catch(() => {}); }}
         />
       )}
     </MusicContext.Provider>

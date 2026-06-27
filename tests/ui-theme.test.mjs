@@ -22,9 +22,10 @@ test("homepage uses soft cream background and wave tokens", async () => {
   assert.match(hero, /#f7efe7/i);
   assert.match(hero, /#241b17/i);
   assert.doesNotMatch(hero, /#d4a574/i);
-  assert.match(page, /<WindyGrass \/>/);
-  assert.match(page, /fixed inset-x-0 bottom-0 z-\[8\]/);
-  assert.match(layout, /id="app-mount-root" className="flex-1 flex flex-col warm-page-surface"/);
+  assert.doesNotMatch(page, /<WindyGrass \/>/);
+  assert.match(layout, /body className="[^"]*warm-page-surface/);
+  assert.match(layout, /id="app-mount-root" className="flex-1 flex flex-col min-h-screen"/);
+  assert.match(layout, /<BackgroundEffects \/>/);
   assert.doesNotMatch(layout, /style=\{\{\s*background:\s*'var\(--page-bg\)'\s*\}\}/);
   assert.match(danmaku, /MAX_DANMAKU_ITEMS = 6/);
   assert.match(danmaku, /onAnimationEnd=\{\(\) => removeDanmaku\(item\.id\)\}/);
