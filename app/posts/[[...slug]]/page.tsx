@@ -8,6 +8,7 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeStringify from 'rehype-stringify';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeSlug from 'rehype-slug';
 import matter from 'gray-matter';
 import 'highlight.js/styles/atom-one-dark.css';
 import Link from 'next/link';
@@ -26,12 +27,13 @@ export async function generateStaticParams() {
   return posts.map(p => ({ slug: p.slug.split('/') }));
 }
 
-function extractToc(content: string) {
-  const headingRegex = /^(#{1,3})\s+(.+)$/gm;
+function extractToc(html: string) {
+  const headingRegex = /<h([1-3])\s+id="([^"]+)"[^>]*>([\s\S]*?)<\/h[1-3]>/g;
   const toc = [];
   let match;
-  while ((match = headingRegex.exec(content)) !== null) {
-    toc.push({ level: match[1].length, text: match[2].trim(), id: match[2].trim().toLowerCase().replace(/\s+/g, '-') });
+  while ((match = headingRegex.exec(html)) !== null) {
+    const text = match[3].replace(/<[^>]*>/g, '').trim();
+    toc.push({ level: parseInt(match[1]), text, id: match[2] });
   }
   return toc;
 }
@@ -57,10 +59,11 @@ async function getPostData(slugArr: string[]) {
     .use(remarkRehype, { allowDangerousHtml: true })
     // @ts-ignore
     .use(rehypeHighlight, { detect: true, ignoreMissing: true, subset: ['cpp', 'c', 'python', 'java', 'javascript', 'typescript', 'go', 'rust', 'bash', 'json', 'html', 'css', 'sql', 'xml'] })
-    .use(rehypeKatex).use(rehypeStringify, { allowDangerousHtml: true })
+    .use(rehypeKatex).use(rehypeSlug).use(rehypeStringify, { allowDangerousHtml: true })
     .process(content);
 
-  return { slug, contentHtml: processedContent.toString(), toc: extractToc(content), title: data.title, date: data.date, tags: data.tags && Array.isArray(data.tags) ? data.tags : [], cover: data.cover || siteConfig.defaultPostCover };
+  const contentHtml = processedContent.toString();
+  return { slug, contentHtml, toc: extractToc(contentHtml), title: data.title, date: data.date, tags: data.tags && Array.isArray(data.tags) ? data.tags : [], cover: data.cover || siteConfig.defaultPostCover };
 }
 
 function getRecentPosts(currentSlug: string) {
@@ -135,8 +138,25 @@ export default async function Post({ params }: { params: Promise<{ slug?: string
                   .prose code::before, .prose code::after { content: none !important; }
                   .prose p code, .prose li code { background-color: rgba(99,102,241,0.1) !important; color: #6366f1 !important; padding: 0.2rem 0.4rem !important; border-radius: 0.5rem !important; font-size: 0.85em !important; }
                   .dark .prose p code, .dark .prose li code { background-color: rgba(99,102,241,0.2) !important; color: #818cf8 !important; }
+                  .prose table { width: 100% !important; border-collapse: separate !important; border-spacing: 0 !important; margin: 1.5rem 0 2rem !important; overflow: hidden !important; border: 1px solid rgba(184,111,43,0.22) !important; border-radius: 0.5rem !important; background: rgba(255,250,244,0.72) !important; box-shadow: 0 12px 32px rgba(126,91,64,0.1) !important; font-size: 0.95rem !important; }
+                  .prose thead { background: rgba(214,138,58,0.12) !important; }
+                  .prose th, .prose td { padding: 0.75rem 1rem !important; border-bottom: 1px solid rgba(184,111,43,0.14) !important; color: inherit !important; }
+                  .prose th { color: #5f4635 !important; font-weight: 800 !important; text-align: left !important; }
+                  .prose tbody tr:last-child td { border-bottom: 0 !important; }
+                  .prose tbody tr { transition: background-color 160ms ease !important; }
+                  .prose tbody tr:hover { background: rgba(214,138,58,0.07) !important; }
+                  .prose th[align="right"], .prose td[align="right"] { text-align: right !important; font-variant-numeric: tabular-nums !important; }
+                  .dark .prose table { background: rgba(52,42,36,0.68) !important; border-color: rgba(255,246,235,0.14) !important; box-shadow: 0 12px 34px rgba(0,0,0,0.22) !important; }
+                  .dark .prose thead { background: rgba(214,138,58,0.13) !important; }
+                  .dark .prose th { color: #f5e8dc !important; }
+                  .dark .prose th, .dark .prose td { border-bottom-color: rgba(255,246,235,0.1) !important; }
+                  .dark .prose tbody tr:hover { background: rgba(214,138,58,0.08) !important; }
                   .prose img { display: block !important; margin: 1.5rem auto !important; border-radius: 1rem !important; box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important; max-width: 100% !important; }
                   .prose br { display: block !important; content: "" !important; margin-top: 0.5em !important; }
+                  @media (max-width: 767px) {
+                    .prose table { font-size: 0.85rem !important; }
+                    .prose th, .prose td { padding: 0.65rem 0.75rem !important; }
+                  }
                   @media (min-width: 768px) {
                     .prose h1 { font-size: 3rem !important; font-weight: 950 !important; margin-bottom: 2rem !important; margin-top: 3rem !important; }
                     .prose h2 { font-size: 2.2rem !important; margin-bottom: 1.5rem !important; margin-top: 2rem !important; }

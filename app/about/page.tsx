@@ -30,7 +30,7 @@ function getDirActivities(dirName: string, typeLabel: '文章' | '杂谈' | '说
 export default async function AboutPage() {
   const fullPath = path.join(process.cwd(), 'app', 'about', 'about.md');
   let contentHtml = "博主很懒，还没有写自我介绍哦...";
-  let coverImage = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1000&auto=format&fit=crop";
+  let coverImage = "https://cloudflare-imgbed-9pz.pages.dev/file/1782542461827_上杉绘梨衣.png";
 
   try {
     const fileContents = fs.readFileSync(fullPath, 'utf8');

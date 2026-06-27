@@ -31,7 +31,7 @@ export default function ClientTOC({ toc }: { toc: TocItem[] }) {
         {toc.map((item, i) => (
           <a
             key={i}
-            href={`#${item.id}`}
+            href={`#${encodeURIComponent(item.id)}`}
             className={`block text-xs font-bold transition-colors duration-300 truncate ${
               activeId === item.id
                 ? 'text-indigo-600 dark:text-indigo-400'
