@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 
-interface Post { slug: string; title?: string; description?: string; tags?: string[]; date?: string; [key: string]: any; }
+interface Post { slug: string; title?: string; description?: string; tags?: string[]; date?: string; }
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 

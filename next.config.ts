@@ -4,9 +4,6 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   reactStrictMode: true,
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],

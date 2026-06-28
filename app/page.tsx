@@ -16,20 +16,8 @@ import SiteDashboard from '../components/SiteDashboard';
 import SiteStats from '../components/SiteStats';
 import { albums } from '../data/albums';
 import { ToastProvider } from '../components/ToastProvider';
-import { getAllPosts } from '../lib/posts';
+import { getAllPosts, type PostMeta } from '../lib/posts';
 import HeroBanner from '../components/HeroBanner';
-
-function formatUpdateTime(dateString: string) {
-  if (!dateString || dateString === '1970-01-01') return '刚刚更新';
-  try {
-    const d = new Date(dateString);
-    if (isNaN(d.getTime())) return dateString;
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}.${month}.${day}`;
-  } catch { return dateString; }
-}
 
 const POSTS_PER_PAGE = 5;
 
@@ -75,7 +63,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
 
             {/* Center Column */}
             <main className="flex-1 min-w-0 flex flex-col gap-6">
-              {posts.length > 0 ? posts.map((post: any) => (
+              {posts.length > 0 ? posts.map((post: PostMeta) => (
                 <ArticleCard key={post.slug} post={post} />
               )) : (
                 <div className="soft-glass-panel rounded-3xl p-12 text-center">

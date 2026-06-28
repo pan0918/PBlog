@@ -75,7 +75,7 @@ export default function WeatherCard() {
 
         const hourly = (data.weather?.[0]?.hourly || [])
           .slice(0, 6)
-          .map((h: any) => {
+          .map((h: Record<string, string>) => {
             const hour = Math.floor(parseInt(h.time) / 100);
             const now = new Date().getHours();
             return {

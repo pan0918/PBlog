@@ -14,7 +14,7 @@ import React, {
 // Types
 // ---------------------------------------------------------------------------
 
-interface Song {
+export interface Song {
   id: number;
   title: string;
   artist: string;
@@ -22,9 +22,11 @@ interface Song {
   pic: string;
   url: string;
   lrc: string;
+  lyric?: string;
+  lyrics?: LyricLine[];
 }
 
-interface LyricLine {
+export interface LyricLine {
   time: number; // seconds
   text: string;
 }

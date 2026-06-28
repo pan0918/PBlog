@@ -2,13 +2,7 @@
 import { useMusic } from './MusicProvider';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-
-const formatTime = (time: number) => {
-  if (!time || isNaN(time)) return "00:00";
-  const m = Math.floor(time / 60).toString().padStart(2, '0');
-  const s = Math.floor(time % 60).toString().padStart(2, '0');
-  return `${m}:${s}`;
-};
+import { formatTime } from '../lib/utils';
 
 export default function FloatingPlayer() {
   const { currentSong, isPlaying, progress, currentTime, duration, togglePlay, nextSong, handleSeek } = useMusic();

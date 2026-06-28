@@ -1,14 +1,8 @@
 "use client";
 import { useEffect, useRef, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMusic } from '../../components/MusicProvider';
-
-const formatTime = (time: number) => {
-  if (!time || isNaN(time)) return "0:00";
-  const m = Math.floor(time / 60);
-  const s = Math.floor(time % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
-};
+import { useMusic, type Song, type LyricLine } from '../../components/MusicProvider';
+import { formatTime } from '../../lib/utils';
 
 export default function MusicClient() {
   const {
@@ -22,7 +16,7 @@ export default function MusicClient() {
   const [activeTab, setActiveTab] = useState<'lyrics' | 'playlist'>('lyrics');
   const [showVolume, setShowVolume] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [parsedLyrics, setParsedLyrics] = useState<any[]>([]);
+  const [parsedLyrics, setParsedLyrics] = useState<LyricLine[]>([]);
 
   useEffect(() => {
     if (!currentSong) { setParsedLyrics([]); return; }
@@ -33,7 +27,7 @@ export default function MusicClient() {
     }
     if (typeof raw !== 'string' || !raw) { setParsedLyrics([]); return; }
     const lines = raw.split('\n');
-    const parsed: any[] = [];
+    const parsed: LyricLine[] = [];
     const timeExp = /\[(\d{2,}):(\d{2})(?:[.:](\d{2,3}))?\]/g;
     for (const line of lines) {
       const text = line.replace(/\[\d{2,}:\d{2}(?:[.:]\d{2,3})?\]/g, '').trim();
@@ -51,7 +45,7 @@ export default function MusicClient() {
 
   const activeLyricIndex = useMemo(() => {
     if (!parsedLyrics.length) return -1;
-    let idx = parsedLyrics.findIndex((l: any) => l.time > currentTime) - 1;
+    let idx = parsedLyrics.findIndex((l) => l.time > currentTime) - 1;
     if (idx === -2) idx = parsedLyrics.length - 1;
     return Math.max(0, idx);
   }, [currentTime, parsedLyrics]);
@@ -68,7 +62,7 @@ export default function MusicClient() {
   const filteredPlaylist = useMemo(() => {
     if (!searchQuery.trim()) return playlist;
     const q = searchQuery.toLowerCase();
-    return playlist.filter((s: any) => (s.title || '').toLowerCase().includes(q) || (s.artist || '').toLowerCase().includes(q));
+    return playlist.filter((s) => (s.title || '').toLowerCase().includes(q) || (s.artist || '').toLowerCase().includes(q));
   }, [playlist, searchQuery]);
 
   const getModeIcon = () => {
@@ -198,7 +192,7 @@ export default function MusicClient() {
                 <div className="absolute bottom-0 left-0 right-0 h-32 md:h-40 bg-gradient-to-t from-white/40 dark:from-slate-800/60 to-transparent z-10 pointer-events-none" />
                 <div ref={lyricContainerRef} className="h-full overflow-y-auto scroll-smooth relative px-4 md:px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)', maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)' }}>
                   <div className="py-[30vh] md:py-[35vh] flex flex-col gap-4 md:gap-6 text-center lg:px-10">
-                    {parsedLyrics.length > 0 ? parsedLyrics.map((line: any, i: number) => {
+                    {parsedLyrics.length > 0 ? parsedLyrics.map((line, i) => {
                       const isActive = i === activeLyricIndex;
                       return (
                         <div key={i} ref={isActive ? activeLyricRef : null}
@@ -230,7 +224,7 @@ export default function MusicClient() {
                   {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-black/10 rounded-full transition-colors"><svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>}
                 </div>
                 <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-2 md:gap-2.5" style={{ scrollbarWidth: 'none' }}>
-                  {filteredPlaylist.map((song: any, idx: number) => {
+                  {filteredPlaylist.map((song, idx) => {
                     const origIdx = playlist.indexOf(song);
                     const isCurrent = origIdx === currentIndex;
                     return (

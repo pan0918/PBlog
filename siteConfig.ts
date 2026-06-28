@@ -1,4 +1,81 @@
-export const siteConfig = {
+interface SocialConfig {
+  github?: string;
+  gitee?: string;
+  google?: string;
+  email?: string;
+  qq?: string;
+  wechat?: string;
+  twitter?: string;
+  xiaohongshu?: string;
+}
+
+interface GitalkConfig {
+  clientID: string;
+  clientSecret: string;
+  repo: string;
+  owner: string;
+  admin: string[];
+}
+
+interface GeminiConfig {
+  modelId: string;
+  systemPrompt: string;
+  maxOutputTokens: number;
+  temperature: number;
+}
+
+interface PetConfig {
+  name: string;
+  avatar: string;
+  systemPrompt: string;
+  proactiveMessages: string[];
+  proactiveInterval: number;
+  allowedApiHosts: string[];
+}
+
+interface FooterBadge {
+  name: string;
+  color: string;
+  svg: string;
+}
+
+interface CloudMusicItem {
+  id: string;
+  name: string;
+  artist: string;
+}
+
+interface SiteConfig {
+  title: string;
+  faviconUrl: string;
+  authorName: string;
+  bio: string;
+  navTitle: string;
+  navSuffix: string;
+  navAfter: string;
+  avatarUrl: string;
+  useGradient: boolean;
+  themeColors: string[];
+  bgImages: string[];
+  defaultPostCover: string;
+  photoWallImage: string;
+  cloudMusicList: CloudMusicItem[];
+  social: SocialConfig;
+  counts: { photos: number };
+  chatterTitle: string;
+  chatterDescription: string;
+  danmakuList: string[];
+  gitalkConfig: GitalkConfig;
+  buildDate: string;
+  footerBadges: FooterBadge[];
+  icpConfig: { name: string; link: string };
+  geminiConfig: GeminiConfig;
+  petConfig: PetConfig;
+  friendLinkApplyFormat: string;
+  enableLevelSystem: boolean;
+}
+
+export const siteConfig: SiteConfig = {
   title: "Frud's Blog",
   faviconUrl: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782456852356_icon.png",
   authorName: "Frud_",

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import { formatUpdateTime } from './utils';
 
 export interface PostMeta {
   slug: string;
@@ -12,18 +13,6 @@ export interface PostMeta {
   category: string | null;
   formattedDate: string;
   content: string;
-}
-
-function formatUpdateTime(dateString: string) {
-  if (!dateString || dateString === '1970-01-01') return '刚刚更新';
-  try {
-    const d = new Date(dateString);
-    if (isNaN(d.getTime())) return dateString;
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}.${month}.${day}`;
-  } catch { return dateString; }
 }
 
 function scanPosts(dir: string, baseDir: string): PostMeta[] {

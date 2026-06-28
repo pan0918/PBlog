@@ -2,13 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useMusic } from './MusicProvider';
 import { useRouter } from 'next/navigation';
-
-const formatTime = (time: number) => {
-  if (!time || isNaN(time)) return "00:00";
-  const m = Math.floor(time / 60).toString().padStart(2, '0');
-  const s = Math.floor(time % 60).toString().padStart(2, '0');
-  return `${m}:${s}`;
-};
+import { formatTime } from '../lib/utils';
 
 export default function CloudPlayer() {
   const { playlist, currentSong, isPlaying, progress, currentTime, duration, currentLyric, isLoading, togglePlay, nextSong, prevSong, handleSeek, playMode, togglePlayMode, volume, setVolume, isMuted, toggleMute } = useMusic();

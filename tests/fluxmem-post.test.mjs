@@ -10,9 +10,9 @@ const figures = [
 ];
 
 test("FluxMem reading note keeps figures and results aligned", async () => {
-  const [post, postPage] = await Promise.all([
+  const [post, globals] = await Promise.all([
     readFile("posts/Research/FluxMem.md", "utf8"),
-    readFile("app/posts/[[...slug]]/page.tsx", "utf8"),
+    readFile("app/globals.css", "utf8"),
   ]);
   const body = post.replace(/^---[\s\S]*?---\s*/, "");
   const positions = figures.map((figure) => body.indexOf(figure));
@@ -34,7 +34,7 @@ test("FluxMem reading note keeps figures and results aligned", async () => {
   assert.doesNotMatch(post, /internal-api-drive-stream\.feishu\.cn/);
   assert.doesNotMatch(post, /[—–]/);
   assert.doesNotMatch(post, /^\d+\.\d+\s/m);
-  assert.match(postPage, /\.prose table\s*\{[^}]*width:\s*100%/s);
-  assert.match(postPage, /\.prose th,\s*\.prose td\s*\{[^}]*padding:/s);
-  assert.match(postPage, /\.dark \.prose table\s*\{/);
+  assert.match(globals, /\.prose table\s*\{[^}]*width:\s*100%/s);
+  assert.match(globals, /\.prose th,\s*\.prose td\s*\{[^}]*padding:/s);
+  assert.match(globals, /\.dark \.prose table\s*\{/);
 });

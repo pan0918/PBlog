@@ -3,11 +3,11 @@ import path from 'path';
 import matter from 'gray-matter';
 import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
-import MomentList from './MomentList';
+import MomentList, { type Moment } from './MomentList';
 
 export default function MomentsPage() {
   const momentsDir = path.join(process.cwd(), 'moments');
-  let moments: any[] = [];
+  let moments: Moment[] = [];
   try {
     if (fs.existsSync(momentsDir)) {
       const files = fs.readdirSync(momentsDir).filter(f => f.endsWith('.md'));

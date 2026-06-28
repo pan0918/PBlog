@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 
-interface Moment { id: string; title: string; date: string; mood: string; weather: string; content: string; }
+export interface Moment { id: string; title: string; date: string; mood: string; weather: string; content: string; }
 
 function getMonthKey(dateStr: string): string {
   if (!dateStr) return '';
