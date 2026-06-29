@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import { fitImageWithinViewport, type FittedImageSize } from "./imageSizing";
 
 interface Photo { url: string; caption?: string; }
 
@@ -16,28 +18,6 @@ interface Album {
 interface BookViewerProps {
   album: Album;
   onClose: () => void;
-}
-
-function useImageSize(src: string) {
-  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
-
-  useEffect(() => {
-    setSize(null);
-    const img = new Image();
-    img.onload = () => {
-      const maxW = window.innerWidth * 0.85;
-      const maxH = window.innerHeight * 0.78;
-      const ratio = img.naturalWidth / img.naturalHeight;
-      let w = img.naturalWidth;
-      let h = img.naturalHeight;
-      if (w > maxW) { w = maxW; h = w / ratio; }
-      if (h > maxH) { h = maxH; w = h * ratio; }
-      setSize({ w, h });
-    };
-    img.src = src;
-  }, [src]);
-
-  return size;
 }
 
 export default function BookViewer({ album, onClose }: BookViewerProps) {
@@ -152,7 +132,7 @@ export default function BookViewer({ album, onClose }: BookViewerProps) {
 }
 
 function Slide({ photo, direction }: { photo: Photo; direction: number }) {
-  const size = useImageSize(photo.url);
+  const [size, setSize] = useState<FittedImageSize | null>(null);
 
   return (
     <motion.div
@@ -160,18 +140,33 @@ function Slide({ photo, direction }: { photo: Photo; direction: number }) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: direction * -60 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="flex items-center justify-center"
-      style={size ? { width: size.w, height: size.h } : { width: 300, height: 300 }}
+      className="relative flex items-center justify-center overflow-hidden rounded-2xl"
+      style={size ? { width: size.width, height: size.height } : { width: 300, height: 300 }}
     >
-      {size ? (
-        <img
-          src={photo.url}
-          alt={photo.caption || ""}
-          className="block w-full h-full rounded-2xl"
-        />
-      ) : (
-        <div className="w-full h-full bg-white/5 rounded-2xl animate-pulse" />
-      )}
+      {!size && <div className="absolute inset-0 bg-white/5 rounded-2xl animate-pulse" />}
+      <Image
+        src={photo.url}
+        alt={photo.caption || ""}
+        fill
+        quality={90}
+        loading="eager"
+        sizes="85vw"
+        decoding="async"
+        onLoad={(event) => {
+          const image = event.currentTarget;
+          setSize(
+            fitImageWithinViewport(
+              image.naturalWidth,
+              image.naturalHeight,
+              window.innerWidth,
+              window.innerHeight,
+            ),
+          );
+        }}
+        className={`object-contain rounded-2xl transition-opacity duration-200 ${
+          size ? "opacity-100" : "opacity-0"
+        }`}
+      />
       {photo.caption && (
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent pointer-events-none rounded-b-2xl">
           <p className="text-white text-sm font-bold text-center">{photo.caption}</p>
