@@ -18,9 +18,12 @@ function formatMonthLabel(key: string): string {
   return `${y.slice(2)}年${parseInt(m)}月`;
 }
 
+const PER_PAGE = 5;
+
 export default function MomentList({ moments }: { moments: Moment[] }) {
   const [query, setQuery] = useState('');
   const [activeMonth, setActiveMonth] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const monthKeys = useMemo(() => {
     const set = new Set<string>();
@@ -48,6 +51,13 @@ export default function MomentList({ moments }: { moments: Moment[] }) {
     return list;
   }, [moments, query, activeMonth]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  const paged = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+
+  const handleMonthChange = (key: string) => { setActiveMonth(key); setCurrentPage(1); };
+  const handleQueryChange = (v: string) => { setQuery(v); setCurrentPage(1); };
+
   if (!moments.length) {
     return <div className="text-center py-20 text-slate-400 dark:text-slate-500 font-bold">暂无说说</div>;
   }
@@ -63,7 +73,7 @@ export default function MomentList({ moments }: { moments: Moment[] }) {
           type="text"
           placeholder="搜索说说内容..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => handleQueryChange(e.target.value)}
           className="w-full h-12 pl-12 pr-4 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/50 dark:border-white/10 rounded-full text-sm text-slate-800 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all duration-300"
         />
       </div>
@@ -71,7 +81,7 @@ export default function MomentList({ moments }: { moments: Moment[] }) {
       {/* Month Filter Tabs */}
       <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
         <button
-          onClick={() => setActiveMonth('all')}
+          onClick={() => handleMonthChange('all')}
           className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 ${
             activeMonth === 'all'
               ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25'
@@ -83,7 +93,7 @@ export default function MomentList({ moments }: { moments: Moment[] }) {
         {monthKeys.map(key => (
           <button
             key={key}
-            onClick={() => setActiveMonth(key)}
+            onClick={() => handleMonthChange(key)}
             className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 ${
               activeMonth === key
                 ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25'
@@ -99,7 +109,7 @@ export default function MomentList({ moments }: { moments: Moment[] }) {
       <div className="relative">
         <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500 to-purple-500 hidden md:block"></div>
         <div className="space-y-6">
-          {filtered.length > 0 ? filtered.map((moment, i) => (
+          {paged.length > 0 ? paged.map((moment, i) => (
             <motion.div
               key={moment.id}
               initial={{ opacity: 0, x: -20 }}
@@ -125,6 +135,37 @@ export default function MomentList({ moments }: { moments: Moment[] }) {
           )}
         </div>
       </div>
+
+      {/* Pagination */}
+      {filtered.length > 0 && (
+        <div className="flex items-center justify-center gap-3 mt-10">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={safePage <= 1}
+            className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
+              safePage <= 1
+                ? 'bg-white/20 dark:bg-slate-800/30 text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                : 'bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 shadow-sm'
+            }`}
+          >
+            上一页
+          </button>
+          <span className="text-sm font-bold text-slate-500 dark:text-slate-400">
+            {safePage} / {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={safePage >= totalPages}
+            className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
+              safePage >= totalPages
+                ? 'bg-white/20 dark:bg-slate-800/30 text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                : 'bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 shadow-sm'
+            }`}
+          >
+            下一页
+          </button>
+        </div>
+      )}
     </div>
   );
 }

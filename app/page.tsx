@@ -72,7 +72,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
               )}
 
               {/* Pagination */}
-              {totalPages > 1 && (
+              {allPosts.length > 0 && (
                 <div className="flex items-center justify-center gap-3 mt-4">
                   {safePage > 1 ? (
                     <Link href={`/?page=${safePage - 1}`} className="soft-glass-panel px-4 py-2 rounded-full text-sm font-bold text-stone-600 dark:text-stone-300 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all">
