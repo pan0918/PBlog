@@ -13,6 +13,14 @@ const nextConfig: NextConfig = {
         hostname: "a68b43cc.cloudflare-imgbed-9pz.pages.dev",
         pathname: "/file/**",
       },
+      {
+        protocol: "https",
+        hostname: "p3.music.126.net",
+      },
+      {
+        protocol: "https",
+        hostname: "p4.music.126.net",
+      },
     ],
     qualities: [75, 80, 90],
     deviceSizes: [640, 750, 828, 1080, 1200, 1600, 1920, 2048],

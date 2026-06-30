@@ -1,4 +1,5 @@
 "use client";
+import Image from 'next/image';
 import { useMusic } from './MusicProvider';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -19,9 +20,17 @@ export default function FloatingPlayer() {
       className="fixed bottom-6 right-6 z-[55] w-72 select-none"
     >
       <div className="rounded-2xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-2xl p-3 flex items-center gap-3 cursor-grab active:cursor-grabbing">
-        <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 animate-[spin_6s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
+        <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 animate-[spin_6s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
           {currentSong.pic ? (
-            <img src={currentSong.pic} alt="cover" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            <Image
+              src={currentSong.pic}
+              alt="cover"
+              fill
+              sizes="48px"
+              quality={75}
+              className="object-cover"
+              referrerPolicy="no-referrer"
+            />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>

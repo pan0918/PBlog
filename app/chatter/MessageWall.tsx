@@ -1,19 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import type { WallMessage } from "../../lib/messageWall";
 
-const STORAGE_KEY = "pb_message_wall";
-const MIGRATION_KEY = "pb_message_wall_migrated_v2";
 const MAX_MESSAGE_LENGTH = 200;
-
-interface WallMessage {
-  id: string;
-  content: string;
-  author: string;
-  colorIndex: number;
-  createdAt: string;
-}
 
 const NOTE_COLORS = [
   { bg: "#f8edff", text: "#3c3154", pin: "#8f82ce", accent: "#d9ceff" },
@@ -49,41 +40,6 @@ const DECORATIONS = [
   <Sprout key="sprout" />,
   <Star key="star" />,
 ];
-
-const DEFAULT_MESSAGES: WallMessage[] = [
-  { id: "1", content: "功不唐捐", author: "匿名", colorIndex: 0, createdAt: "2026-06-09T03:10:48.125Z" },
-  { id: "2", content: "凡是过往，皆为序章", author: "zet", colorIndex: 5, createdAt: "2026-05-22T13:42:23.359Z" },
-  { id: "3", content: "Never say never", author: "Frud_", colorIndex: 3, createdAt: "2026-05-22T13:41:55.278Z" },
-  { id: "4", content: "帮顶！", author: "ttdk", colorIndex: 2, createdAt: "2026-05-21T12:37:20.541Z" },
-  { id: "5", content: "好久不见", author: "zzz", colorIndex: 6, createdAt: "2026-05-21T12:23:23.480Z" },
-  { id: "6", content: "不错！", author: "wex", colorIndex: 3, createdAt: "2026-05-21T12:02:23.737Z" },
-  { id: "7", content: "好耶！", author: "aura", colorIndex: 4, createdAt: "2026-05-21T11:53:50.622Z" },
-  { id: "8", content: "测试一下", author: "cc", colorIndex: 0, createdAt: "2026-05-21T11:53:29.707Z" },
-];
-
-function loadMessages(): WallMessage[] {
-  if (typeof window === "undefined") return DEFAULT_MESSAGES;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_MESSAGES;
-    return parsed
-      .filter((item) => item && typeof item.content === "string")
-      .map((item, index) => ({
-        id: typeof item.id === "string" ? item.id : crypto.randomUUID(),
-        content: item.content.slice(0, MAX_MESSAGE_LENGTH),
-        author: typeof item.author === "string" ? item.author.slice(0, 20) : "匿名",
-        colorIndex: Number.isInteger(item.colorIndex) ? item.colorIndex : index,
-        createdAt: typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString(),
-      }));
-  } catch {
-    return DEFAULT_MESSAGES;
-  }
-}
-
-function saveMessages(msgs: WallMessage[]) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs)); } catch {}
-}
 
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -181,54 +137,50 @@ function StickyNote({ msg, index }: { msg: WallMessage; index: number }) {
   );
 }
 
-export default function MessageWall() {
-  const [messages, setMessages] = useState<WallMessage[]>([]);
+export default function MessageWall({ initialMessages }: { initialMessages: WallMessage[] }) {
   const [authorName, setAuthorName] = useState("");
   const [messageText, setMessageText] = useState("");
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
-  const visibleMessages = useMemo(() => messages.slice(0, 10), [messages]);
+  const visibleMessages = useMemo(() => initialMessages.slice(0, 10), [initialMessages]);
 
-  useEffect(() => {
-    setMessages(loadMessages());
-    setIsLoaded(true);
-  }, []);
-
-  const submit = () => {
+  const submit = async () => {
     const content = messageText.trim();
     if (!content || isSubmitting) return;
     setIsSubmitting(true);
     setError("");
+    setNotice("");
 
-    const newMsg: WallMessage = {
-      id: crypto.randomUUID(),
-      content: content.slice(0, MAX_MESSAGE_LENGTH),
-      author: authorName.trim().slice(0, 20) || "匿名",
-      colorIndex: Math.floor(Math.random() * 10),
-      createdAt: new Date().toISOString(),
-    };
-
-    setTimeout(() => {
-      setMessages((current) => {
-        const updated = [newMsg, ...current];
-        saveMessages(updated);
-        return updated;
+    try {
+      const response = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          author: authorName,
+          content,
+          honeypot,
+        }),
       });
-      setMessageText("");
-      setIsSubmitting(false);
-    }, 300);
-  };
+      const payload = await response.json().catch(() => ({}));
 
-  if (!isLoaded) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-4 py-32 text-[#526b94]">
-        <div className="h-10 w-10 rounded-full border-[3px] border-white/60 border-t-[#8aa3dd] shadow-[0_0_18px_rgba(255,255,255,0.65)] animate-spin" />
-        <span className="text-sm font-bold tracking-[0.2em]">加载留言墙...</span>
-      </div>
-    );
-  }
+      if (!response.ok) {
+        setError(typeof payload.error === "string" ? payload.error : "提交失败，请稍后再试");
+        return;
+      }
+
+      setMessageText("");
+      setAuthorName("");
+      setHoneypot("");
+      setNotice(typeof payload.message === "string" ? payload.message : "留言已收到，审核后展示。");
+    } catch {
+      setError("网络异常，请稍后再试");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <section className="flex flex-col gap-5 text-[#284467] dark:text-[#dbe8ff]">
@@ -266,6 +218,18 @@ export default function MessageWall() {
         </div>
 
         <div className="relative z-10 grid gap-3 lg:grid-cols-[280px_1fr]">
+          <div className="hidden" aria-hidden="true">
+            <label htmlFor="message-website">Website</label>
+            <input
+              id="message-website"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={honeypot}
+              onChange={(event) => setHoneypot(event.target.value)}
+            />
+          </div>
+
           <div className="relative">
             <label htmlFor="message-author" className="sr-only">你的名字</label>
             <UserIcon />
@@ -315,7 +279,13 @@ export default function MessageWall() {
 
         <div className="relative z-10 mt-3 flex items-center justify-between gap-3 text-xs text-[#6d83ab] dark:text-[#aebff0]">
           <span>{messageText.length}/{MAX_MESSAGE_LENGTH}</span>
-          {error ? <span className="text-[#ffb0bd]">{error}</span> : <span>感谢你的到来，愿你在这里遇见美好</span>}
+          {error ? (
+            <span className="text-[#ffb0bd]">{error}</span>
+          ) : notice ? (
+            <span className="text-[#6f8ed8] dark:text-[#bed0ff]">{notice}</span>
+          ) : (
+            <span>留言会先发送到站长邮箱，审核后展示</span>
+          )}
         </div>
       </div>
 

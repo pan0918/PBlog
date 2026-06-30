@@ -1,4 +1,5 @@
 "use client";
+import Image from 'next/image';
 import { useEffect, useRef, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMusic, type Song, type LyricLine } from '../../components/MusicProvider';
@@ -41,7 +42,7 @@ export default function MusicClient() {
       }
     }
     setParsedLyrics(parsed.length > 0 ? parsed.sort((a, b) => a.time - b.time) : lines.map(l => ({ time: -1, text: l.trim() })).filter(l => l.text));
-  }, [currentSong?.id, currentSong?.lyrics]);
+  }, [currentSong]);
 
   const activeLyricIndex = useMemo(() => {
     if (!parsedLyrics.length) return -1;
@@ -55,7 +56,7 @@ export default function MusicClient() {
       const container = lyricContainerRef.current;
       const el = activeLyricRef.current;
       const target = el.offsetTop - container.offsetHeight / 2 + el.offsetHeight / 2;
-      container.scrollTo({ top: target, behavior: 'smooth' });
+      container.scrollTo({ top: target, behavior: 'auto' });
     }
   }, [activeLyricIndex, activeTab]);
 
@@ -122,7 +123,16 @@ export default function MusicClient() {
               <div className={`absolute inset-0 m-auto w-[85%] h-[85%] bg-indigo-500/25 blur-[35px] rounded-full transition-all duration-1000 z-0 ${isPlaying ? 'opacity-90 scale-105' : 'opacity-20 scale-100'}`}></div>
               <div className="absolute inset-0 m-auto w-[90%] h-[90%] rounded-full shadow-[0_0_40px_-5px_rgba(99,102,241,0.4)] z-0"></div>
               <div className={`absolute inset-0 w-full h-full rounded-full border-[4px] md:border-[6px] border-white/80 dark:border-slate-600/80 shadow-2xl overflow-hidden z-10 ${isPlaying ? 'animate-[spin_20s_linear_infinite]' : 'scale-95'}`}>
-                <img src={songCover} alt="cover" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                <Image
+                  src={songCover}
+                  alt="cover"
+                  fill
+                  sizes="(max-width: 640px) 160px, (max-width: 1024px) 192px, 256px"
+                  quality={75}
+                  priority
+                  className="object-cover"
+                  referrerPolicy="no-referrer"
+                />
                 <div className="absolute inset-0 m-auto w-10 h-10 md:w-12 md:h-12 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full z-30 shadow-inner border border-slate-300 dark:border-slate-700"></div>
                 <div className="absolute inset-0 z-20 rounded-full pointer-events-none opacity-20" style={{ background: 'conic-gradient(from 0deg, transparent, rgba(255,255,255,0.4), transparent, rgba(255,255,255,0.4), transparent)' }}></div>
               </div>
@@ -234,7 +244,15 @@ export default function MusicClient() {
                         <div className="flex items-center gap-3 md:gap-4 w-[85%]">
                           <div className="relative w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-lg md:rounded-xl overflow-hidden shadow-sm">
                             {song.pic ? (
-                              <img src={song.pic} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              <Image
+                                src={song.pic}
+                                alt=""
+                                fill
+                                sizes="48px"
+                                quality={75}
+                                className="object-cover"
+                                referrerPolicy="no-referrer"
+                              />
                             ) : (
                               <div className="w-full h-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>

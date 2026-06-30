@@ -230,7 +230,12 @@ const MusicContext = createContext<MusicContextValue | null>(null);
 
 export function MusicProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const pendingPlayRef = useRef(false);
+  const pendingSeekRatioRef = useRef<number | null>(null);
+  const endedRef = useRef(false);
   const blobUrlRef = useRef<string | null>(null);
+  const blobReadyIndexRef = useRef<number | null>(null);
+  const blobAbortRef = useRef<AbortController | null>(null);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -243,23 +248,26 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [isMuted, setIsMuted] = useState(false);
   const [playMode, setPlayMode] = useState<PlayMode>("loop");
   const [parsedLyrics, setParsedLyrics] = useState<LyricLine[]>([]);
-  const [audioSrc, setAudioSrc] = useState<string>("");
+  const [audioSrc, setAudioSrc] = useState("");
 
   const currentSong = SONGS[currentIndex];
 
   // Clear loading immediately (hardcoded data)
   useEffect(() => { setIsLoading(false); }, []);
 
-  // Clean up blob URL on unmount
+  // Release the audio decoder when the provider unmounts.
   useEffect(() => {
+    const audio = audioRef.current;
     return () => {
+      blobAbortRef.current?.abort();
       if (blobUrlRef.current) {
         URL.revokeObjectURL(blobUrlRef.current);
         blobUrlRef.current = null;
       }
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
+      if (audio) {
+        audio.pause();
+        audio.src = '';
+        audio.load();
       }
     };
   }, []);
@@ -267,44 +275,139 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   // Parse lyrics when song changes
   useEffect(() => {
     if (currentSong) setParsedLyrics(parseLrc(currentSong.lrc));
-  }, [currentIndex]);
+  }, [currentSong]);
 
-  // Fetch audio as blob — ensures seeking works regardless of CDN range request support
+  const lyricAt = useCallback((time: number) => {
+    for (let i = parsedLyrics.length - 1; i >= 0; i--) {
+      if (time >= parsedLyrics[i].time) {
+        return parsedLyrics[i].text;
+      }
+    }
+    return "";
+  }, [parsedLyrics]);
+
+  const applyPendingSeek = useCallback((audio: HTMLAudioElement) => {
+    const ratio = pendingSeekRatioRef.current;
+    const dur = audio.duration;
+    if (ratio === null || !dur || !isFinite(dur)) return;
+
+    const target = Math.max(0, Math.min(1, ratio)) * dur;
+    audio.currentTime = target;
+    setCurrentTime(target);
+    setProgress(ratio * 100);
+    setCurrentLyric(lyricAt(target));
+    pendingSeekRatioRef.current = null;
+  }, [lyricAt]);
+
+  const requestPlayback = useCallback((deferUntilCanPlay = false) => {
+    pendingPlayRef.current = true;
+    setIsPlaying(true);
+
+    const audio = audioRef.current;
+    if (!audio || deferUntilCanPlay) return;
+
+    audio.play()
+      .then(() => {
+        pendingPlayRef.current = false;
+        setIsPlaying(true);
+      })
+      .catch(() => {
+        pendingPlayRef.current = false;
+        setIsPlaying(false);
+      });
+  }, []);
+
+  const ensureSeekableSource = useCallback(() => {
+    if (blobReadyIndexRef.current !== currentIndex || !blobUrlRef.current) {
+      setCurrentLyric("♪ 正在准备跳转 ♪");
+      pendingPlayRef.current = true;
+      return false;
+    }
+
+    if (audioSrc !== blobUrlRef.current) {
+      setCurrentLyric("♪ 正在定位 ♪");
+      pendingPlayRef.current = true;
+      setAudioSrc(blobUrlRef.current);
+      return false;
+    }
+
+    return true;
+  }, [audioSrc, currentIndex]);
+
+  const switchSong = useCallback((nextIndex: number, shouldPlay: boolean) => {
+    if (nextIndex < 0 || nextIndex >= SONGS.length) return;
+
+    endedRef.current = false;
+    pendingSeekRatioRef.current = null;
+    if (shouldPlay) {
+      requestPlayback(true);
+    } else {
+      pendingPlayRef.current = false;
+      setIsPlaying(false);
+    }
+    setCurrentIndex(nextIndex);
+  }, [requestPlayback]);
+
+  // Reset visible state and make the audio element load only metadata for the new track.
   useEffect(() => {
     if (!currentSong) return;
-    let cancelled = false;
-    // Reset display states immediately on song change
-    setDuration(0);
-    setCurrentTime(0);
-    setProgress(0);
-    setCurrentLyric("♪ 正在缓冲 ♪");
-    // Clean up old blob URL
+    blobAbortRef.current?.abort();
+    blobAbortRef.current = null;
     if (blobUrlRef.current) {
       URL.revokeObjectURL(blobUrlRef.current);
       blobUrlRef.current = null;
     }
-    // Phase 1: use direct URL for fast initial playback
+    blobReadyIndexRef.current = null;
+
+    setDuration(0);
+    setCurrentTime(0);
+    setProgress(0);
+    setCurrentLyric("♪ 正在缓冲 ♪");
     setAudioSrc(currentSong.url);
-    // Phase 2: fetch full file in background for reliable seeking
-    fetch(currentSong.url)
-      .then(res => res.blob())
-      .then(blob => {
-        if (cancelled) return;
-        const url = URL.createObjectURL(blob);
-        blobUrlRef.current = url;
-        setAudioSrc(url);
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.load();
+    }
+
+    const controller = new AbortController();
+    blobAbortRef.current = controller;
+
+    fetch(currentSong.url, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Failed to prepare seekable audio: ${res.status}`);
+        return res.blob();
       })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [currentIndex]);
+      .then((blob) => {
+        if (controller.signal.aborted) return;
+        const url = URL.createObjectURL(blob);
+        if (blobUrlRef.current) {
+          URL.revokeObjectURL(blobUrlRef.current);
+        }
+        blobUrlRef.current = url;
+        blobReadyIndexRef.current = currentIndex;
+        if (pendingSeekRatioRef.current !== null) {
+          pendingPlayRef.current = true;
+          setAudioSrc(url);
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          console.warn("[MusicProvider] Seekable audio fallback failed", error);
+        }
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [currentIndex, currentSong]);
 
   // Sync volume
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = isMuted ? 0 : volume;
   }, [volume, isMuted]);
 
-  // Time update & lyric sync
-  const endedRef = useRef(false);
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -321,11 +424,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         endedRef.current = true;
         if (playMode === "single") {
           audio.currentTime = 0;
-          audio.play();
+          requestPlayback();
         } else if (playMode === "random") {
-          setCurrentIndex(Math.floor(Math.random() * SONGS.length));
+          switchSong(Math.floor(Math.random() * SONGS.length), true);
         } else {
-          setCurrentIndex((prev) => (prev + 1) % SONGS.length);
+          switchSong((currentIndex + 1) % SONGS.length, true);
         }
         return;
       }
@@ -333,13 +436,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         endedRef.current = false;
       }
     }
-    for (let i = parsedLyrics.length - 1; i >= 0; i--) {
-      if (t >= parsedLyrics[i].time) {
-        if (parsedLyrics[i].text !== currentLyric) {
-          setCurrentLyric(parsedLyrics[i].text);
-        }
-        break;
-      }
+    const nextLyric = lyricAt(t);
+    if (nextLyric && nextLyric !== currentLyric) {
+      setCurrentLyric(nextLyric);
     }
   };
 
@@ -350,72 +449,109 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     const dur = audio.duration;
     if (dur && isFinite(dur)) {
       setDuration(dur);
+      applyPendingSeek(audio);
     }
   };
 
+  const handleCanPlay = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    applyPendingSeek(audio);
+    if (!pendingPlayRef.current) return;
+
+    audio.play()
+      .then(() => {
+        pendingPlayRef.current = false;
+        setIsPlaying(true);
+      })
+      .catch(() => {
+        pendingPlayRef.current = false;
+        setIsPlaying(false);
+      });
+  }, [applyPendingSeek]);
+
   const handleEnded = useCallback(() => {
     const audio = audioRef.current;
+    endedRef.current = true;
     if (playMode === "single" && audio) {
       audio.currentTime = 0;
-      audio.play();
+      requestPlayback();
     } else if (playMode === "random") {
-      setCurrentIndex(Math.floor(Math.random() * SONGS.length));
+      switchSong(Math.floor(Math.random() * SONGS.length), true);
     } else {
-      setCurrentIndex((prev) => (prev + 1) % SONGS.length);
+      switchSong((currentIndex + 1) % SONGS.length, true);
     }
-  }, [playMode]);
+  }, [currentIndex, playMode, requestPlayback, switchSong]);
 
   // Controls
   const togglePlay = () => {
     const audio = audioRef.current;
     if (!audio) return;
     if (isPlaying) {
+      pendingPlayRef.current = false;
       audio.pause();
       setIsPlaying(false);
     } else {
-      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      requestPlayback();
     }
   };
 
   const nextSong = () => {
     if (playMode === 'single') {
-      // Single repeat: restart current song
       const audio = audioRef.current;
-      if (audio) { audio.currentTime = 0; audio.play(); }
+      if (audio) {
+        audio.currentTime = 0;
+        requestPlayback();
+      }
     } else if (playMode === 'random') {
-      setCurrentIndex(Math.floor(Math.random() * SONGS.length));
+      switchSong(Math.floor(Math.random() * SONGS.length), isPlaying);
     } else {
-      setCurrentIndex((prev) => (prev + 1) % SONGS.length);
+      switchSong((currentIndex + 1) % SONGS.length, isPlaying);
     }
   };
   const prevSong = () => {
     if (playMode === 'single') {
-      // Single repeat: restart current song
       const audio = audioRef.current;
-      if (audio) { audio.currentTime = 0; audio.play(); }
+      if (audio) {
+        audio.currentTime = 0;
+        requestPlayback();
+      }
     } else if (playMode === 'random') {
-      setCurrentIndex(Math.floor(Math.random() * SONGS.length));
+      switchSong(Math.floor(Math.random() * SONGS.length), isPlaying);
     } else {
-      setCurrentIndex((prev) => (prev - 1 + SONGS.length) % SONGS.length);
+      switchSong((currentIndex - 1 + SONGS.length) % SONGS.length, isPlaying);
     }
   };
 
   const handleSeek = (time: number) => {
     const audio = audioRef.current;
-    if (!audio) return;
-    const dur = audio.duration;
-    if (!dur || !isFinite(dur)) return;
-    setProgress(time);
-    audio.currentTime = (time / 100) * dur;
+    const ratio = Math.max(0, Math.min(100, time)) / 100;
+    pendingSeekRatioRef.current = ratio;
+    setProgress(ratio * 100);
+
+    if (!ensureSeekableSource()) return;
+
+    if (audio) {
+      const dur = audio.duration;
+      if (dur && isFinite(dur)) {
+        const target = ratio * dur;
+        audio.currentTime = target;
+        setCurrentTime(target);
+        setCurrentLyric(lyricAt(target));
+        pendingSeekRatioRef.current = null;
+      }
+    }
+    requestPlayback();
   };
 
   const playSong = (index: number) => {
     if (index < 0 || index >= SONGS.length) return;
-    setCurrentIndex(index);
-    const audio = audioRef.current;
-    if (audio) {
-      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    if (index === currentIndex) {
+      requestPlayback();
+      return;
     }
+    switchSong(index, true);
   };
 
   const setVolume = (v: number) => { setVolumeState(Math.min(1, Math.max(0, v))); setIsMuted(false); };
@@ -451,13 +587,16 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   return (
     <MusicContext.Provider value={value}>
       {children}
-      {currentSong && audioSrc && (
+      {currentSong && (
         <audio
           ref={audioRef}
-          src={audioSrc}
+          src={audioSrc || currentSong.url}
+          preload="metadata"
+          crossOrigin="anonymous"
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
-          onCanPlay={() => { if (isPlaying && audioRef.current) audioRef.current.play().catch(() => {}); }}
+          onCanPlay={handleCanPlay}
+          onEnded={handleEnded}
         />
       )}
     </MusicContext.Provider>

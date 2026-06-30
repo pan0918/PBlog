@@ -81,7 +81,7 @@ export const albums: Album[] = [
     id: "chuanxi",
     title: "川西印象",
     description: "2023年8月，川西高原之旅",
-    cover: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782634758947_IMG_20230803_175210.jpg",
+    cover: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782634780876_IMG_20230806_090350.jpg",
     date: "2023.08",
     photos: [
       { url: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782634758947_IMG_20230803_175210.jpg", caption: "川西初印象" },
