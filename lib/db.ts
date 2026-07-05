@@ -15,7 +15,7 @@ export function getDb() {
 export const db = new Proxy({} as ReturnType<typeof createClient>, {
   get(_, prop) {
     const client = getDb();
-    const val = (client as Record<string | symbol, unknown>)[prop];
+    const val = (client as unknown as Record<string | symbol, unknown>)[prop];
     return typeof val === 'function' ? val.bind(client) : val;
   },
 });
