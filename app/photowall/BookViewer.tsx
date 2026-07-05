@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import { fitImageWithinViewport, type FittedImageSize } from "./imageSizing";
 
 interface Photo { url: string; caption?: string; }
@@ -144,13 +143,10 @@ function Slide({ photo, direction }: { photo: Photo; direction: number }) {
       style={size ? { width: size.width, height: size.height } : { width: 300, height: 300 }}
     >
       {!size && <div className="absolute inset-0 bg-white/5 rounded-2xl animate-pulse" />}
-      <Image
+      <img
         src={photo.url}
         alt={photo.caption || ""}
-        fill
-        quality={90}
         loading="eager"
-        sizes="85vw"
         decoding="async"
         onLoad={(event) => {
           const image = event.currentTarget;
@@ -163,7 +159,7 @@ function Slide({ photo, direction }: { photo: Photo; direction: number }) {
             ),
           );
         }}
-        className={`object-contain rounded-2xl transition-opacity duration-200 ${
+        className={`absolute inset-0 w-full h-full object-contain rounded-2xl transition-opacity duration-200 ${
           size ? "opacity-100" : "opacity-0"
         }`}
       />

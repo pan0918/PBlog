@@ -83,7 +83,7 @@ export const siteConfig: SiteConfig = {
   navTitle: "Frud",
   navSuffix: "'s ",
   navAfter: "Blog",
-  avatarUrl: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782456681130_圣诞猫猫.jpg",
+  avatarUrl: new URL("https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782456681130_圣诞猫猫.jpg").href,
   useGradient: true,
   themeColors: ["#fffaf4", "#f7efe7", "#ead8ca", "#f4e7dc"],
   bgImages: [

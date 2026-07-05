@@ -10,17 +10,22 @@ test("chatter page no longer stores public messages in the browser", async () =>
 
   assert.doesNotMatch(wall, /localStorage|STORAGE_KEY|MIGRATION_KEY|saveMessages|loadMessages/);
   assert.match(wall, /initialMessages/);
-  assert.match(page, /readPublicMessages/);
+  assert.match(page, /getApprovedMessages/);
   assert.match(page, /<MessageWall initialMessages=\{messages\}/);
 });
 
-test("message API is moderation-only and protected against basic abuse", async () => {
-  const route = await readFile("app/api/messages/route.ts", "utf8");
+test("message API stores pending submissions and protects against basic abuse", async () => {
+  const [route, repository] = await Promise.all([
+    readFile("app/api/messages/route.ts", "utf8"),
+    readFile("lib/db/messages.ts", "utf8"),
+  ]);
 
   assert.doesNotMatch(route, /writeFile/);
   assert.match(route, /checkMessageRateLimit/);
+  assert.match(route, /validateMessageSubmission/);
   assert.match(route, /honeypot/);
-  assert.match(route, /sendModerationEmail/);
+  assert.match(route, /createPendingMessage/);
+  assert.match(repository, /'pending'/);
   assert.match(route, /审核后展示/);
 });
 

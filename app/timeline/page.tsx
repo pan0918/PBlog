@@ -3,8 +3,8 @@ import PageTransition from '../../components/PageTransition';
 import TimelineClient from '../../components/TimelineClient';
 import { getAllPosts } from '../../lib/posts';
 
-export default function TimelinePage() {
-  const posts = getAllPosts();
+export default async function TimelinePage() {
+  const posts = await getAllPosts();
 
   return (
     <div className="min-h-screen relative pb-20">

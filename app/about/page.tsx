@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import matter from 'gray-matter';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
@@ -9,23 +8,14 @@ import remarkRehype from 'remark-rehype';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeKatex from 'rehype-katex';
 import rehypeStringify from 'rehype-stringify';
+import matter from 'gray-matter';
 import 'highlight.js/styles/atom-one-dark.css';
 import 'katex/dist/katex.min.css';
 import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import AboutClient from '../../components/AboutClient';
 import { Suspense } from 'react';
-
-function getDirActivities(dirName: string, typeLabel: '文章' | '说说', linkPrefix: string) {
-  const dirPath = path.join(process.cwd(), dirName);
-  if (!fs.existsSync(dirPath)) return [];
-  const files = fs.readdirSync(dirPath).filter(f => f.endsWith('.md'));
-  return files.map(file => {
-    const content = fs.readFileSync(path.join(dirPath, file), 'utf8');
-    const { data } = matter(content);
-    return { id: `${dirName}-${file}`, type: typeLabel, title: data.title || file.replace('.md', ''), date: data.date ? new Date(data.date).toISOString() : '1970-01-01T00:00:00Z', url: `/${linkPrefix}/${file.replace('.md', '')}` };
-  });
-}
+import { db } from '../../lib/db';
 
 export default async function AboutPage() {
   const fullPath = path.join(process.cwd(), 'app', 'about', 'about.md');
@@ -55,9 +45,38 @@ export default async function AboutPage() {
     contentHtml = processedContent.toString();
   } catch (e) {}
 
-  const posts = getDirActivities('posts', '文章', 'posts');
-  const moments = getDirActivities('moments', '说说', 'moments');
-  const allActivities = [...posts, ...moments].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Get activities from database
+  const allActivities: { id: string; type: string; title: string; date: string; url: string }[] = [];
+
+  try {
+    const postsResult = await db.execute(`SELECT id, title, slug, published_at FROM posts WHERE status = 'published' AND deleted_at IS NULL`);
+    for (const row of postsResult.rows) {
+      const r = row as Record<string, unknown>;
+      allActivities.push({
+        id: `post-${r.id}`,
+        type: '文章',
+        title: (r.title as string) || '',
+        date: (r.published_at as string) || '1970-01-01T00:00:00Z',
+        url: `/posts/${r.slug}`,
+      });
+    }
+  } catch {}
+
+  try {
+    const momentsResult = await db.execute(`SELECT id, content, published_at FROM moments WHERE status = 'published' AND deleted_at IS NULL`);
+    for (const row of momentsResult.rows) {
+      const r = row as Record<string, unknown>;
+      allActivities.push({
+        id: `moment-${r.id}`,
+        type: '说说',
+        title: ((r.content as string) || '').substring(0, 50),
+        date: (r.published_at as string) || '1970-01-01T00:00:00Z',
+        url: `/moments`,
+      });
+    }
+  } catch {}
+
+  allActivities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="min-h-screen relative pb-20">

@@ -2,10 +2,18 @@ import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import MessageWall from './MessageWall';
 import { siteConfig } from '../../siteConfig';
-import { readPublicMessages } from '../../lib/messageStore';
+import { getApprovedMessages } from '../../lib/db/messages';
 
 export default async function ChatterPage() {
-  const messages = await readPublicMessages(10);
+  const dbMessages = await getApprovedMessages(10);
+
+  const messages = dbMessages.map(m => ({
+    id: m.id,
+    content: m.content,
+    author: m.author,
+    colorIndex: Math.abs(hashCode(m.id)) % 10,
+    createdAt: m.approved_at || m.created_at,
+  }));
 
   return (
     <div className="min-h-screen relative pb-20">
@@ -21,4 +29,14 @@ export default async function ChatterPage() {
       </PageTransition>
     </div>
   );
+}
+
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return hash;
 }

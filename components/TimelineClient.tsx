@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
-interface Post { slug: string; title: string; date: string; tags: string[]; category: string | null; }
+interface Post { slug: string; title: string; date: string; formattedDate: string; tags: string[]; category: string | null; viewCount?: number; }
 
 export default function TimelineClient({ posts }: { posts: Post[] }) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -81,7 +81,15 @@ export default function TimelineClient({ posts }: { posts: Post[] }) {
                   <Link href={`/posts/${post.slug}`} className="soft-glass-panel block rounded-2xl p-4 transition-all duration-300 hover:scale-[1.01] group">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-bold text-stone-800 dark:text-stone-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{post.title}</h3>
-                      <span className="text-[10px] text-stone-400 dark:text-stone-500 font-mono">{post.date}</span>
+                      <div className="flex items-center gap-3">
+                        {post.viewCount !== undefined && (
+                          <span className="text-[10px] text-stone-400 dark:text-stone-500 flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                            {post.viewCount}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-stone-400 dark:text-stone-500 font-mono">{post.formattedDate}</span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       {post.category && (

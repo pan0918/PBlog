@@ -175,6 +175,7 @@ export default function MessageWall({ initialMessages }: { initialMessages: Wall
       setAuthorName("");
       setHoneypot("");
       setNotice(typeof payload.message === "string" ? payload.message : "留言已收到，审核后展示。");
+      setTimeout(() => setNotice(""), 3500);
     } catch {
       setError("网络异常，请稍后再试");
     } finally {
@@ -184,6 +185,29 @@ export default function MessageWall({ initialMessages }: { initialMessages: Wall
 
   return (
     <section className="flex flex-col gap-5 text-[#284467] dark:text-[#dbe8ff]">
+      {/* Fixed toast at bottom-right */}
+      <AnimatePresence>
+        {notice && (
+          <motion.div
+            initial={{ opacity: 0, x: 60, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 60, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className="fixed bottom-6 right-6 z-50 overflow-hidden rounded-2xl border border-[#879bdd]/30 bg-[#eaf3ff]/90 px-5 py-3 shadow-[0_12px_32px_rgba(89,111,183,0.22)] backdrop-blur-xl dark:border-[#7793e8]/30 dark:bg-[#16213e]/90 dark:shadow-[0_12px_32px_rgba(89,122,229,0.22)]"
+          >
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(135,155,221,0.12),transparent_60%)]" />
+            <div className="relative z-10 flex items-center gap-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#879bdd]/20 text-[#6b7fc4] dark:bg-[#7793e8]/20 dark:text-[#a0b4f0]">
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+              </div>
+              <span className="text-sm font-bold tracking-wide text-[#4a6491] dark:text-[#c0d0f0]">{notice}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="relative overflow-hidden rounded-[2rem] border border-white/[0.65] bg-[#eaf3ff]/[0.35] px-4 py-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_24px_60px_rgba(42,64,104,0.18)] backdrop-blur-2xl dark:border-[#dce8ff]/40 dark:bg-[#0c1630]/55 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_28px_70px_rgba(0,0,0,0.34),0_0_42px_rgba(120,150,220,0.16)] sm:px-8 md:px-11">
         <div className="pointer-events-none absolute inset-[7px] rounded-[1.65rem] border border-white/[0.45] dark:border-white/20" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.66),transparent_31%),radial-gradient(circle_at_86%_28%,rgba(196,222,255,0.32),transparent_36%),linear-gradient(135deg,rgba(255,255,255,0.36),rgba(209,225,247,0.18))] dark:hidden" />
@@ -284,7 +308,7 @@ export default function MessageWall({ initialMessages }: { initialMessages: Wall
           ) : notice ? (
             <span className="text-[#6f8ed8] dark:text-[#bed0ff]">{notice}</span>
           ) : (
-            <span>留言会先发送到站长邮箱，审核后展示</span>
+            <span>留言提交后需审核，通过后展示</span>
           )}
         </div>
       </div>

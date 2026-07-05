@@ -1,23 +1,19 @@
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
 import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
-import MomentList, { type Moment } from './MomentList';
+import MomentList from './MomentList';
+import { getPublishedMoments } from '../../lib/db/moments';
 
-export default function MomentsPage() {
-  const momentsDir = path.join(process.cwd(), 'moments');
-  let moments: Moment[] = [];
-  try {
-    if (fs.existsSync(momentsDir)) {
-      const files = fs.readdirSync(momentsDir).filter(f => f.endsWith('.md'));
-      moments = files.map(f => {
-        const content = fs.readFileSync(path.join(momentsDir, f), 'utf8');
-        const { data, content: body } = matter(content);
-        return { id: f.replace(/\.md$/, ''), title: data.title || '', date: data.date || '', mood: data.mood || '', weather: data.weather || '', content: body };
-      }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }
-  } catch (e) {}
+export default async function MomentsPage() {
+  const dbMoments = await getPublishedMoments();
+
+  const moments = dbMoments.map(m => ({
+    id: m.id,
+    title: '',
+    date: m.published_at || m.created_at,
+    mood: m.mood || '',
+    weather: m.weather || '',
+    content: m.content,
+  }));
 
   return (
     <div className="min-h-screen relative pb-20">

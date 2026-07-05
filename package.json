@@ -9,10 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.4",
+    "bcryptjs": "^3.0.3",
     "framer-motion": "^12.38.0",
     "gitalk": "^1.8.0",
     "gray-matter": "^4.0.3",
     "highlight.js": "^11.11.1",
+    "jose": "^6.2.3",
     "katex": "^0.16.45",
     "lucide-react": "^1.7.0",
     "next": "16.2.1",
@@ -26,17 +29,21 @@
     "remark-math": "^6.0.0",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.2",
-    "unified": "^11.0.5"
+    "unified": "^11.0.5",
+    "vditor": "^3.11.2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.19",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.0",
     "typescript": "^5"
   }
 }

@@ -1,7 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
 import { AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import BookViewer from "./BookViewer";
 
 interface Photo { url: string; caption?: string; }
@@ -51,37 +50,30 @@ export default function PhotoWallClient({ albums }: { albums: Album[] }) {
             <div className="relative w-[85%] aspect-[4/3] mb-8">
               <div className="absolute inset-0 bg-slate-300 dark:bg-slate-700 rounded-[4px] shadow-md transform rotate-6 translate-x-4 translate-y-2 group-hover:rotate-12 group-hover:translate-x-8 transition-all duration-500 border-[6px] border-white dark:border-slate-200 overflow-hidden opacity-60">
                 {album.photos[2] && (
-                  <Image
+                  <img
                     src={album.photos[2].url}
                     alt=""
-                    fill
-                    quality={80}
-                    sizes="(max-width: 640px) 85vw, (max-width: 1024px) 42vw, 287px"
-                    className="object-cover grayscale blur-[2px]"
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover grayscale blur-[2px]"
                   />
                 )}
               </div>
               <div className="absolute inset-0 bg-slate-200 dark:bg-slate-600 rounded-[4px] shadow-lg transform -rotate-3 -translate-x-2 -translate-y-1 group-hover:-rotate-6 group-hover:-translate-x-6 transition-all duration-500 border-[6px] border-white dark:border-slate-200 overflow-hidden opacity-80 z-10">
                 {album.photos[1] && (
-                  <Image
+                  <img
                     src={album.photos[1].url}
                     alt=""
-                    fill
-                    quality={80}
-                    sizes="(max-width: 640px) 85vw, (max-width: 1024px) 42vw, 287px"
-                    className="object-cover grayscale-[50%]"
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover grayscale-[50%]"
                   />
                 )}
               </div>
               <div className="absolute inset-0 bg-white dark:bg-slate-200 rounded-[4px] shadow-2xl border-[6px] border-white dark:border-slate-200 overflow-hidden z-20 transform group-hover:-translate-y-2 group-hover:scale-105 transition-all duration-500">
-                <Image
+                <img
                   src={album.cover}
                   alt={album.title}
-                  fill
-                  quality={80}
                   loading={albumIndex === 0 ? "eager" : "lazy"}
-                  sizes="(max-width: 640px) 85vw, (max-width: 1024px) 42vw, 287px"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-5">
                   <span className="text-white font-bold text-lg drop-shadow-md translate-y-2 group-hover:translate-y-0 transition-transform duration-500">{album.photos.length} 张照片</span>

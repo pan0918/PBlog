@@ -3,11 +3,12 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("homepage uses soft cream background and wave tokens", async () => {
-  const [globals, hero, page, layout, danmaku, projects, timeline] = await Promise.all([
+  const [globals, hero, page, layout, decorations, danmaku, projects, timeline] = await Promise.all([
     readFile("app/globals.css", "utf8"),
     readFile("components/HeroBanner.tsx", "utf8"),
     readFile("app/page.tsx", "utf8"),
     readFile("app/layout.tsx", "utf8"),
+    readFile("components/ClientDecorations.tsx", "utf8"),
     readFile("components/DanmakuBackground.tsx", "utf8"),
     readFile("app/projects/ProjectsBoard.tsx", "utf8"),
     readFile("components/TimelineClient.tsx", "utf8"),
@@ -25,7 +26,8 @@ test("homepage uses soft cream background and wave tokens", async () => {
   assert.doesNotMatch(page, /<WindyGrass \/>/);
   assert.match(layout, /body className="[^"]*warm-page-surface/);
   assert.match(layout, /id="app-mount-root" className="flex-1 flex flex-col min-h-screen"/);
-  assert.match(layout, /<BackgroundEffects \/>/);
+  assert.match(layout, /<ClientDecorations \/>/);
+  assert.match(decorations, /<BackgroundEffects \/>/);
   assert.doesNotMatch(layout, /style=\{\{\s*background:\s*'var\(--page-bg\)'\s*\}\}/);
   assert.match(danmaku, /MAX_DANMAKU_ITEMS = 6/);
   assert.match(danmaku, /onAnimationEnd=\{\(\) => removeDanmaku\(item\.id\)\}/);

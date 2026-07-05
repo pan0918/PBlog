@@ -9,6 +9,7 @@ interface Post {
   date?: string;
   formattedDate?: string;
   tags?: string[];
+  viewCount?: number;
 }
 
 export default function ArticleCard({ post }: { post: Post }) {
@@ -26,9 +27,17 @@ export default function ArticleCard({ post }: { post: Post }) {
             </p>
           </div>
           <div className="flex items-center justify-between">
-            {post.formattedDate && (
-              <span className="text-[10px] sm:text-xs text-stone-400 dark:text-stone-500 font-mono">{post.formattedDate}</span>
-            )}
+            <div className="flex items-center gap-3">
+              {post.formattedDate && (
+                <span className="text-[10px] sm:text-xs text-stone-400 dark:text-stone-500 font-mono">{post.formattedDate}</span>
+              )}
+              {post.viewCount !== undefined && (
+                <span className="text-[10px] sm:text-xs text-stone-400 dark:text-stone-500 flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  {post.viewCount}
+                </span>
+              )}
+            </div>
             {post.tags && post.tags.length > 0 && (
               <div className="flex gap-1.5 flex-wrap justify-end">
                 {post.tags.slice(0, 2).map((tag: string) => (

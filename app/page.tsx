@@ -1,7 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
-import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import PageTransition from '../components/PageTransition';
 import SearchBar from '../components/SearchBar';
@@ -14,31 +10,38 @@ import WeatherCard from '../components/WeatherCard';
 import CalendarCard from '../components/CalendarCard';
 import SiteDashboard from '../components/SiteDashboard';
 import SiteStats from '../components/SiteStats';
-import { albums } from '../data/albums';
 import { ToastProvider } from '../components/ToastProvider';
 import { getAllPosts, type PostMeta } from '../lib/posts';
 import HeroBanner from '../components/HeroBanner';
+import { db } from '../lib/db';
 
 const POSTS_PER_PAGE = 5;
+
+async function getCounts() {
+  let momentCount = 0;
+  let photoCount = 0;
+  try {
+    const momentsResult = await db.execute(`SELECT COUNT(*) as count FROM moments WHERE status = 'published' AND deleted_at IS NULL`);
+    momentCount = Number(momentsResult.rows[0]?.count ?? 0);
+  } catch {}
+  try {
+    const photosResult = await db.execute(`SELECT COUNT(*) as count FROM photos WHERE deleted_at IS NULL`);
+    photoCount = Number(photosResult.rows[0]?.count ?? 0);
+  } catch {}
+  return { momentCount, photoCount };
+}
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const params = await searchParams;
   const currentPage = Math.max(1, parseInt(params.page || '1', 10) || 1);
 
-  const allPosts = getAllPosts();
+  const allPosts = await getAllPosts();
   const totalPages = Math.max(1, Math.ceil(allPosts.length / POSTS_PER_PAGE));
   const safePage = Math.min(currentPage, totalPages);
   const startIndex = (safePage - 1) * POSTS_PER_PAGE;
   const posts = allPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
 
-  const momentsDirectory = path.join(process.cwd(), 'moments');
-  let momentCount = 0;
-  try {
-    if (fs.existsSync(momentsDirectory)) {
-      momentCount = fs.readdirSync(momentsDirectory).filter(f => f.endsWith('.md')).length;
-    }
-  } catch (e) {}
-  const realPhotoCount = albums.reduce((total, album) => total + album.photos.length, 0);
+  const { momentCount, photoCount } = await getCounts();
 
   return (
     <ToastProvider>
@@ -55,7 +58,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
 
             {/* Left Column */}
             <aside className="w-full lg:w-[260px] flex-shrink-0 flex flex-col gap-6">
-              <ProfileCard postCount={allPosts.length} momentCount={momentCount} photoCount={realPhotoCount} />
+              <ProfileCard postCount={allPosts.length} momentCount={momentCount} photoCount={photoCount} />
               <NavigationCard />
               <SiteDashboard />
               <SiteStats lastPostDate={allPosts[0]?.date || siteConfig.buildDate} />
@@ -75,9 +78,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
               {allPosts.length > 0 && (
                 <div className="flex items-center justify-center gap-3 mt-4">
                   {safePage > 1 ? (
-                    <Link href={`/?page=${safePage - 1}`} className="soft-glass-panel px-4 py-2 rounded-full text-sm font-bold text-stone-600 dark:text-stone-300 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all">
+                    <a href={`/?page=${safePage - 1}`} className="soft-glass-panel px-4 py-2 rounded-full text-sm font-bold text-stone-600 dark:text-stone-300 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all">
                       上一页
-                    </Link>
+                    </a>
                   ) : (
                     <span className="px-4 py-2 rounded-full bg-white/20 dark:bg-slate-800/30 text-sm font-bold text-slate-300 dark:text-slate-600 cursor-not-allowed">
                       上一页
@@ -87,9 +90,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
                     {safePage} / {totalPages}
                   </span>
                   {safePage < totalPages ? (
-                    <Link href={`/?page=${safePage + 1}`} className="soft-glass-panel px-4 py-2 rounded-full text-sm font-bold text-stone-600 dark:text-stone-300 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all">
+                    <a href={`/?page=${safePage + 1}`} className="soft-glass-panel px-4 py-2 rounded-full text-sm font-bold text-stone-600 dark:text-stone-300 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all">
                       下一页
-                    </Link>
+                    </a>
                   ) : (
                     <span className="px-4 py-2 rounded-full bg-white/20 dark:bg-slate-800/30 text-sm font-bold text-slate-300 dark:text-slate-600 cursor-not-allowed">
                       下一页

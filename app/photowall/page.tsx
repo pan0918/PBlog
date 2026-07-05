@@ -1,9 +1,29 @@
 import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import PhotoWallClient from './PhotoWallClient';
-import { albums } from '../../data/albums';
+import { getPublishedAlbums } from '../../lib/db/albums';
+import { getPhotosByAlbumId } from '../../lib/db/photos';
 
-export default function PhotoWallPage() {
+export default async function PhotoWallPage() {
+  const dbAlbums = await getPublishedAlbums();
+
+  const albums = await Promise.all(
+    dbAlbums.map(async (a) => {
+      const dbPhotos = await getPhotosByAlbumId(a.id);
+      return {
+        id: a.slug,
+        title: a.title,
+        description: a.description || '',
+        cover: a.cover_url || '',
+        date: '',
+        photos: dbPhotos.map(p => ({
+          url: p.image_url,
+          caption: p.title || p.description || '',
+        })),
+      };
+    })
+  );
+
   return (
     <div className="min-h-screen relative pb-20">
       <Navbar />

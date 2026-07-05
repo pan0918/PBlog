@@ -1,80 +1,78 @@
-import { NextRequest, NextResponse } from "next/server";
-import { sendModerationEmail, EmailConfigurationError } from "../../../lib/messageEmail";
-import { checkMessageRateLimit, validateMessageSubmission } from "../../../lib/messageWall";
-import { readPublicMessages } from "../../../lib/messageStore";
+import { NextRequest, NextResponse } from 'next/server';
+import { createPendingMessage, getApprovedMessages } from '../../../lib/db/messages';
+import { revalidateAfterMessage } from '../../../lib/admin/revalidate';
+import { checkMessageRateLimit, validateMessageSubmission } from '../../../lib/messageWall';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function getClientIp(request: NextRequest) {
-  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return (
-    request.headers.get("cf-connecting-ip") ||
-    request.headers.get("x-real-ip") ||
-    forwarded ||
-    "unknown"
-  );
-}
-
-async function readJsonBody(request: NextRequest) {
-  try {
-    return await request.json();
-  } catch {
-    return null;
-  }
+function getClientIp(request: NextRequest): string {
+  return request.headers.get('cf-connecting-ip') ||
+    request.headers.get('x-real-ip') ||
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    'unknown';
 }
 
 export async function GET() {
-  const messages = await readPublicMessages();
-  return NextResponse.json({ messages });
+  try {
+    const messages = await getApprovedMessages(100);
+    const formatted = messages.map(m => ({
+      id: m.id,
+      content: m.content,
+      author: m.author,
+      colorIndex: Math.abs(hashCode(m.id)) % 10,
+      createdAt: m.approved_at || m.created_at,
+    }));
+    return NextResponse.json({ messages: formatted });
+  } catch {
+    return NextResponse.json({ messages: [] });
+  }
 }
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
-  const limited = checkMessageRateLimit(ip);
-  if (!limited.allowed) {
+  const rateCheck = checkMessageRateLimit(ip);
+  if (!rateCheck.allowed) {
     return NextResponse.json(
-      { error: "提交太频繁，请稍后再试" },
-      {
-        status: 429,
-        headers: { "Retry-After": String(limited.retryAfterSeconds) },
-      },
+      { error: '提交太频繁，请稍后再试' },
+      { status: 429, headers: { 'Retry-After': String(rateCheck.retryAfterSeconds) } }
     );
   }
 
-  const body = await readJsonBody(request);
-  if (!body || typeof body !== "object") {
-    return NextResponse.json({ error: "请求格式无效" }, { status: 400 });
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: '请求格式无效' }, { status: 400 });
   }
 
   const validation = validateMessageSubmission({
-    author: "author" in body ? body.author : undefined,
-    content: "content" in body ? body.content : undefined,
-    honeypot: "honeypot" in body ? body.honeypot : undefined,
+    author: body.author,
+    content: body.content,
+    honeypot: body.honeypot,
   });
-
   if (!validation.ok) {
     return NextResponse.json({ error: validation.error }, { status: validation.status });
   }
 
   try {
-    await sendModerationEmail({
+    await createPendingMessage({
       author: validation.author,
       content: validation.content,
-      createdAt: new Date().toISOString(),
-      ip,
-      userAgent: request.headers.get("user-agent") || "unknown",
     });
-
-    return NextResponse.json({
-      ok: true,
-      message: "留言已收到，审核后展示。",
-    });
-  } catch (error) {
-    if (error instanceof EmailConfigurationError) {
-      return NextResponse.json({ error: error.message }, { status: 503 });
-    }
-
-    return NextResponse.json({ error: "留言通知发送失败，请稍后再试" }, { status: 502 });
+    revalidateAfterMessage();
+    return NextResponse.json({ ok: true, message: '留言已收到，审核后展示。' });
+  } catch {
+    return NextResponse.json({ error: '留言提交失败，请稍后再试' }, { status: 500 });
   }
+}
+
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return hash;
 }
