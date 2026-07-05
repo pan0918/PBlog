@@ -78,7 +78,8 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({ ok: true });
     response.cookies.set(getCookieName(), token, getCookieOptions());
     return response;
-  } catch {
+  } catch (err) {
+    console.error(err);
     return NextResponse.json({ ok: false, message: '服务器错误' }, { status: 500 });
   }
 }
