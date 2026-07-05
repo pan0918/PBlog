@@ -2,8 +2,6 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { getJwtSecret } from './jwt-secret';
 
-const JWT_SECRET = getJwtSecret();
-
 const COOKIE_NAME = 'pblog_admin_token';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
@@ -17,12 +15,12 @@ export async function signAdminToken(payload: AdminJwtPayload): Promise<string> 
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(JWT_EXPIRES_IN)
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function verifyAdminToken(token: string): Promise<AdminJwtPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     if (typeof payload.sub !== 'string' || typeof payload.username !== 'string') {
       return null;
     }

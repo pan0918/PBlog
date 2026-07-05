@@ -1,14 +1,21 @@
 import { createClient } from '@libsql/client';
 
-if (!process.env.TURSO_DATABASE_URL) {
-  throw new Error('Missing TURSO_DATABASE_URL environment variable');
+let _db: ReturnType<typeof createClient> | null = null;
+
+export function getDb() {
+  if (_db) return _db;
+  _db = createClient({
+    url: process.env.TURSO_DATABASE_URL!,
+    authToken: process.env.TURSO_AUTH_TOKEN!,
+  });
+  return _db;
 }
 
-if (!process.env.TURSO_AUTH_TOKEN) {
-  throw new Error('Missing TURSO_AUTH_TOKEN environment variable');
-}
-
-export const db = createClient({
-  url: process.env.TURSO_DATABASE_URL,
-  authToken: process.env.TURSO_AUTH_TOKEN,
+// Lazy proxy so module evaluation doesn't throw during build
+export const db = new Proxy({} as ReturnType<typeof createClient>, {
+  get(_, prop) {
+    const client = getDb();
+    const val = (client as Record<string | symbol, unknown>)[prop];
+    return typeof val === 'function' ? val.bind(client) : val;
+  },
 });

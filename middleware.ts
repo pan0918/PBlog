@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 import { getJwtSecret } from './lib/admin/jwt-secret';
 
-const JWT_SECRET = getJwtSecret();
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -24,7 +22,7 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    await jwtVerify(token, JWT_SECRET);
+    await jwtVerify(token, getJwtSecret());
     return NextResponse.next();
   } catch {
     const response = NextResponse.redirect(new URL('/admin/login', request.url));

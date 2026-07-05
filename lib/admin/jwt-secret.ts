@@ -10,6 +10,10 @@ export function normalizeJwtSecret(value: string | undefined): string {
   return value;
 }
 
+let _secret: Uint8Array | null = null;
+
 export function getJwtSecret(): Uint8Array {
-  return new TextEncoder().encode(normalizeJwtSecret(process.env.JWT_SECRET));
+  if (_secret) return _secret;
+  _secret = new TextEncoder().encode(normalizeJwtSecret(process.env.JWT_SECRET));
+  return _secret;
 }
