@@ -39,7 +39,7 @@ export async function createSong(input: { title: string; artist: string; album?:
   return getSongById(id) as Promise<SongRecord>;
 }
 
-export async function updateSong(id: string, input: Partial<{ title: string; artist: string; album: string; pic: string; url: string; lrc: string; sort_order: number }>): Promise<void> {
+export async function updateSong(id: string, input: Partial<{ title: string; artist: string; album: string | null; pic: string | null; url: string; lrc: string | null; sort_order: number }>): Promise<void> {
   const now = new Date().toISOString();
   const fields: string[] = [];
   const args: (string | number | null)[] = [];
