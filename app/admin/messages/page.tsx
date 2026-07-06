@@ -42,10 +42,9 @@ export default function AdminMessagesPage() {
 
   const handleStatus = async (id: number, status: string) => {
     try {
-      const res = await fetch(`/api/admin/messages/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+      const action = status === 'approved' ? 'approve' : 'reject';
+      const res = await fetch(`/api/admin/messages/${id}/${action}`, {
+        method: 'PATCH',
       });
       const data = await res.json();
       if (data.ok) {

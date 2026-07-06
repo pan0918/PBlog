@@ -43,10 +43,9 @@ export default function AdminFriendsPage() {
 
   const handleStatus = async (id: number, status: string) => {
     try {
-      const res = await fetch(`/api/admin/friends/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+      const action = status === 'approved' ? 'approve' : 'reject';
+      const res = await fetch(`/api/admin/friends/${id}/${action}`, {
+        method: 'PATCH',
       });
       const data = await res.json();
       if (data.ok) {
