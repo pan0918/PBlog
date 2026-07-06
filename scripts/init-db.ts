@@ -30,6 +30,7 @@ async function main() {
     `CREATE TABLE IF NOT EXISTS messages (id TEXT PRIMARY KEY, author TEXT NOT NULL, content TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', created_at TEXT NOT NULL, updated_at TEXT NOT NULL, approved_at TEXT, deleted_at TEXT)`,
     `CREATE TABLE IF NOT EXISTS albums (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT, cover_url TEXT, location TEXT, status TEXT NOT NULL DEFAULT 'published', sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, deleted_at TEXT)`,
     `CREATE TABLE IF NOT EXISTS photos (id TEXT PRIMARY KEY, album_id TEXT NOT NULL, title TEXT, description TEXT, image_url TEXT NOT NULL, thumbnail_url TEXT, width INTEGER, height INTEGER, sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, deleted_at TEXT, FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE)`,
+    `CREATE TABLE IF NOT EXISTS songs (id TEXT PRIMARY KEY, title TEXT NOT NULL, artist TEXT NOT NULL, album TEXT NOT NULL DEFAULT '', pic TEXT NOT NULL DEFAULT '', url TEXT NOT NULL, lrc TEXT NOT NULL DEFAULT '', sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, deleted_at TEXT)`,
     `CREATE INDEX IF NOT EXISTS idx_posts_status_published_at ON posts(status, published_at)`,
     `CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category_id)`,
     `CREATE INDEX IF NOT EXISTS idx_posts_pinned ON posts(is_pinned, published_at)`,
@@ -40,6 +41,7 @@ async function main() {
     `CREATE INDEX IF NOT EXISTS idx_albums_status_sort ON albums(status, sort_order)`,
     `CREATE INDEX IF NOT EXISTS idx_photos_album_sort ON photos(album_id, sort_order)`,
     `CREATE INDEX IF NOT EXISTS idx_admin_login_failures_key_time ON admin_login_failures(rate_key, attempted_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_songs_sort ON songs(sort_order)`,
   ];
 
   console.log(`📦 Executing ${statements.length} SQL statements...`);

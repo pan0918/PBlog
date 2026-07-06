@@ -113,3 +113,16 @@ export const createPhotoSchema = z.object({
 });
 
 export const updatePhotoSchema = createPhotoSchema.partial();
+
+// --- Songs ---
+export const createSongSchema = z.object({
+  title: z.string().min(1, '歌名不能为空').max(100),
+  artist: z.string().min(1, '歌手不能为空').max(100),
+  album: z.string().max(100).optional().nullable(),
+  pic: z.string().url().optional().nullable().or(z.literal('')),
+  url: z.string().url('音频 URL 格式不正确'),
+  lrc: z.string().optional().nullable(),
+  sort_order: z.number().int().default(0),
+});
+
+export const updateSongSchema = createSongSchema.partial();

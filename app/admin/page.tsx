@@ -18,6 +18,7 @@ async function getStats(): Promise<StatCard[]> {
     { sql: `SELECT COUNT(*) as count FROM friends WHERE status = 'pending' AND deleted_at IS NULL`, label: '友链待审', icon: '🔗', color: '#F9901F', bg: '#F9901F1a' },
     { sql: `SELECT COUNT(*) as count FROM messages WHERE status = 'pending' AND deleted_at IS NULL`, label: '留言待审', icon: '💬', color: '#38c0fc', bg: '#38c0fc1a' },
     { sql: `SELECT COUNT(*) as count FROM albums WHERE deleted_at IS NULL`, label: '相册', icon: '📸', color: '#FF80C8', bg: '#FF80C81a' },
+    { sql: `SELECT COUNT(*) as count FROM songs WHERE deleted_at IS NULL`, label: '歌曲', icon: '🎵', color: '#818cf8', bg: '#818cf81a' },
   ];
 
   const results: StatCard[] = [];
@@ -89,6 +90,10 @@ export default async function AdminDashboard() {
           <a href="/admin/albums/new" className="admin-action-card">
             <span className="icon">📸</span>
             <span className="label">建相册</span>
+          </a>
+          <a href="/admin/songs" className="admin-action-card">
+            <span className="icon">🎵</span>
+            <span className="label">加歌曲</span>
           </a>
         </div>
       </div>

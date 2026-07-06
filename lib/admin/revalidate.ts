@@ -37,3 +37,8 @@ export function revalidateAfterPhoto() {
   revalidatePath('/');
   revalidatePath('/photowall');
 }
+
+export function revalidateAfterSong() {
+  revalidatePath('/');
+  revalidatePath('/music');
+}

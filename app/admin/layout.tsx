@@ -26,6 +26,7 @@ const NAV_SECTIONS = [
     title: '扩展管理',
     items: [
       { name: '项目管理', href: '/admin/projects', icon: '🚀' },
+      { name: '歌曲管理', href: '/admin/songs', icon: '🎵' },
       { name: '友链管理', href: '/admin/friends', icon: '🔗' },
       { name: '留言审核', href: '/admin/messages', icon: '💬' },
       { name: '相册管理', href: '/admin/albums', icon: '📸' },
