@@ -32,6 +32,8 @@ yarn-error.log*
 
 # isolated development worktrees
 .worktrees/
+.superpowers/
+docs/superpowers/
 
 # typescript
 *.tsbuildinfo

@@ -59,6 +59,8 @@ test("post editor workspace centralizes smooth writing behavior", async () => {
   assert.match(source, /imageCount/);
   assert.match(source, /linkCount/);
   assert.match(source, /selectedTagIds/);
+  assert.doesNotMatch(source, /router\.push\(['"]\/admin\/posts['"]\)/);
+  assert.doesNotMatch(source, /window\.setTimeout\(\(\)\s*=>\s*router\.push\(['"]\/admin\/posts['"]\)/);
 });
 
 test("new and edit post pages use the shared editor workspace", async () => {

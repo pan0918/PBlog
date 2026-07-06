@@ -203,9 +203,12 @@ export default function PostEditorWorkspace({
 
       if (data.ok) {
         editorRef.current?.clearCache();
+        setForm((current) => ({ ...current, content }));
         setIsDirty(false);
         showToast('success', successMessage);
-        window.setTimeout(() => router.push('/admin/posts'), 700);
+        if (mode === 'create' && data.data?.id) {
+          router.replace(`/admin/posts/${data.data.id}/edit`);
+        }
       } else {
         showToast('error', data.message || failureMessage);
       }
@@ -214,7 +217,7 @@ export default function PostEditorWorkspace({
     } finally {
       setLoading(false);
     }
-  }, [failureMessage, form, loading, router, selectedTagIds, showToast, submitMethod, submitUrl, successMessage]);
+  }, [failureMessage, form, loading, mode, router, selectedTagIds, showToast, submitMethod, submitUrl, successMessage]);
 
   return (
     <div style={{ maxWidth: 1240, margin: '0 auto' }}>

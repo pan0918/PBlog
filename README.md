@@ -32,7 +32,7 @@ PBlogs/
 │   ├── projects/page.tsx       # 项目展示
 │   ├── friends/page.tsx        # 友链
 │   ├── about/page.tsx          # 关于页
-│   └── api/                    # API 路由 (AI 猫猫、Gitalk OAuth)
+│   └── api/                    # API 路由 (后台、内容、AI 猫猫、Gitalk OAuth)
 │
 ├── components/                 # 所有 UI 组件
 │   ├── ThemeProvider.tsx        # 暗黑模式上下文 (核心，几乎所有组件依赖)
@@ -61,15 +61,10 @@ PBlogs/
 │   ├── BackButton.tsx           # 返回按钮
 │   ├── PageTransition.tsx       # 页面过渡动画
 │   └── ...
-│
-├── data/                       # 静态数据
-│   ├── albums.ts               # 相册数据
-│   ├── projects.ts             # 项目数据
-│   └── friends.ts              # 友链数据
-│
-├── posts/                      # 博客文章 (Markdown)
-├── moments/                    # 说说 (Markdown)
 ├── chatters/                   # 杂谈 (Markdown)
+├── lib/                        # 数据库访问、内容服务、鉴权和缓存刷新
+├── scripts/                    # 数据库迁移和初始化脚本
+├── tests/                      # Node 测试
 ├── app/about/about.md          # 关于页内容
 └── siteConfig.ts               # 全站配置中心 ← 重点修改这个文件
 ```
@@ -139,53 +134,17 @@ export const siteConfig = {
 
 ## 写文章
 
-在 `posts/` 目录下创建 `.md` 文件即可：
+文章已经改为数据库存储。进入后台管理系统的「文章管理」创建或编辑文章，内容会通过 API 写入数据库，并自动刷新前台文章列表、详情页、时间线和相关缓存。
 
-```markdown
----
-title: "文章标题"
-date: "2026-05-21"
-description: "文章描述，会显示在首页和搜索结果中"
-tags: ["标签1", "标签2"]
-cover: "https://...封面图URL"
----
-
-正文内容，支持标准 Markdown 语法。
-
-## 二级标题
-
-支持代码高亮：
-\```python
-print("Hello World")
-\```
-
-支持数学公式：
-$E = mc^2$
-
-$$
-\int_{0}^{1} x^2 dx = \frac{1}{3}
-$$
-```
-
-**文件名即 URL**：`posts/hello-world.md` → 访问 `/posts/hello-world`
+后台编辑器基于 Vditor，支持 Markdown、图片上传、快捷保存、全屏写作和本地草稿缓存。更新已有文章时会停留在当前编辑页，便于连续写作。
 
 ---
 
-## 说说 / 杂谈
+## 说说 / 杂谈 / 相册 / 项目 / 友链
 
-### 说说 (moments/)
+说说、相册、项目、友链等内容也已经迁移到数据库。请通过后台管理系统维护，不要再新增旧的静态数据文件。
 
-```markdown
----
-title: "今天的心情"
-date: "2026-05-21"
-mood: "开心"
-weather: "晴天"
----
-说说内容...
-```
-
-### 杂谈 (chatters/)
+杂谈仍保留现有 Markdown 页面模式：
 
 ```markdown
 ---
@@ -196,57 +155,6 @@ tags: ["标签"]
 cover: "封面图URL"
 ---
 正文内容...
-```
-
----
-
-## 修改静态数据
-
-### 相册 (data/albums.ts)
-
-```typescript
-export const albums: Album[] = [
-  {
-    id: "my-album",
-    title: "相册标题",
-    description: "相册描述",
-    cover: "封面图URL",
-    date: "2026.05",
-    photos: [
-      { url: "图片URL", caption: "图片说明" },
-    ],
-  },
-];
-```
-
-### 项目 (data/projects.ts)
-
-```typescript
-export const projectsData: Project[] = [
-  {
-    id: "proj_1",
-    name: "项目名称",
-    description: "项目描述",
-    icon: "🚀",
-    githubUrl: "https://github.com/...",
-    tags: ["React", "TypeScript"],
-  },
-];
-```
-
-### 友链 (data/friends.ts)
-
-```typescript
-export const friendsData: Friend[] = [
-  {
-    id: "friend-1",
-    name: "友链名称",
-    description: "简介",
-    avatar: "头像URL",
-    url: "https://...",
-    themeColor: "rgba(99, 102, 241, 0.5)",
-  },
-];
 ```
 
 ---
@@ -335,9 +243,19 @@ layout.tsx
 
 ## 环境变量 (可选)
 
-在项目根目录创建 `.env.local`：
+在项目根目录创建 `.env.local`。Vercel 部署时需要在 Project Settings → Environment Variables 配置同名变量：
 
 ```bash
+# Turso / libSQL 数据库
+TURSO_DATABASE_URL=libsql://...
+TURSO_AUTH_TOKEN=...
+
+# 后台登录 JWT
+JWT_SECRET=至少32位的随机字符串
+
+# 后台 Vditor 图片上传到 Cloudflare ImgBed
+IMAGE_BED_TOKEN=your-image-bed-token
+
 # Gemini API Key (AI 猫猫助手)
 GEMINI_API_KEY=your-api-key-here
 ```
@@ -390,10 +308,10 @@ bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:bo
 
 ### Server/Client 组件分工
 
-- **Server Component** (默认)：读取文件系统、处理 Markdown、传递数据给客户端
+- **Server Component** (默认)：读取数据库、处理 Markdown 渲染、传递数据给客户端
 - **Client Component** (`"use client"`)：处理交互、动画、状态
 
-例如 `app/posts/[slug]/page.tsx` 是 Server Component，它读取 Markdown 文件、渲染成 HTML，然后把 HTML 传给客户端组件渲染。
+例如 `app/posts/[[...slug]]/page.tsx` 是 Server Component，它从数据库读取文章内容、渲染成 HTML，然后把 HTML 传给客户端组件渲染。
 
 ### ThemeProvider 模式
 

@@ -135,26 +135,13 @@ export function checkMessageRateLimit(ip: string, now = Date.now()): MessageRate
 export function buildModerationEmail(input: ModerationEmailInput) {
   const subject = "新的留言墙审核请求";
   const text = [
-    "收到一条新的留言墙提交，请审核后手动加入 data/messages.json。",
+    "收到一条新的留言墙提交，请在后台管理系统审核并写入数据库。",
     "",
     `昵称：${input.author}`,
     `留言：${input.content}`,
     `时间：${input.createdAt}`,
     `IP：${input.ip}`,
     `User-Agent：${input.userAgent}`,
-    "",
-    "建议 JSON 条目格式：",
-    JSON.stringify(
-      {
-        id: crypto.randomUUID(),
-        content: input.content,
-        author: input.author,
-        colorIndex: Math.floor(Math.random() * 10),
-        createdAt: input.createdAt,
-      },
-      null,
-      2,
-    ),
   ].join("\n");
 
   const html = text
