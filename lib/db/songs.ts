@@ -29,7 +29,7 @@ export async function getSongById(id: string): Promise<SongRecord | null> {
   return result.rows.length > 0 ? (result.rows[0] as unknown as SongRecord) : null;
 }
 
-export async function createSong(input: { title: string; artist: string; album?: string; pic?: string; url: string; lrc?: string; sort_order?: number }): Promise<SongRecord> {
+export async function createSong(input: { title: string; artist: string; album?: string | null; pic?: string | null; url: string; lrc?: string | null; sort_order?: number }): Promise<SongRecord> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   await db.execute({
