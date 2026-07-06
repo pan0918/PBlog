@@ -2,6 +2,7 @@
 import '../../../admin.css';
 
 import { memo, useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { toBrowserSafeUrl } from '../../../../../lib/utils';
 
@@ -73,12 +74,16 @@ const PhotoCard = memo(function PhotoCard({
       }}
     >
       <div style={{ aspectRatio: '4/3', background: '#f0f0f0', overflow: 'hidden', position: 'relative' }}>
-        <img
+        <Image
           src={toBrowserSafeUrl(photo.thumbnail_url || photo.image_url)}
           alt={photo.title || ''}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 280px"
+          quality={75}
+          unoptimized
           loading={index < 4 ? 'eager' : 'lazy'}
           decoding="async"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+          style={{ objectFit: 'cover' }}
         />
       </div>
 

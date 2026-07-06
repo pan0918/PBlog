@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "p4.music.126.net",
       },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
     ],
     qualities: [75, 80, 90],
     deviceSizes: [640, 750, 828, 1080, 1200, 1600, 1920, 2048],

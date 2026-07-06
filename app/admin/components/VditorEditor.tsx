@@ -9,62 +9,96 @@ interface VditorEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   height?: number;
+  cacheId?: string;
+  uploadUrl?: string;
+  onReady?: () => void;
+  onSaveShortcut?: () => void;
 }
 
 export interface VditorEditorHandle {
   getContent: () => string;
   renderPreview: () => void;
+  clearCache: () => void;
+  isUploading: () => boolean;
+  insertMarkdown: (markdown: string) => void;
+  focus: () => void;
 }
 
 const VditorEditor = forwardRef<VditorEditorHandle, VditorEditorProps>(
-  function VditorEditor({ value, onChange, placeholder = '请输入 Markdown 内容...', height }, ref) {
+  function VditorEditor({
+    value,
+    onChange,
+    placeholder = '请输入 Markdown 内容...',
+    height,
+    cacheId,
+    uploadUrl,
+    onReady,
+    onSaveShortcut,
+  }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
     const editorRef = useRef<VditorType | null>(null);
     const onChangeRef = useRef(onChange);
+    const onReadyRef = useRef(onReady);
+    const onSaveShortcutRef = useRef(onSaveShortcut);
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     onChangeRef.current = onChange;
+    onReadyRef.current = onReady;
+    onSaveShortcutRef.current = onSaveShortcut;
 
-    // Debounced onChange - 3 second delay
     const debouncedOnChange = useCallback((val: string) => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
       debounceTimerRef.current = setTimeout(() => {
         onChangeRef.current(val);
-      }, 3000);
+      }, 120);
     }, []);
 
     useImperativeHandle(ref, () => ({
       getContent: () => editorRef.current?.getValue() || '',
       renderPreview: () => {
-        // In ir mode, content is always rendered - no-op
+        editorRef.current?.renderPreview();
       },
+      clearCache: () => editorRef.current?.clearCache(),
+      isUploading: () => Boolean(editorRef.current?.isUploading()),
+      insertMarkdown: (markdown: string) => editorRef.current?.insertValue(markdown),
+      focus: () => editorRef.current?.focus(),
     }));
 
     useEffect(() => {
       if (!containerRef.current) return;
+      let cancelled = false;
 
       import('vditor').then(({ default: Vditor }) => {
-        if (editorRef.current) return;
+        if (cancelled || editorRef.current) return;
 
         const editor = new Vditor(containerRef.current!, {
-          // ir = instant rendering, no split view, no video flickering
           mode: 'ir',
           height: height || '100%',
           placeholder,
           value,
           toolbar: [
             'emoji', 'headings', 'bold', 'italic', 'strike', '|',
-            'line', 'quote', 'code', 'inline-code', 'table', '|',
+            'link', 'list', 'ordered-list', 'check', 'outdent', 'indent', '|',
+            'line', 'quote', 'code', 'inline-code', 'table', 'upload', '|',
             'undo', 'redo', '|',
+            'preview', 'both', 'fullscreen', 'edit-mode', '|',
+            {
+              name: 'more',
+              toolbar: ['code-theme', 'content-theme', 'outline', 'export', 'info', 'help'],
+            },
           ],
+          toolbarConfig: {
+            pin: true,
+          },
           outline: {
             enable: true,
             position: 'right',
           },
           cache: {
-            enable: false,
+            enable: Boolean(cacheId),
+            id: cacheId,
           },
           counter: {
             enable: true,
@@ -82,6 +116,14 @@ const VditorEditor = forwardRef<VditorEditorHandle, VditorEditorProps>(
               style: 'github',
               lineNumber: true,
             },
+            math: {
+              engine: 'KaTeX',
+            },
+            render: {
+              media: {
+                enable: true,
+              },
+            },
           },
           hint: {
             emoji: {
@@ -90,8 +132,41 @@ const VditorEditor = forwardRef<VditorEditorHandle, VditorEditorProps>(
               'smile': '😊',
             },
           },
+          upload: {
+            url: uploadUrl || '',
+            accept: 'image/*',
+            fieldName: 'file[]',
+            multiple: true,
+            max: 8 * 1024 * 1024,
+            filename: (name: string) => name.replace(/[^\w.\-\u4e00-\u9fa5]/g, '_'),
+            format: (files: File[], responseText: string) => {
+              try {
+                const parsed = JSON.parse(responseText) as {
+                  code?: number;
+                  msg?: string;
+                  data?: { succMap?: Record<string, string>; errFiles?: string[] };
+                };
+                return JSON.stringify({
+                  msg: parsed.msg || '',
+                  code: parsed.code ?? 0,
+                  data: {
+                    errFiles: parsed.data?.errFiles || [],
+                    succMap: parsed.data?.succMap || Object.fromEntries(files.map((file) => [file.name, ''])),
+                  },
+                });
+              } catch {
+                return responseText;
+              }
+            },
+          },
           input: (val: string) => {
             debouncedOnChange(val);
+          },
+          ctrlEnter: () => {
+            onSaveShortcutRef.current?.();
+          },
+          after: () => {
+            onReadyRef.current?.();
           },
         });
 
@@ -99,6 +174,7 @@ const VditorEditor = forwardRef<VditorEditorHandle, VditorEditorProps>(
       });
 
       return () => {
+        cancelled = true;
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         if (editorRef.current) {
           try { editorRef.current.destroy(); } catch {}

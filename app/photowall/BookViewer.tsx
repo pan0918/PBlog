@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { fitImageWithinViewport, type FittedImageSize } from "./imageSizing";
 
@@ -143,9 +144,12 @@ function Slide({ photo, direction }: { photo: Photo; direction: number }) {
       style={size ? { width: size.width, height: size.height } : { width: 300, height: 300 }}
     >
       {!size && <div className="absolute inset-0 bg-white/5 rounded-2xl animate-pulse" />}
-      <img
+      <Image
         src={photo.url}
         alt={photo.caption || ""}
+        fill
+        sizes="85vw"
+        quality={90}
         loading="eager"
         decoding="async"
         onLoad={(event) => {

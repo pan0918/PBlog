@@ -8,6 +8,7 @@ test("admin photo cards use responsive optimized images", async () => {
   assert.match(page, /from ['"]next\/image['"]/);
   assert.match(page, /photo\.thumbnail_url\s*\|\|\s*photo\.image_url/);
   assert.match(page, /sizes=/);
+  assert.match(page, /unoptimized/);
   assert.match(page, /loading=\{index < 4 \? ['"]eager['"] : ['"]lazy['"]\}/);
   assert.match(page, /decoding=['"]async['"]/);
   assert.match(page, /contentVisibility:\s*['"]auto['"]/);

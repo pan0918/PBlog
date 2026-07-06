@@ -1,5 +1,6 @@
 "use client";
 import { useMusic } from './MusicProvider';
+import Image from 'next/image';
 
 export default function SidebarLyric() {
   const { currentLyric, isPlaying, currentSong } = useMusic();
@@ -12,12 +13,15 @@ export default function SidebarLyric() {
       <div className="flex items-center gap-3 mb-3">
         <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0 animate-[spin_6s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
           {currentSong.pic && (
-            <img
+            <Image
               src={currentSong.pic}
               alt="cover"
+              fill
+              sizes="40px"
+              quality={75}
               loading="lazy"
               referrerPolicy="no-referrer"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{ objectFit: 'cover' }}
             />
           )}
         </div>
