@@ -5,6 +5,7 @@ import { memo, useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { toBrowserSafeUrl } from '../../../../../lib/utils';
+import { useAdminToast } from '../../../components/useAdminToast';
 
 interface Album {
   id: string;
@@ -163,26 +164,22 @@ export default function AlbumPhotosPage() {
   const [album, setAlbum] = useState<Album | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { toast, showToast } = useAdminToast();
   const [showAdd, setShowAdd] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [form, setForm] = useState({ image_url: '', title: '', description: '', sort_order: 0 });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  const showToast = useCallback((type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    window.setTimeout(() => setToast(null), 3000);
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
 
     async function fetchData() {
       try {
         const [albumRes, photosRes] = await Promise.all([
-          fetch(`/api/admin/albums/${albumId}`),
-          fetch(`/api/admin/albums/${albumId}/photos`),
+          fetch(`/api/admin/albums/${albumId}`, { signal: controller.signal }),
+          fetch(`/api/admin/albums/${albumId}/photos`, { signal: controller.signal }),
         ]);
         const [albumData, photosData] = await Promise.all([
           albumRes.json(),
@@ -192,6 +189,7 @@ export default function AlbumPhotosPage() {
         if (albumData.ok) setAlbum(albumData.data);
         if (photosData.ok) setPhotos(photosData.data || []);
       } catch {
+        if (cancelled || controller.signal.aborted) return;
         if (!cancelled) showToast('error', '加载数据失败');
       } finally {
         if (!cancelled) setLoading(false);
@@ -201,6 +199,7 @@ export default function AlbumPhotosPage() {
     fetchData();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [albumId, showToast]);
 

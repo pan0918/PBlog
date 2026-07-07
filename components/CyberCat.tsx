@@ -27,7 +27,13 @@ function loadConfig(): PetConfig {
 function saveConfig(c: PetConfig) { try { sessionStorage.setItem('pet-config', JSON.stringify(c)); } catch {} }
 function loadHistory(): ChatMessage[] {
   if (typeof window === 'undefined') return [];
-  try { const s = sessionStorage.getItem('pet-history'); if (s) return JSON.parse(s); } catch {}
+  try {
+    const s = sessionStorage.getItem('pet-history');
+    if (s) {
+      const parsed = JSON.parse(s);
+      return Array.isArray(parsed) ? parsed.slice(-50) : [];
+    }
+  } catch {}
   return [];
 }
 function saveHistory(m: ChatMessage[]) { try { sessionStorage.setItem('pet-history', JSON.stringify(m.slice(-50))); } catch {} }
@@ -96,6 +102,28 @@ export default function CyberCat() {
   const [configDraft, setConfigDraft] = useState<PetConfig>(DEFAULT_CONFIG);
   const [isHovered, setIsHovered] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const timeoutRefs = useRef(new Set<ReturnType<typeof setTimeout>>());
+  const chatAbortRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
+
+  const scheduleTimeout = useCallback((callback: () => void, delay: number) => {
+    const timeout = setTimeout(() => {
+      timeoutRefs.current.delete(timeout);
+      callback();
+    }, delay);
+    timeoutRefs.current.add(timeout);
+    return timeout;
+  }, []);
+
+  useEffect(() => {
+    const timeouts = timeoutRefs.current;
+    return () => {
+      mountedRef.current = false;
+      chatAbortRef.current?.abort();
+      timeouts.forEach(clearTimeout);
+      timeouts.clear();
+    };
+  }, []);
 
   useEffect(() => {
     setConfig(loadConfig());
@@ -114,10 +142,10 @@ export default function CyberCat() {
       const msgs = siteConfig.petConfig.proactiveMessages;
       setProactiveMsg(msgs[Math.floor(Math.random() * msgs.length)]);
       setMood('talk');
-      setTimeout(() => { setProactiveMsg(null); setMood('idle'); }, 5000);
+      scheduleTimeout(() => { setProactiveMsg(null); setMood('idle'); }, 5000);
     }, siteConfig.petConfig.proactiveInterval);
     return () => clearInterval(t);
-  }, [isOpen]);
+  }, [isOpen, scheduleTimeout]);
 
   // Sleep when idle
   useEffect(() => {
@@ -137,10 +165,14 @@ export default function CyberCat() {
     setMood('talk');
 
     const historyForApi = newMsgs.slice(-10).map(m => ({ role: m.role === 'cat' ? 'assistant' : 'user', content: m.text }));
+    chatAbortRef.current?.abort();
+    const controller = new AbortController();
+    chatAbortRef.current = controller;
 
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMsg,
@@ -149,18 +181,26 @@ export default function CyberCat() {
         }),
       });
       const data = await res.json();
+      if (controller.signal.aborted || !mountedRef.current) return;
       const catMsg = { role: 'cat' as const, text: data.reply || '喵？听不懂...' };
       const updated = [...newMsgs, catMsg];
       setMessages(updated);
       saveHistory(updated);
       setMood('happy');
-      setTimeout(() => setMood('idle'), 2000);
+      scheduleTimeout(() => setMood('idle'), 2000);
     } catch {
+      if (controller.signal.aborted || !mountedRef.current) return;
       setMessages([...newMsgs, { role: 'cat' as const, text: '网络出问题了喵~' }]);
       setMood('idle');
+    } finally {
+      if (chatAbortRef.current === controller) {
+        chatAbortRef.current = null;
+      }
+      if (!controller.signal.aborted && mountedRef.current) {
+        setIsTyping(false);
+      }
     }
-    setIsTyping(false);
-  }, [input, isTyping, messages, config]);
+  }, [input, isTyping, messages, config, scheduleTimeout]);
 
   // BYO-key mode: the server keeps no key, so availability is purely the client-provided key.
   // (process.env.* is undefined in client components unless NEXT_PUBLIC_-prefixed.)
@@ -174,7 +214,7 @@ export default function CyberCat() {
         dragMomentum={false}
         dragConstraints={{ left: -300, right: -10, top: -500, bottom: -10 }}
         onDragStart={() => setMood('happy')}
-        onDragEnd={() => { setTimeout(() => setMood('idle'), 1000); }}
+        onDragEnd={() => { scheduleTimeout(() => setMood('idle'), 1000); }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className="fixed bottom-4 right-4 z-[56] hidden md:block cursor-grab active:cursor-grabbing"

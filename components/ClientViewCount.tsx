@@ -6,13 +6,16 @@ export default function ClientViewCount({ slug, initialCount }: { slug: string; 
   const [count, setCount] = useState(initialCount);
 
   useEffect(() => {
+    const controller = new AbortController();
     const encodedSlug = slug.split('/').map(encodeURIComponent).join('/');
-    fetch(`/api/posts/view/${encodedSlug}`, { method: 'POST' })
+    fetch(`/api/posts/view/${encodedSlug}`, { method: 'POST', signal: controller.signal })
       .then(res => res.json())
       .then(data => {
+        if (controller.signal.aborted) return;
         if (data.ok) setCount(data.viewCount);
       })
       .catch(() => {});
+    return () => controller.abort();
   }, [slug]);
 
   return (

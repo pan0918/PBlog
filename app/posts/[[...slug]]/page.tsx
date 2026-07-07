@@ -86,7 +86,7 @@ export default async function Post({ params }: { params: Promise<{ slug?: string
           </article>
 
           <aside className="w-full lg:w-[320px] flex flex-col gap-6 flex-shrink-0">
-            <ProfileCard showStats={false} />
+            <ProfileCard showStats={false} surfaceTone="slate" />
             <SidebarLyric />
             <div className="bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl p-6 border border-white/40 dark:border-white/10 shadow-xl">
               <h3 className="font-black text-slate-900 dark:text-white mb-4 border-l-4 border-indigo-500 pl-2 text-sm">RECOMMENDED</h3>

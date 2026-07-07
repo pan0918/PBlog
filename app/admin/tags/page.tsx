@@ -1,9 +1,10 @@
 "use client";
 import '../admin.css';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Pagination from '../components/Pagination';
+import { useAdminToast } from '../components/useAdminToast';
 
 interface Tag {
   id: number;
@@ -14,31 +15,31 @@ interface Tag {
 export default function AdminTagsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { toast, showToast } = useAdminToast();
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 5;
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({ name: '', slug: '' });
 
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const fetchTags = async () => {
+  const fetchTags = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch('/api/admin/tags');
+      const res = await fetch('/api/admin/tags', { signal });
       const data = await res.json();
+      if (signal?.aborted) return;
       if (data.ok) { setTags(data.data || []); setPage(1); }
     } catch {
-      showToast('error', '加载标签列表失败');
+      if (!signal?.aborted) showToast('error', '加载标签列表失败');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  useEffect(() => { fetchTags(); }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchTags(controller.signal);
+    return () => controller.abort();
+  }, [fetchTags]);
 
   const resetForm = () => {
     setForm({ name: '', slug: '' });

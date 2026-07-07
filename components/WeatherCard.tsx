@@ -59,10 +59,11 @@ export default function WeatherCard() {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
 
     async function fetchWeather() {
       try {
-        const res = await fetch("https://wttr.in/?format=j1");
+        const res = await fetch("https://wttr.in/?format=j1", { signal: controller.signal });
         if (!res.ok) throw new Error("Weather failed");
         const data = await res.json();
         if (cancelled) return;
@@ -101,12 +102,16 @@ export default function WeatherCard() {
         });
         setLoading(false);
       } catch (e) {
+        if (cancelled || controller.signal.aborted) return;
         if (!cancelled) { setError(true); setLoading(false); }
       }
     }
 
     fetchWeather();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, []);
 
   if (error) {

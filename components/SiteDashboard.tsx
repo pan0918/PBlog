@@ -5,9 +5,35 @@ export default function SiteDashboard() {
   const [time, setTime] = useState<Date | null>(null);
 
   useEffect(() => {
-    setTime(new Date());
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const syncTime = () => setTime(new Date());
+    const stopTimer = () => {
+      if (!timer) return;
+      clearInterval(timer);
+      timer = null;
+    };
+    const startTimer = () => {
+      stopTimer();
+      syncTime();
+      if (!document.hidden) {
+        timer = setInterval(syncTime, 1000);
+      }
+    };
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopTimer();
+      } else {
+        startTimer();
+      }
+    };
+
+    startTimer();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      stopTimer();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const hours = time ? String(time.getHours()).padStart(2, '0') : '--';

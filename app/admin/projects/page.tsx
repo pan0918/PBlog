@@ -1,10 +1,11 @@
 "use client";
 import '../admin.css';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Pagination from '../components/Pagination';
+import { useAdminToast } from '../components/useAdminToast';
 
 interface Project {
   id: number;
@@ -20,28 +21,28 @@ export default function AdminProjectsPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { toast, showToast } = useAdminToast();
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 5;
 
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch('/api/admin/projects');
+      const res = await fetch('/api/admin/projects', { signal });
       const data = await res.json();
+      if (signal?.aborted) return;
       if (data.ok) { setProjects(data.data || []); setPage(1); }
     } catch {
-      showToast('error', '加载项目列表失败');
+      if (!signal?.aborted) showToast('error', '加载项目列表失败');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  useEffect(() => { fetchProjects(); }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchProjects(controller.signal);
+    return () => controller.abort();
+  }, [fetchProjects]);
 
   const handleDelete = async (id: number, title: string) => {
     if (!confirm(`确定要删除项目「${title}」吗？`)) return;

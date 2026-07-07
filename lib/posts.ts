@@ -9,6 +9,7 @@ import rehypeStringify from 'rehype-stringify';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
+import { katexOptions } from './markdown';
 
 export interface PostMeta {
   slug: string;
@@ -118,7 +119,7 @@ export async function getPostBySlug(slug: string): Promise<{
       .use(remarkRehype, { allowDangerousHtml: true })
       // @ts-ignore
       .use(rehypeHighlight, { detect: true, ignoreMissing: true, subset: ['cpp', 'c', 'python', 'java', 'javascript', 'typescript', 'go', 'rust', 'bash', 'json', 'html', 'css', 'sql', 'xml'] })
-      .use(rehypeKatex).use(rehypeSlug).use(rehypeStringify, { allowDangerousHtml: true })
+      .use(rehypeKatex, katexOptions).use(rehypeSlug).use(rehypeStringify, { allowDangerousHtml: true })
       .process(processedContent);
 
     const contentHtml = processed.toString();

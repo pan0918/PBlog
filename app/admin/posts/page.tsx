@@ -1,10 +1,11 @@
 "use client";
 import '../admin.css';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Pagination from '../components/Pagination';
+import { useAdminToast } from '../components/useAdminToast';
 
 interface Post {
   id: number;
@@ -20,28 +21,28 @@ export default function AdminPostsPage() {
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { toast, showToast } = useAdminToast();
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 5;
 
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch('/api/admin/posts');
+      const res = await fetch('/api/admin/posts', { signal });
       const data = await res.json();
+      if (signal?.aborted) return;
       if (data.ok) { setPosts(data.data || []); setPage(1); }
     } catch {
-      showToast('error', '加载文章列表失败');
+      if (!signal?.aborted) showToast('error', '加载文章列表失败');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  useEffect(() => { fetchPosts(); }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchPosts(controller.signal);
+    return () => controller.abort();
+  }, [fetchPosts]);
 
   const handleDelete = async (id: number, title: string) => {
     if (!confirm(`确定要删除文章「${title}」吗？`)) return;

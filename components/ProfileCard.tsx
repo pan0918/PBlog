@@ -4,9 +4,20 @@ import { useRouter } from 'next/navigation';
 import { siteConfig } from '../siteConfig';
 import { useToast } from './ToastProvider';
 
-export default function ProfileCard({ postCount, momentCount, photoCount, showStats = true }: { postCount?: number; momentCount?: number; photoCount?: number; showStats?: boolean }) {
+type ProfileSurfaceTone = 'warm' | 'slate';
+
+interface ProfileCardProps {
+  postCount?: number;
+  momentCount?: number;
+  photoCount?: number;
+  showStats?: boolean;
+  surfaceTone?: 'warm' | 'slate';
+}
+
+export default function ProfileCard({ postCount, momentCount, photoCount, showStats = true, surfaceTone = 'warm' }: ProfileCardProps) {
   const router = useRouter();
   const { showToast } = useToast();
+  const panelClass = surfaceTone === 'slate' ? 'soft-glass-panel-slate' : 'soft-glass-panel';
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -16,7 +27,7 @@ export default function ProfileCard({ postCount, momentCount, photoCount, showSt
   return (
     <div
       onClick={() => router.push('/about')}
-      className="soft-glass-panel group relative flex cursor-pointer flex-col items-center overflow-hidden rounded-3xl p-6 text-center transition-all duration-700 hover:scale-[1.02]"
+      className={`${panelClass} group relative flex cursor-pointer flex-col items-center overflow-hidden rounded-3xl p-6 text-center transition-transform duration-300 hover:scale-[1.02]`}
     >
       {/* Avatar */}
       <div className="mb-4 w-24 h-24 rounded-2xl bg-gradient-to-tr from-amber-300 to-orange-300 p-1 shadow-[0_14px_34px_rgba(184,111,43,0.24)] transition-transform duration-500 group-hover:rotate-3 group-hover:scale-105">
@@ -35,11 +46,11 @@ export default function ProfileCard({ postCount, momentCount, photoCount, showSt
 
       {/* Social Icons */}
       <div className="flex gap-2 mb-4" onClick={(e) => e.stopPropagation()}>
-        <SocialBtn type="github" />
-        <SocialBtn type="email" onClick={() => copyToClipboard(siteConfig.social?.email || '', '邮箱')} />
-        <SocialBtn type="qq" onClick={() => copyToClipboard(siteConfig.social?.qq || '', 'QQ号')} />
-        <SocialBtn type="twitter" />
-        <SocialBtn type="xiaohongshu" />
+        <SocialBtn type="github" surfaceTone={surfaceTone} />
+        <SocialBtn type="email" surfaceTone={surfaceTone} onClick={() => copyToClipboard(siteConfig.social?.email || '', '邮箱')} />
+        <SocialBtn type="qq" surfaceTone={surfaceTone} onClick={() => copyToClipboard(siteConfig.social?.qq || '', 'QQ号')} />
+        <SocialBtn type="twitter" surfaceTone={surfaceTone} />
+        <SocialBtn type="xiaohongshu" surfaceTone={surfaceTone} />
       </div>
 
       {/* Stats */}
@@ -65,7 +76,7 @@ function StatItem({ count, label, color }: { count: number; label: string; color
   );
 }
 
-function SocialBtn({ type, onClick }: { type: string; onClick?: () => void }) {
+function SocialBtn({ type, surfaceTone, onClick }: { type: string; surfaceTone: ProfileSurfaceTone; onClick?: () => void }) {
   const urlMap: Record<string, string | undefined> = {
     github: siteConfig.social?.github,
     twitter: siteConfig.social?.twitter,
@@ -82,8 +93,10 @@ function SocialBtn({ type, onClick }: { type: string; onClick?: () => void }) {
       default: return null;
     }
   };
+  const slateClass = "dark:bg-slate-700/50 dark:text-slate-300 dark:hover:bg-indigo-500 dark:hover:text-white";
+  const warmClass = "dark:bg-stone-700/50 dark:text-stone-400 dark:hover:bg-amber-600 dark:hover:text-white";
   const content = (
-    <div onClick={onClick} className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/55 bg-white/55 text-stone-600 shadow-sm transition-all duration-300 hover:bg-amber-500 hover:text-white dark:border-white/10 dark:bg-stone-700/50 dark:text-stone-400 dark:hover:bg-amber-600 dark:hover:text-white" title={type}>
+    <div onClick={onClick} className={`flex h-9 w-9 items-center justify-center rounded-xl border border-white/55 bg-white/55 text-stone-600 shadow-sm transition-colors duration-300 hover:bg-amber-500 hover:text-white dark:border-white/10 ${surfaceTone === 'slate' ? slateClass : warmClass}`} title={type}>
       {getIcon()}
     </div>
   );

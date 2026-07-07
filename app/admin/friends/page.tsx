@@ -1,9 +1,10 @@
 "use client";
 import '../admin.css';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Pagination from '../components/Pagination';
+import { useAdminToast } from '../components/useAdminToast';
 
 interface Friend {
   id: number;
@@ -18,28 +19,28 @@ export default function AdminFriendsPage() {
   const router = useRouter();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { toast, showToast } = useAdminToast();
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 5;
 
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const fetchFriends = async () => {
+  const fetchFriends = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch('/api/admin/friends');
+      const res = await fetch('/api/admin/friends', { signal });
       const data = await res.json();
+      if (signal?.aborted) return;
       if (data.ok) { setFriends(data.data || []); setPage(1); }
     } catch {
-      showToast('error', '加载友链列表失败');
+      if (!signal?.aborted) showToast('error', '加载友链列表失败');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  useEffect(() => { fetchFriends(); }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchFriends(controller.signal);
+    return () => controller.abort();
+  }, [fetchFriends]);
 
   const handleStatus = async (id: number, status: string) => {
     try {

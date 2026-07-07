@@ -1,14 +1,16 @@
 "use client";
 import '../../admin.css';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAdminToast } from '../../components/useAdminToast';
 
 export default function NewMomentPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { toast, showToast } = useAdminToast();
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [form, setForm] = useState({
     content: '',
     mood: '',
@@ -17,10 +19,11 @@ export default function NewMomentPage() {
     status: 'draft',
   });
 
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +37,7 @@ export default function NewMomentPage() {
       const data = await res.json();
       if (data.ok) {
         showToast('success', '说说创建成功');
-        setTimeout(() => router.push('/admin/moments'), 1000);
+        redirectTimerRef.current = setTimeout(() => router.push('/admin/moments'), 1000);
       } else {
         showToast('error', data.message || '创建失败');
       }

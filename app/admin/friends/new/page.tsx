@@ -1,13 +1,15 @@
 "use client";
 import '../../admin.css';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAdminToast } from '../../components/useAdminToast';
 
 export default function NewFriendPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { toast, showToast } = useAdminToast();
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [form, setForm] = useState({
     name: '',
     url: '',
@@ -18,10 +20,11 @@ export default function NewFriendPage() {
     sort_order: 0,
   });
 
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +38,7 @@ export default function NewFriendPage() {
       const data = await res.json();
       if (data.ok) {
         showToast('success', '友链创建成功');
-        setTimeout(() => router.push('/admin/friends'), 1000);
+        redirectTimerRef.current = setTimeout(() => router.push('/admin/friends'), 1000);
       } else {
         showToast('error', data.message || '创建失败');
       }

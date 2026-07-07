@@ -1,14 +1,16 @@
 "use client";
 import '../../admin.css';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAdminToast } from '../../components/useAdminToast';
 
 export default function NewAlbumPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { toast, showToast } = useAdminToast();
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [form, setForm] = useState({
     title: '',
     slug: '',
@@ -18,11 +20,6 @@ export default function NewAlbumPage() {
     status: 'draft',
     sort_order: 0,
   });
-
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   const generateSlug = (title: string) => {
     return title.toLowerCase().replace(/[^a-z0-9一-龥]+/g, '-').replace(/^-+|-+$/g, '');
@@ -36,6 +33,12 @@ export default function NewAlbumPage() {
     }));
   };
 
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -48,7 +51,7 @@ export default function NewAlbumPage() {
       const data = await res.json();
       if (data.ok) {
         showToast('success', '相册创建成功');
-        setTimeout(() => router.push('/admin/albums'), 1000);
+        redirectTimerRef.current = setTimeout(() => router.push('/admin/albums'), 1000);
       } else {
         showToast('error', data.message || '创建失败');
       }

@@ -1,10 +1,11 @@
 "use client";
 import '../admin.css';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Pagination from '../components/Pagination';
+import { useAdminToast } from '../components/useAdminToast';
 
 interface Album {
   id: number;
@@ -20,28 +21,28 @@ export default function AdminAlbumsPage() {
   const router = useRouter();
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { toast, showToast } = useAdminToast();
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 5;
 
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const fetchAlbums = async () => {
+  const fetchAlbums = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch('/api/admin/albums');
+      const res = await fetch('/api/admin/albums', { signal });
       const data = await res.json();
+      if (signal?.aborted) return;
       if (data.ok) { setAlbums(data.data || []); setPage(1); }
     } catch {
-      showToast('error', '加载相册列表失败');
+      if (!signal?.aborted) showToast('error', '加载相册列表失败');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  useEffect(() => { fetchAlbums(); }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchAlbums(controller.signal);
+    return () => controller.abort();
+  }, [fetchAlbums]);
 
   const handleDelete = async (id: number, title: string) => {
     if (!confirm(`确定要删除相册「${title}」吗？相册中的照片也将被删除。`)) return;

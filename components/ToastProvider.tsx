@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 interface Toast { id: number; message: string; type: 'success' | 'error' | 'info'; }
@@ -7,16 +7,31 @@ const ToastContext = createContext({ showToast: (msg: string, type?: 'success' |
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  let nextId = 0;
+  const nextIdRef = useRef(0);
+  const timerRefs = useRef(new Set<ReturnType<typeof setTimeout>>());
 
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    const id = ++nextId;
+    const id = ++nextIdRef.current;
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
+    const timer = setTimeout(() => {
+      timerRefs.current.delete(timer);
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 3000);
+    timerRefs.current.add(timer);
   }, []);
 
+  useEffect(() => {
+    const timers = timerRefs.current;
+    return () => {
+      timers.forEach(clearTimeout);
+      timers.clear();
+    };
+  }, []);
+
+  const value = useMemo(() => ({ showToast }), [showToast]);
+
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={value}>
       {children}
       <div className="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
         <AnimatePresence>

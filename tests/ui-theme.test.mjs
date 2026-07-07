@@ -37,3 +37,27 @@ test("homepage uses soft cream background and wave tokens", async () => {
   assert.match(timeline, /from-amber-500 to-orange-400/);
   assert.match(timeline, /soft-glass-panel block rounded-2xl/);
 });
+
+test("post profile sidebar and theme toggles use synchronized surfaces", async () => {
+  const [globals, profileCard, postPage, themeProvider, layout] = await Promise.all([
+    readFile("app/globals.css", "utf8"),
+    readFile("components/ProfileCard.tsx", "utf8"),
+    readFile("app/posts/[[...slug]]/page.tsx", "utf8"),
+    readFile("components/ThemeProvider.tsx", "utf8"),
+    readFile("app/layout.tsx", "utf8"),
+  ]);
+
+  assert.match(profileCard, /surfaceTone\?:\s*'warm'\s*\|\s*'slate'/);
+  assert.match(profileCard, /soft-glass-panel-slate/);
+  assert.match(postPage, /<ProfileCard showStats=\{false\} surfaceTone="slate" \/>/);
+
+  assert.match(globals, /--theme-transition-duration:\s*640ms/);
+  assert.match(globals, /html\.theme-transitioning \*/);
+  assert.match(globals, /transition-duration:\s*var\(--theme-transition-duration\)\s*!important/);
+  assert.match(globals, /\.dark \.soft-glass-panel-slate/);
+
+  assert.match(themeProvider, /THEME_TRANSITION_MS = 640/);
+  assert.match(themeProvider, /theme-transitioning/);
+  assert.match(themeProvider, /window\.clearTimeout/);
+  assert.doesNotMatch(layout, /theme-transitioning/);
+});

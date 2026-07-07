@@ -1,8 +1,9 @@
 "use client";
 import '../admin.css';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Pagination from '../components/Pagination';
+import { useAdminToast } from '../components/useAdminToast';
 
 interface Song {
   id: string;
@@ -20,31 +21,31 @@ interface Song {
 export default function AdminSongsPage() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { toast, showToast } = useAdminToast();
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ title: '', artist: '', album: '', pic: '', url: '', lrc: '', sort_order: 0 });
   const PAGE_SIZE = 10;
 
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const fetchSongs = async () => {
+  const fetchSongs = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch('/api/admin/songs');
+      const res = await fetch('/api/admin/songs', { signal });
       const data = await res.json();
+      if (signal?.aborted) return;
       if (data.ok) { setSongs(data.data || []); setPage(1); }
     } catch {
-      showToast('error', '加载歌曲列表失败');
+      if (!signal?.aborted) showToast('error', '加载歌曲列表失败');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  useEffect(() => { fetchSongs(); }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchSongs(controller.signal);
+    return () => controller.abort();
+  }, [fetchSongs]);
 
   const resetForm = () => {
     setForm({ title: '', artist: '', album: '', pic: '', url: '', lrc: '', sort_order: 0 });

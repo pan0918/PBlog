@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import VditorEditor, { type VditorEditorHandle } from './VditorEditor';
+import { useAdminToast } from './useAdminToast';
 
 export interface PostEditorCategory {
   id: string;
@@ -43,8 +44,6 @@ interface PostEditorWorkspaceProps {
   cacheId: string;
   autoSlug?: boolean;
 }
-
-const emptyToast: { type: 'success' | 'error'; message: string } | null = null;
 
 function generateSlug(value: string) {
   return value
@@ -89,13 +88,8 @@ export default function PostEditorWorkspace({
   const [newTagSlug, setNewTagSlug] = useState('');
   const [showTagInput, setShowTagInput] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState(emptyToast);
+  const { toast, showToast } = useAdminToast();
   const [isDirty, setIsDirty] = useState(false);
-
-  const showToast = useCallback((type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    window.setTimeout(() => setToast(null), 3000);
-  }, []);
 
   const updateForm = useCallback((patch: Partial<PostEditorForm>) => {
     setForm((current) => ({ ...current, ...patch }));

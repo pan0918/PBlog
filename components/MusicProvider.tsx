@@ -7,6 +7,7 @@ import React, {
   useRef,
   useEffect,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 
@@ -109,6 +110,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const blobUrlRef = useRef<string | null>(null);
   const blobReadyIndexRef = useRef<number | null>(null);
   const blobAbortRef = useRef<AbortController | null>(null);
+  const preparingBlobIndexRef = useRef<number | null>(null);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -128,15 +130,22 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   // Fetch songs from database
   useEffect(() => {
-    fetch('/api/songs')
+    const controller = new AbortController();
+
+    fetch('/api/songs', { signal: controller.signal })
       .then(res => res.json())
       .then((data: Song[]) => {
+        if (controller.signal.aborted) return;
         if (Array.isArray(data) && data.length > 0) {
           setSongs(data);
         }
       })
       .catch(() => {})
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+
+    return () => controller.abort();
   }, []);
 
   // Release the audio decoder when the provider unmounts.
@@ -201,10 +210,55 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
+  const prepareSeekableBlob = useCallback((song: Song, index: number) => {
+    if (blobReadyIndexRef.current === index && blobUrlRef.current) return;
+    if (preparingBlobIndexRef.current === index) return;
+
+    blobAbortRef.current?.abort();
+    const controller = new AbortController();
+    blobAbortRef.current = controller;
+    preparingBlobIndexRef.current = index;
+
+    fetch(song.url, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Failed to prepare seekable audio: ${res.status}`);
+        return res.blob();
+      })
+      .then((blob) => {
+        if (controller.signal.aborted) return;
+        const url = URL.createObjectURL(blob);
+        if (blobUrlRef.current) {
+          URL.revokeObjectURL(blobUrlRef.current);
+        }
+        blobUrlRef.current = url;
+        blobReadyIndexRef.current = index;
+        if (pendingSeekRatioRef.current !== null && currentIndex === index) {
+          pendingPlayRef.current = true;
+          setAudioSrc(url);
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          console.warn("[MusicProvider] Seekable audio fallback failed", error);
+        }
+      })
+      .finally(() => {
+        if (blobAbortRef.current === controller) {
+          blobAbortRef.current = null;
+        }
+        if (preparingBlobIndexRef.current === index) {
+          preparingBlobIndexRef.current = null;
+        }
+      });
+  }, [currentIndex]);
+
   const ensureSeekableSource = useCallback(() => {
     if (blobReadyIndexRef.current !== currentIndex || !blobUrlRef.current) {
       setCurrentLyric("♪ 正在准备跳转 ♪");
       pendingPlayRef.current = true;
+      if (currentSong) {
+        void prepareSeekableBlob(currentSong, currentIndex);
+      }
       return false;
     }
 
@@ -216,7 +270,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
 
     return true;
-  }, [audioSrc, currentIndex]);
+  }, [audioSrc, currentIndex, currentSong, prepareSeekableBlob]);
 
   const switchSong = useCallback((nextIndex: number, shouldPlay: boolean) => {
     if (nextIndex < 0 || nextIndex >= songs.length) return;
@@ -237,6 +291,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (!currentSong) return;
     blobAbortRef.current?.abort();
     blobAbortRef.current = null;
+    preparingBlobIndexRef.current = null;
     if (blobUrlRef.current) {
       URL.revokeObjectURL(blobUrlRef.current);
       blobUrlRef.current = null;
@@ -254,37 +309,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       audio.pause();
       audio.load();
     }
-
-    const controller = new AbortController();
-    blobAbortRef.current = controller;
-
-    fetch(currentSong.url, { signal: controller.signal })
-      .then((res) => {
-        if (!res.ok) throw new Error(`Failed to prepare seekable audio: ${res.status}`);
-        return res.blob();
-      })
-      .then((blob) => {
-        if (controller.signal.aborted) return;
-        const url = URL.createObjectURL(blob);
-        if (blobUrlRef.current) {
-          URL.revokeObjectURL(blobUrlRef.current);
-        }
-        blobUrlRef.current = url;
-        blobReadyIndexRef.current = currentIndex;
-        if (pendingSeekRatioRef.current !== null) {
-          pendingPlayRef.current = true;
-          setAudioSrc(url);
-        }
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted) {
-          console.warn("[MusicProvider] Seekable audio fallback failed", error);
-        }
-      });
-
-    return () => {
-      controller.abort();
-    };
   }, [currentIndex, currentSong]);
 
   // Sync volume
@@ -369,7 +393,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   }, [currentIndex, playMode, requestPlayback, switchSong, songs.length]);
 
   // Controls
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
     if (isPlaying) {
@@ -379,9 +403,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     } else {
       requestPlayback();
     }
-  };
+  }, [isPlaying, requestPlayback]);
 
-  const nextSong = () => {
+  const nextSong = useCallback(() => {
     if (playMode === 'single') {
       const audio = audioRef.current;
       if (audio) {
@@ -393,8 +417,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     } else {
       switchSong((currentIndex + 1) % songs.length, isPlaying);
     }
-  };
-  const prevSong = () => {
+  }, [currentIndex, isPlaying, playMode, requestPlayback, songs.length, switchSong]);
+
+  const prevSong = useCallback(() => {
     if (playMode === 'single') {
       const audio = audioRef.current;
       if (audio) {
@@ -406,9 +431,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     } else {
       switchSong((currentIndex - 1 + songs.length) % songs.length, isPlaying);
     }
-  };
+  }, [currentIndex, isPlaying, playMode, requestPlayback, songs.length, switchSong]);
 
-  const handleSeek = (time: number) => {
+  const handleSeek = useCallback((time: number) => {
     const audio = audioRef.current;
     const ratio = Math.max(0, Math.min(100, time)) / 100;
     pendingSeekRatioRef.current = ratio;
@@ -427,24 +452,29 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       }
     }
     requestPlayback();
-  };
+  }, [ensureSeekableSource, lyricAt, requestPlayback]);
 
-  const playSong = (index: number) => {
+  const playSong = useCallback((index: number) => {
     if (index < 0 || index >= songs.length) return;
     if (index === currentIndex) {
       requestPlayback();
       return;
     }
     switchSong(index, true);
-  };
+  }, [currentIndex, requestPlayback, songs.length, switchSong]);
 
-  const setVolume = (v: number) => { setVolumeState(Math.min(1, Math.max(0, v))); setIsMuted(false); };
-  const toggleMute = () => setIsMuted((prev) => !prev);
-  const togglePlayMode = () => setPlayMode((prev) => prev === "loop" ? "single" : prev === "single" ? "random" : "loop");
+  const setVolume = useCallback((v: number) => {
+    setVolumeState(Math.min(1, Math.max(0, v)));
+    setIsMuted(false);
+  }, []);
+  const toggleMute = useCallback(() => setIsMuted((prev) => !prev), []);
+  const togglePlayMode = useCallback(() => {
+    setPlayMode((prev) => prev === "loop" ? "single" : prev === "single" ? "random" : "loop");
+  }, []);
 
   // -- Context value --
 
-  const value: MusicContextValue = {
+  const value: MusicContextValue = useMemo(() => ({
     playlist: songs,
     currentIndex,
     currentSong,
@@ -466,7 +496,28 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setVolume,
     toggleMute,
     togglePlayMode,
-  };
+  }), [
+    songs,
+    currentIndex,
+    currentSong,
+    isPlaying,
+    progress,
+    currentTime,
+    duration,
+    currentLyric,
+    isLoading,
+    volume,
+    isMuted,
+    playMode,
+    togglePlay,
+    nextSong,
+    prevSong,
+    handleSeek,
+    playSong,
+    setVolume,
+    toggleMute,
+    togglePlayMode,
+  ]);
 
   return (
     <MusicContext.Provider value={value}>

@@ -16,6 +16,7 @@ import PageTransition from '../../components/PageTransition';
 import AboutClient from '../../components/AboutClient';
 import { Suspense } from 'react';
 import { db } from '../../lib/db';
+import { katexOptions } from '../../lib/markdown';
 
 export default async function AboutPage() {
   const fullPath = path.join(process.cwd(), 'app', 'about', 'about.md');
@@ -40,7 +41,7 @@ export default async function AboutPage() {
       .use(remarkRehype, { allowDangerousHtml: true })
       // @ts-ignore
       .use(rehypeHighlight, { detect: true, ignoreMissing: true, subset: ['cpp', 'c', 'python', 'java', 'javascript', 'typescript', 'go', 'rust', 'bash', 'json', 'html', 'css', 'sql', 'xml'] })
-      .use(rehypeKatex).use(rehypeStringify, { allowDangerousHtml: true })
+      .use(rehypeKatex, katexOptions).use(rehypeStringify, { allowDangerousHtml: true })
       .process(content);
     contentHtml = processedContent.toString();
   } catch (e) {}

@@ -1,9 +1,10 @@
 "use client";
 import '../../../admin.css';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
+import { useAdminToast } from '../../../components/useAdminToast';
 
 export default function EditProjectPage() {
   const router = useRouter();
@@ -11,7 +12,8 @@ export default function EditProjectPage() {
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { toast, showToast } = useAdminToast();
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [form, setForm] = useState({
     title: '',
     slug: '',
@@ -23,16 +25,19 @@ export default function EditProjectPage() {
     sort_order: 0,
   });
 
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchProject = async () => {
       try {
-        const res = await fetch(`/api/admin/projects/${id}`);
+        const res = await fetch(`/api/admin/projects/${id}`, { signal: controller.signal });
         const data = await res.json();
+        if (controller.signal.aborted) return;
         if (data.ok && data.data) {
           const p = data.data;
           setForm({
@@ -49,13 +54,14 @@ export default function EditProjectPage() {
           showToast('error', '项目不存在');
         }
       } catch {
-        showToast('error', '加载项目失败');
+        if (!controller.signal.aborted) showToast('error', '加载项目失败');
       } finally {
-        setFetching(false);
+        if (!controller.signal.aborted) setFetching(false);
       }
     };
     fetchProject();
-  }, [id]);
+    return () => controller.abort();
+  }, [id, showToast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +75,7 @@ export default function EditProjectPage() {
       const data = await res.json();
       if (data.ok) {
         showToast('success', '项目更新成功');
-        setTimeout(() => router.push('/admin/projects'), 1000);
+        redirectTimerRef.current = setTimeout(() => router.push('/admin/projects'), 1000);
       } else {
         showToast('error', data.message || '更新失败');
       }

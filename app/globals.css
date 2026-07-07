@@ -22,6 +22,8 @@
     --surface-glass-strong: rgba(255, 252, 247, 0.8);
     --surface-border: rgba(255, 255, 255, 0.72);
     --shadow-soft: 0 22px 70px rgba(126, 91, 64, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.58);
+    --theme-transition-duration: 640ms;
+    --theme-transition-easing: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   body {
@@ -75,6 +77,14 @@
   -webkit-backdrop-filter: blur(22px) saturate(145%);
 }
 
+.soft-glass-panel-slate {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 20px 55px rgba(126, 91, 64, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.52);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+}
+
 .dark .soft-glass-panel {
   background: rgba(64, 52, 45, 0.46);
   border-color: rgba(255, 246, 235, 0.14);
@@ -85,6 +95,29 @@
   background: rgba(52, 42, 36, 0.48);
   border-color: rgba(255, 246, 235, 0.16);
   box-shadow: 0 22px 72px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.dark .soft-glass-panel-slate {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 22px 70px rgba(15, 23, 42, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow !important;
+  transition-duration: var(--theme-transition-duration) !important;
+  transition-timing-function: var(--theme-transition-easing) !important;
+  transition-delay: 0ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-transitioning *,
+  html.theme-transitioning *::before,
+  html.theme-transitioning *::after {
+    transition-duration: 1ms !important;
+  }
 }
 
 .warm-page-surface {

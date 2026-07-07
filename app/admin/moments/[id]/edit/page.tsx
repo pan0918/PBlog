@@ -1,9 +1,10 @@
 "use client";
 import '../../../admin.css';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
+import { useAdminToast } from '../../../components/useAdminToast';
 
 export default function EditMomentPage() {
   const router = useRouter();
@@ -11,7 +12,8 @@ export default function EditMomentPage() {
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { toast, showToast } = useAdminToast();
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [form, setForm] = useState({
     content: '',
     mood: '',
@@ -20,16 +22,19 @@ export default function EditMomentPage() {
     status: 'draft',
   });
 
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchMoment = async () => {
       try {
-        const res = await fetch(`/api/admin/moments/${id}`);
+        const res = await fetch(`/api/admin/moments/${id}`, { signal: controller.signal });
         const data = await res.json();
+        if (controller.signal.aborted) return;
         if (data.ok && data.data) {
           const m = data.data;
           setForm({
@@ -43,13 +48,14 @@ export default function EditMomentPage() {
           showToast('error', '说说不存在');
         }
       } catch {
-        showToast('error', '加载说说失败');
+        if (!controller.signal.aborted) showToast('error', '加载说说失败');
       } finally {
-        setFetching(false);
+        if (!controller.signal.aborted) setFetching(false);
       }
     };
     fetchMoment();
-  }, [id]);
+    return () => controller.abort();
+  }, [id, showToast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +69,7 @@ export default function EditMomentPage() {
       const data = await res.json();
       if (data.ok) {
         showToast('success', '说说更新成功');
-        setTimeout(() => router.push('/admin/moments'), 1000);
+        redirectTimerRef.current = setTimeout(() => router.push('/admin/moments'), 1000);
       } else {
         showToast('error', data.message || '更新失败');
       }

@@ -1,10 +1,11 @@
 "use client";
 import '../admin.css';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Pagination from '../components/Pagination';
+import { useAdminToast } from '../components/useAdminToast';
 
 interface Moment {
   id: number;
@@ -20,28 +21,28 @@ export default function AdminMomentsPage() {
   const router = useRouter();
   const [moments, setMoments] = useState<Moment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { toast, showToast } = useAdminToast();
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 5;
 
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const fetchMoments = async () => {
+  const fetchMoments = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch('/api/admin/moments');
+      const res = await fetch('/api/admin/moments', { signal });
       const data = await res.json();
+      if (signal?.aborted) return;
       if (data.ok) { setMoments(data.data || []); setPage(1); }
     } catch {
-      showToast('error', '加载说说列表失败');
+      if (!signal?.aborted) showToast('error', '加载说说列表失败');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  useEffect(() => { fetchMoments(); }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchMoments(controller.signal);
+    return () => controller.abort();
+  }, [fetchMoments]);
 
   const handleDelete = async (id: number) => {
     if (!confirm('确定要删除这条说说吗？')) return;
