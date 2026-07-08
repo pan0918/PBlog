@@ -8,8 +8,10 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { musicPlaybackStore } from "../lib/music-playback-store";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,10 +41,6 @@ interface MusicContextValue {
   currentIndex: number;
   currentSong: Song;
   isPlaying: boolean;
-  progress: number;
-  currentTime: number;
-  duration: number;
-  currentLyric: string;
   isLoading: boolean;
   volume: number;
   isMuted: boolean;
@@ -58,15 +56,7 @@ interface MusicContextValue {
   togglePlayMode: () => void;
 }
 
-// ---------------------------------------------------------------------------
-// Songs are loaded from the database via /api/songs
-// ---------------------------------------------------------------------------
-
 const FALLBACK_SONGS: Song[] = [];
-
-// ---------------------------------------------------------------------------
-// LRC parser
-// ---------------------------------------------------------------------------
 
 function parseLrc(lrc: string): LyricLine[] {
   const lines = lrc.split("\n");
@@ -92,15 +82,7 @@ function parseLrc(lrc: string): LyricLine[] {
   return result;
 }
 
-// ---------------------------------------------------------------------------
-// Context
-// ---------------------------------------------------------------------------
-
 const MusicContext = createContext<MusicContextValue | null>(null);
-
-// ---------------------------------------------------------------------------
-// Provider
-// ---------------------------------------------------------------------------
 
 export function MusicProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -115,10 +97,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [progress, setProgress] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [currentLyric, setCurrentLyric] = useState("");
   const [volume, setVolumeState] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [playMode, setPlayMode] = useState<PlayMode>("loop");
@@ -128,7 +106,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const currentSong = songs[currentIndex];
 
-  // Fetch songs from database
   useEffect(() => {
     const controller = new AbortController();
 
@@ -148,7 +125,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     return () => controller.abort();
   }, []);
 
-  // Release the audio decoder when the provider unmounts.
   useEffect(() => {
     const audio = audioRef.current;
     return () => {
@@ -165,27 +141,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Keep music playing when page is hidden, but pause visual updates
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      const audio = audioRef.current;
-      if (!audio) return;
-
-      if (document.hidden) {
-        // Page is hidden - music continues, but we can reduce update frequency
-        // The audio element will continue playing automatically
-        console.log('[MusicProvider] Page hidden, music continues playing');
-      } else {
-        // Page is visible again - resume normal updates
-        console.log('[MusicProvider] Page visible, resuming normal updates');
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  // Parse lyrics when song changes
   useEffect(() => {
     if (currentSong) setParsedLyrics(parseLrc(currentSong.lrc));
   }, [currentSong]);
@@ -195,13 +150,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const lyricAt = useCallback((time: number) => {
     for (let i = parsedLyrics.length - 1; i >= 0; i--) {
       if (time >= parsedLyrics[i].time) {
-        const lyric = parsedLyrics[i].text;
-        // Only return new lyric if it's different from the last one
-        if (lyric !== lastLyricRef.current) {
-          lastLyricRef.current = lyric;
-          return lyric;
-        }
-        return ""; // Return empty to avoid unnecessary state update
+        return parsedLyrics[i].text;
       }
     }
     return "";
@@ -214,9 +163,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
     const target = Math.max(0, Math.min(1, ratio)) * dur;
     audio.currentTime = target;
-    setCurrentTime(target);
-    setProgress(ratio * 100);
-    setCurrentLyric(lyricAt(target));
+    const lyric = lyricAt(target);
+    lastLyricRef.current = lyric;
+    musicPlaybackStore.update({
+      currentTime: target,
+      progress: ratio * 100,
+      duration: dur,
+      currentLyric: lyric || musicPlaybackStore.getSnapshot().currentLyric,
+    });
     pendingSeekRatioRef.current = null;
   }, [lyricAt]);
 
@@ -282,7 +236,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const ensureSeekableSource = useCallback(() => {
     if (blobReadyIndexRef.current !== currentIndex || !blobUrlRef.current) {
-      setCurrentLyric("♪ 正在准备跳转 ♪");
+      musicPlaybackStore.update({ currentLyric: "♪ 正在准备跳转 ♪" });
       pendingPlayRef.current = true;
       if (currentSong) {
         void prepareSeekableBlob(currentSong, currentIndex);
@@ -291,7 +245,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
 
     if (audioSrc !== blobUrlRef.current) {
-      setCurrentLyric("♪ 正在定位 ♪");
+      musicPlaybackStore.update({ currentLyric: "♪ 正在定位 ♪" });
       pendingPlayRef.current = true;
       setAudioSrc(blobUrlRef.current);
       return false;
@@ -314,7 +268,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setCurrentIndex(nextIndex);
   }, [requestPlayback, songs.length]);
 
-  // Reset visible state and make the audio element load only metadata for the new track.
   useEffect(() => {
     if (!currentSong) return;
     blobAbortRef.current?.abort();
@@ -326,10 +279,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
     blobReadyIndexRef.current = null;
 
-    setDuration(0);
-    setCurrentTime(0);
-    setProgress(0);
-    setCurrentLyric("♪ 正在缓冲 ♪");
+    lastLyricRef.current = "";
+    musicPlaybackStore.reset({ currentLyric: "♪ 正在缓冲 ♪" });
     setAudioSrc(currentSong.url);
 
     const audio = audioRef.current;
@@ -339,7 +290,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [currentIndex, currentSong]);
 
-  // Sync volume
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = isMuted ? 0 : volume;
   }, [volume, isMuted]);
@@ -347,7 +297,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const lastUpdateTimeRef = useRef(0);
   const isPageVisibleRef = useRef(true);
 
-  // Track page visibility
   useEffect(() => {
     const handleVisibilityChange = () => {
       isPageVisibleRef.current = !document.hidden;
@@ -360,21 +309,23 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     const audio = audioRef.current;
     if (!audio) return;
 
-    // Throttle updates more aggressively when page is hidden
     const now = performance.now();
-    const throttleMs = isPageVisibleRef.current ? 250 : 2000; // 2s when hidden
+    const throttleMs = isPageVisibleRef.current ? 500 : 2000;
     if (now - lastUpdateTimeRef.current < throttleMs) return;
     lastUpdateTimeRef.current = now;
 
     const t = audio.currentTime;
     const dur = audio.duration;
-    setCurrentTime(t);
+    const playbackPatch: Partial<ReturnType<typeof musicPlaybackStore.getSnapshot>> = {
+      currentTime: t,
+    };
+
     if (dur && isFinite(dur)) {
-      setDuration(dur);
+      playbackPatch.duration = dur;
       if (dur > 0) {
-        setProgress((t / dur) * 100);
+        playbackPatch.progress = (t / dur) * 100;
       }
-      // Detect song end manually (more reliable than onEnded)
+
       if (dur > 0 && t >= dur - 0.3 && !endedRef.current) {
         endedRef.current = true;
         if (playMode === "single") {
@@ -391,19 +342,22 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         endedRef.current = false;
       }
     }
+
     const nextLyric = lyricAt(t);
-    if (nextLyric && nextLyric !== currentLyric) {
-      setCurrentLyric(nextLyric);
+    if (nextLyric && nextLyric !== lastLyricRef.current) {
+      lastLyricRef.current = nextLyric;
+      playbackPatch.currentLyric = nextLyric;
     }
+
+    musicPlaybackStore.update(playbackPatch);
   };
 
-  // Get duration immediately when metadata loads (faster than timeupdate)
   const handleLoadedMetadata = () => {
     const audio = audioRef.current;
     if (!audio) return;
     const dur = audio.duration;
     if (dur && isFinite(dur)) {
-      setDuration(dur);
+      musicPlaybackStore.update({ duration: dur });
       applyPendingSeek(audio);
     }
   };
@@ -439,7 +393,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [currentIndex, playMode, requestPlayback, switchSong, songs.length]);
 
-  // Controls
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -484,7 +437,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     const audio = audioRef.current;
     const ratio = Math.max(0, Math.min(100, time)) / 100;
     pendingSeekRatioRef.current = ratio;
-    setProgress(ratio * 100);
+    musicPlaybackStore.update({ progress: ratio * 100 });
 
     if (!ensureSeekableSource()) return;
 
@@ -493,8 +446,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       if (dur && isFinite(dur)) {
         const target = ratio * dur;
         audio.currentTime = target;
-        setCurrentTime(target);
-        setCurrentLyric(lyricAt(target));
+        const lyric = lyricAt(target);
+        lastLyricRef.current = lyric;
+        musicPlaybackStore.update({
+          currentTime: target,
+          currentLyric: lyric || musicPlaybackStore.getSnapshot().currentLyric,
+        });
         pendingSeekRatioRef.current = null;
       }
     }
@@ -519,17 +476,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setPlayMode((prev) => prev === "loop" ? "single" : prev === "single" ? "random" : "loop");
   }, []);
 
-  // -- Context value --
-
   const value: MusicContextValue = useMemo(() => ({
     playlist: songs,
     currentIndex,
     currentSong,
     isPlaying,
-    progress,
-    currentTime,
-    duration,
-    currentLyric,
     isLoading,
     volume,
     isMuted,
@@ -548,10 +499,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     currentIndex,
     currentSong,
     isPlaying,
-    progress,
-    currentTime,
-    duration,
-    currentLyric,
     isLoading,
     volume,
     isMuted,
@@ -585,14 +532,18 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Hook
-// ---------------------------------------------------------------------------
-
 export function useMusic(): MusicContextValue {
   const ctx = useContext(MusicContext);
   if (!ctx) {
     throw new Error("useMusic must be used within a MusicProvider");
   }
   return ctx;
+}
+
+export function useMusicPlayback() {
+  return useSyncExternalStore(
+    musicPlaybackStore.subscribe,
+    musicPlaybackStore.getSnapshot,
+    musicPlaybackStore.getSnapshot,
+  );
 }

@@ -22,13 +22,12 @@ export default function Sakura() {
     });
   }, [mounted, petalsCount]);
 
-  // Reduce petals when page is hidden
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        setPetalsCount(3); // Keep only 3 petals
+        setPetalsCount(3);
       } else {
-        setPetalsCount(8); // Restore all petals
+        setPetalsCount(8);
       }
     };
 

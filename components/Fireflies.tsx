@@ -31,12 +31,11 @@ export default function Fireflies() {
     }));
     setFlies(generated);
 
-    // Reduce particles when page is hidden
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        setFlies(prev => prev.slice(0, 5)); // Keep only 5 particles
+        setFlies(prev => prev.slice(0, 5));
       } else {
-        setFlies(generated); // Restore all particles
+        setFlies(generated);
       }
     };
 

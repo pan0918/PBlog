@@ -52,7 +52,6 @@
   }
 
   [class*="backdrop-blur-"] {
-    will-change: backdrop-filter;
     -webkit-backdrop-filter: blur(12px);
   }
 
@@ -65,8 +64,8 @@
   background: var(--surface-glass);
   border: 1px solid var(--surface-border);
   box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(18px) saturate(135%);
-  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
 }
 
 .soft-glass-panel-strong {
@@ -249,9 +248,6 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 /* ---- Page Visibility: Pause animations when page is hidden ---- */
-/* When the user switches to another tab or minimizes the browser, */
-/* all CSS animations are paused to save CPU/GPU resources and reduce heat. */
-/* Music playback continues normally (audio element is not affected by CSS). */
 html.page-hidden *,
 html.page-hidden *::before,
 html.page-hidden *::after {

@@ -1,31 +1,22 @@
 "use client";
-import { useEffect, useState } from 'react';
-import { useMusic } from './MusicProvider';
+import { memo, useState } from 'react';
+import { useMusic, useMusicPlayback } from './MusicProvider';
 import { useRouter } from 'next/navigation';
-import { formatTime } from '../lib/utils';
+import MusicProgressBar from './MusicProgressBar';
+
+const CloudPlayerLyric = memo(function CloudPlayerLyric() {
+  const { currentLyric } = useMusicPlayback();
+  if (!currentLyric) return null;
+  return (
+    <div className="relative z-10 mb-2 h-6 overflow-hidden">
+      <p className="truncate text-xs font-bold text-amber-600 dark:text-amber-400">{currentLyric}</p>
+    </div>
+  );
+});
 
 export default function CloudPlayer() {
-  const { playlist, currentSong, isPlaying, progress, currentTime, duration, currentLyric, isLoading, togglePlay, nextSong, prevSong, handleSeek, playMode, togglePlayMode, volume, setVolume, isMuted, toggleMute } = useMusic();
-  const [displayedLyric, setDisplayedLyric] = useState("");
-  const [showVolume, setShowVolume] = useState(false);
+  const { playlist, currentSong, isPlaying, isLoading, togglePlay, nextSong, prevSong, playMode, togglePlayMode, volume, setVolume, isMuted, toggleMute } = useMusic();
   const router = useRouter();
-
-  useEffect(() => {
-    let i = 0;
-    setDisplayedLyric("");
-    const target = currentLyric || "";
-    if (!target) return;
-
-    // Use faster typing when page is visible, slower when hidden
-    const isPageHidden = document.hidden;
-    const typingSpeed = isPageHidden ? 200 : 80;
-
-    const typingInterval = setInterval(() => {
-      if (i <= target.length) { setDisplayedLyric(target.slice(0, i)); i++; }
-      else clearInterval(typingInterval);
-    }, typingSpeed);
-    return () => clearInterval(typingInterval);
-  }, [currentLyric]);
 
   if (isLoading) {
     return (
@@ -50,7 +41,6 @@ export default function CloudPlayer() {
   const safeTogglePlay = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); togglePlay(); };
   const safePrevSong = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); prevSong(); };
   const safeNextSong = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); nextSong(); };
-  const safeHandleSeek = (e: React.ChangeEvent<HTMLInputElement>) => { e.stopPropagation(); handleSeek(Number(e.target.value)); };
   const safeTogglePlayMode = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); togglePlayMode(); };
   const safeSetVolume = (e: React.ChangeEvent<HTMLInputElement>) => { e.stopPropagation(); setVolume(Number(e.target.value)); };
 
@@ -91,7 +81,7 @@ export default function CloudPlayer() {
       <div className={`absolute -right-20 -top-20 h-48 w-48 rounded-full bg-amber-300/22 blur-[50px] transition-opacity duration-1000 ${isPlaying ? 'opacity-100' : 'opacity-35'}`}></div>
 
       <div className="flex items-center gap-5 relative z-10 mb-6 mt-2">
-        <div className="w-20 h-20 rounded-full border-2 border-white/50 shadow-lg flex-shrink-0 overflow-hidden relative animate-[spin_8s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
+        <div className="w-20 h-20 rounded-full border-2 border-white/50 shadow-lg flex-shrink-0 overflow-hidden relative animate-[spin_12s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
           {currentSong.pic && <img src={currentSong.pic} alt="cover" className="w-full h-full object-cover" referrerPolicy="no-referrer" />}
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white/80 backdrop-blur-sm rounded-full border border-gray-300 shadow-inner"></div>
@@ -103,23 +93,18 @@ export default function CloudPlayer() {
         </div>
       </div>
 
-      <div className="relative z-10 mb-2 h-6 overflow-hidden">
-        <p className="truncate text-xs font-bold text-amber-600 dark:text-amber-400">{displayedLyric}</p>
-      </div>
+      <CloudPlayerLyric />
 
-      <div className="relative z-10 mt-auto">
-        <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 font-bold mb-3" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} onPointerDown={(e) => e.stopPropagation()}>
-          <span className="w-10 text-right">{formatTime(currentTime)}</span>
-          <input type="range" min="0" max="100" value={progress} onChange={safeHandleSeek} className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-white/40 shadow-inner outline-none dark:bg-stone-700/50" style={{ background: `linear-gradient(to right, #d68a3a ${progress}%, rgba(184,111,43,0.22) ${progress}%)` }} />
-          <span className="w-10">{formatTime(duration)}</span>
-        </div>
+      <div className="relative z-10 mt-auto" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+        <MusicProgressBar
+          containerClassName="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 font-bold mb-3"
+          rangeClassName="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-white/40 shadow-inner outline-none dark:bg-stone-700/50"
+        />
         <div className="flex items-center justify-between px-2">
-          {/* Play Mode */}
           <button onClick={safeTogglePlayMode} className="relative z-20 p-1 text-stone-700 transition-colors hover:text-amber-600 dark:text-stone-300 dark:hover:text-amber-400" title={playMode === 'loop' ? '顺序播放' : playMode === 'single' ? '单曲循环' : '随机播放'}>
             {getModeIcon()}
           </button>
 
-          {/* Prev / Play / Next */}
           <div className="flex items-center gap-5">
             <button onClick={safePrevSong} className="relative z-20 text-stone-700 transition-colors hover:text-amber-600 dark:text-stone-300 dark:hover:text-amber-400">
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
@@ -132,22 +117,43 @@ export default function CloudPlayer() {
             </button>
           </div>
 
-          {/* Volume */}
-          <div className="flex items-center relative z-20" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-            {showVolume && (
-              <div className="absolute bottom-full right-0 mb-2 w-24 rounded-full border border-white/40 bg-white/80 px-3 py-2 shadow-lg dark:border-white/10 dark:bg-stone-800/80" onMouseLeave={() => setShowVolume(false)}>
-                <input type="range" min="0" max="1" step="0.01" value={isMuted ? 0 : volume} onChange={safeSetVolume} className="h-1 w-full cursor-pointer appearance-none rounded-full" style={{ background: `linear-gradient(to right, #d68a3a ${(isMuted ? 0 : volume) * 100}%, rgba(184,111,43,0.22) ${(isMuted ? 0 : volume) * 100}%)` }} />
-              </div>
-            )}
-            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowVolume(!showVolume); }} onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMute(); }} className="p-1 text-stone-700 transition-colors hover:text-amber-600 dark:text-stone-300 dark:hover:text-amber-400">
-              {isMuted || volume === 0
-                ? <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
-                : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-              }
-            </button>
-          </div>
+          <VolumeControl
+            volume={volume}
+            isMuted={isMuted}
+            onSetVolume={safeSetVolume}
+            onToggleMute={toggleMute}
+          />
         </div>
       </div>
+    </div>
+  );
+}
+
+function VolumeControl({
+  volume,
+  isMuted,
+  onSetVolume,
+  onToggleMute,
+}: {
+  volume: number;
+  isMuted: boolean;
+  onSetVolume: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onToggleMute: () => void;
+}) {
+  const [showVolume, setShowVolume] = useState(false);
+  return (
+    <div className="flex items-center relative z-20" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      {showVolume && (
+        <div className="absolute bottom-full right-0 mb-2 w-24 rounded-full border border-white/40 bg-white/80 px-3 py-2 shadow-lg dark:border-white/10 dark:bg-stone-800/80" onMouseLeave={() => setShowVolume(false)}>
+          <input type="range" min="0" max="1" step="0.01" value={isMuted ? 0 : volume} onChange={onSetVolume} className="h-1 w-full cursor-pointer appearance-none rounded-full" style={{ background: `linear-gradient(to right, #d68a3a ${(isMuted ? 0 : volume) * 100}%, rgba(184,111,43,0.22) ${(isMuted ? 0 : volume) * 100}%)` }} />
+        </div>
+      )}
+      <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowVolume(!showVolume); }} onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleMute(); }} className="p-1 text-stone-700 transition-colors hover:text-amber-600 dark:text-stone-300 dark:hover:text-amber-400">
+        {isMuted || volume === 0
+          ? <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+          : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+        }
+      </button>
     </div>
   );
 }

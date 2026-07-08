@@ -24,13 +24,12 @@ export default function WindyGrass() {
     });
   }, [mounted, bladesCount]);
 
-  // Reduce blades when page is hidden
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        setBladesCount(10); // Keep only 10 blades
+        setBladesCount(10);
       } else {
-        setBladesCount(30); // Restore all blades
+        setBladesCount(30);
       }
     };
 

@@ -2,15 +2,16 @@
 import { useEffect, useRef, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMusic, type Song, type LyricLine } from '../../components/MusicProvider';
+import { useMusic, useMusicPlayback, type Song, type LyricLine } from '../../components/MusicProvider';
 import { formatTime } from '../../lib/utils';
 
 export default function MusicClient() {
   const {
-    playlist, currentIndex, currentSong, isPlaying, progress, currentTime, duration, currentLyric,
+    playlist, currentIndex, currentSong, isPlaying,
     isLoading, togglePlay, nextSong, prevSong, handleSeek,
     playSong, playMode, togglePlayMode, volume, setVolume, isMuted, toggleMute,
   } = useMusic();
+  const { progress, currentTime, duration, currentLyric } = useMusicPlayback();
 
   const lyricContainerRef = useRef<HTMLDivElement>(null);
   const activeLyricRef = useRef<HTMLDivElement>(null);
