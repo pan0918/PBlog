@@ -14,7 +14,7 @@ const MAX_DANMAKU_ITEMS = 4;
 export default function DanmakuBackground() {
   const [items, setItems] = useState<DanmakuItem[]>([]);
   const counterRef = useRef(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     const list = siteConfig.danmakuList;
