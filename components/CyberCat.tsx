@@ -129,28 +129,52 @@ export default function CyberCat() {
     setConfig(loadConfig());
     setMessages(loadHistory());
     setIdlePhrase(IDLE_PHRASES[Math.floor(Math.random() * IDLE_PHRASES.length)]);
-    const t = setInterval(() => setIdlePhrase(IDLE_PHRASES[Math.floor(Math.random() * IDLE_PHRASES.length)]), 10000);
+
+    // Reduce idle phrase updates when page is hidden
+    const idleInterval = document.hidden ? 30000 : 10000; // 3x slower when hidden
+    const t = setInterval(() => setIdlePhrase(IDLE_PHRASES[Math.floor(Math.random() * IDLE_PHRASES.length)]), idleInterval);
     return () => clearInterval(t);
   }, []);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isTyping]);
-
-  // Proactive
   useEffect(() => {
+    // Only scroll when page is visible
+    if (!document.hidden) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isTyping]);
+
+  // Re-scroll when page becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // Proactive - reduce frequency when page is hidden
+  useEffect(() => {
+    const proactiveInterval = siteConfig.petConfig.proactiveInterval;
+
     const t = setInterval(() => {
       if (document.hidden || isOpen) return;
       const msgs = siteConfig.petConfig.proactiveMessages;
       setProactiveMsg(msgs[Math.floor(Math.random() * msgs.length)]);
       setMood('talk');
       scheduleTimeout(() => { setProactiveMsg(null); setMood('idle'); }, 5000);
-    }, siteConfig.petConfig.proactiveInterval);
+    }, document.hidden ? proactiveInterval * 3 : proactiveInterval); // 3x slower when hidden
+
     return () => clearInterval(t);
   }, [isOpen, scheduleTimeout]);
 
-  // Sleep when idle
+  // Sleep when idle - faster sleep when page is hidden
   useEffect(() => {
     if (isOpen || isHovered || proactiveMsg) { if (mood === 'sleep') setMood('idle'); return; }
-    const t = setTimeout(() => setMood('sleep'), 30000);
+    const sleepDelay = document.hidden ? 10000 : 30000; // Sleep faster when hidden
+    const t = setTimeout(() => setMood('sleep'), sleepDelay);
     return () => clearTimeout(t);
   }, [isOpen, isHovered, proactiveMsg, mood]);
 

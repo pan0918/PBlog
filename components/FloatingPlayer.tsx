@@ -19,8 +19,8 @@ export default function FloatingPlayer() {
       dragConstraints={{ left: -300, right: 0, top: -500, bottom: 0 }}
       className="fixed bottom-6 right-6 z-[55] w-72 select-none"
     >
-      <div className="rounded-2xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-2xl p-3 flex items-center gap-3 cursor-grab active:cursor-grabbing">
-        <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 animate-[spin_6s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
+      <div className="rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-white/40 dark:border-white/10 shadow-2xl p-3 flex items-center gap-3 cursor-grab active:cursor-grabbing">
+        <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 animate-[spin_8s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
           {currentSong.pic ? (
             <Image
               src={currentSong.pic}

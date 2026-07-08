@@ -18,7 +18,7 @@ export default function Fireflies() {
   const [flies, setFlies] = useState<Firefly[]>([]);
 
   useEffect(() => {
-    const generated: Firefly[] = Array.from({ length: 50 }).map((_, i) => ({
+    const generated: Firefly[] = Array.from({ length: 15 }).map((_, i) => ({
       id: i,
       top: `${Math.random() * 100}%`,
       left: `${Math.random() * 100}%`,
@@ -30,10 +30,22 @@ export default function Fireflies() {
       floatPath: `float${Math.floor(Math.random() * 4) + 1}`,
     }));
     setFlies(generated);
+
+    // Reduce particles when page is hidden
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setFlies(prev => prev.slice(0, 5)); // Keep only 5 particles
+      } else {
+        setFlies(generated); // Restore all particles
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   return (
-    <div className="fixed inset-0 w-full h-full pointer-events-none z-10 overflow-hidden mix-blend-screen">
+    <div className="fixed inset-0 w-full h-full pointer-events-none z-10 overflow-hidden mix-blend-screen" style={{ contain: 'strict' }}>
       <style>{`
         @keyframes fireflyBreathe {
           0%, 100% {

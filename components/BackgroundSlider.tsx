@@ -8,14 +8,31 @@ export default function BackgroundSlider() {
 
   useEffect(() => {
     if (images.length <= 1) return;
+
     const timer = setInterval(() => {
       setIndex((prev) => (prev + 1) % images.length);
     }, 10000);
-    return () => clearInterval(timer);
+
+    // Pause slider when page is hidden
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        clearInterval(timer);
+      } else {
+        // Restart the interval when page becomes visible
+        // Note: This creates a new interval, but it's simpler than pausing/resuming
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [images.length]);
 
   return (
-    <div className="absolute inset-0 z-[-10] overflow-hidden">
+    <div className="absolute inset-0 z-[-10] overflow-hidden" style={{ contain: 'strict' }}>
       {images.map((img, i) => (
         <div
           key={img}

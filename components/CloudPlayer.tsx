@@ -15,10 +15,15 @@ export default function CloudPlayer() {
     setDisplayedLyric("");
     const target = currentLyric || "";
     if (!target) return;
+
+    // Use faster typing when page is visible, slower when hidden
+    const isPageHidden = document.hidden;
+    const typingSpeed = isPageHidden ? 200 : 80;
+
     const typingInterval = setInterval(() => {
       if (i <= target.length) { setDisplayedLyric(target.slice(0, i)); i++; }
       else clearInterval(typingInterval);
-    }, 50);
+    }, typingSpeed);
     return () => clearInterval(typingInterval);
   }, [currentLyric]);
 
@@ -86,7 +91,7 @@ export default function CloudPlayer() {
       <div className={`absolute -right-20 -top-20 h-48 w-48 rounded-full bg-amber-300/22 blur-[50px] transition-opacity duration-1000 ${isPlaying ? 'opacity-100' : 'opacity-35'}`}></div>
 
       <div className="flex items-center gap-5 relative z-10 mb-6 mt-2">
-        <div className="w-20 h-20 rounded-full border-2 border-white/50 shadow-lg flex-shrink-0 overflow-hidden relative animate-[spin_6s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused', willChange: 'transform' }}>
+        <div className="w-20 h-20 rounded-full border-2 border-white/50 shadow-lg flex-shrink-0 overflow-hidden relative animate-[spin_8s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
           {currentSong.pic && <img src={currentSong.pic} alt="cover" className="w-full h-full object-cover" referrerPolicy="no-referrer" />}
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white/80 backdrop-blur-sm rounded-full border border-gray-300 shadow-inner"></div>
@@ -130,7 +135,7 @@ export default function CloudPlayer() {
           {/* Volume */}
           <div className="flex items-center relative z-20" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
             {showVolume && (
-              <div className="absolute bottom-full right-0 mb-2 w-24 rounded-full border border-white/40 bg-white/65 px-3 py-2 shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-stone-800/60" onMouseLeave={() => setShowVolume(false)}>
+              <div className="absolute bottom-full right-0 mb-2 w-24 rounded-full border border-white/40 bg-white/80 px-3 py-2 shadow-lg dark:border-white/10 dark:bg-stone-800/80" onMouseLeave={() => setShowVolume(false)}>
                 <input type="range" min="0" max="1" step="0.01" value={isMuted ? 0 : volume} onChange={safeSetVolume} className="h-1 w-full cursor-pointer appearance-none rounded-full" style={{ background: `linear-gradient(to right, #d68a3a ${(isMuted ? 0 : volume) * 100}%, rgba(184,111,43,0.22) ${(isMuted ? 0 : volume) * 100}%)` }} />
               </div>
             )}

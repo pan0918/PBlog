@@ -10,17 +10,33 @@ export default function WindyGrass() {
     setMounted(true);
   }, []);
 
+  const [bladesCount, setBladesCount] = useState(30);
+
   const bladesData = useMemo(() => {
     if (!mounted) return [];
-    return Array.from({ length: 72 }, (_, i) => {
-      const x = (i / 72) * 100 + (Math.random() - 0.5) * 2.4;
+    return Array.from({ length: bladesCount }, (_, i) => {
+      const x = (i / bladesCount) * 100 + (Math.random() - 0.5) * 2.4;
       const height = 26 + Math.random() * 48;
       const width = 1.5 + Math.random() * 2.8;
       const duration = 1.6 + Math.random() * 2.2;
       const delay = Math.random() * 2;
       return { x, height, width, duration, delay, key: i };
     });
-  }, [mounted]);
+  }, [mounted, bladesCount]);
+
+  // Reduce blades when page is hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setBladesCount(10); // Keep only 10 blades
+      } else {
+        setBladesCount(30); // Restore all blades
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   if (!mounted) return null;
 
@@ -37,6 +53,7 @@ export default function WindyGrass() {
         style={{
           WebkitMaskImage: 'linear-gradient(to top, black 12%, rgba(0,0,0,0.78) 52%, transparent 100%)',
           maskImage: 'linear-gradient(to top, black 12%, rgba(0,0,0,0.78) 52%, transparent 100%)',
+          contain: 'strict',
         }}
       >
         {bladesData.map((b) => (

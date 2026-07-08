@@ -8,9 +8,11 @@ export default function Sakura() {
     setMounted(true);
   }, []);
 
+  const [petalsCount, setPetalsCount] = useState(8);
+
   const petals = useMemo(() => {
     if (!mounted) return [];
-    return Array.from({ length: 20 }, (_, i) => {
+    return Array.from({ length: petalsCount }, (_, i) => {
       const x = Math.random() * 100;
       const size = 8 + Math.random() * 12;
       const duration = 8 + Math.random() * 7;
@@ -18,7 +20,21 @@ export default function Sakura() {
       const rotate = Math.random() * 360;
       return { x, size, duration, delay, rotate, key: i };
     });
-  }, [mounted]);
+  }, [mounted, petalsCount]);
+
+  // Reduce petals when page is hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setPetalsCount(3); // Keep only 3 petals
+      } else {
+        setPetalsCount(8); // Restore all petals
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   if (!mounted) return null;
 
@@ -32,7 +48,7 @@ export default function Sakura() {
           100% { transform: translateY(100vh) rotate(720deg) translateX(100px); opacity: 0; }
         }
       `}</style>
-      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none" style={{ contain: 'strict' }}>
         {petals.map((p) => (
           <div
             key={p.key}

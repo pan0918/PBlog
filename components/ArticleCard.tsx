@@ -12,11 +12,13 @@ interface Post {
   viewCount?: number;
 }
 
-export default function ArticleCard({ post }: { post: Post }) {
+export default function ArticleCard({ post, index = 0 }: { post: Post; index?: number }) {
+  const isReversed = index % 2 === 1;
+
   return (
     <Link href={`/posts/${post.slug}`}>
-      <div className="soft-glass-panel group flex flex-col overflow-hidden rounded-3xl transition-all duration-500 hover:scale-[1.01] hover:shadow-[0_26px_80px_rgba(126,91,64,0.18)] sm:flex-row">
-        {/* Left: Text */}
+      <div className={`soft-glass-panel group flex flex-col overflow-hidden rounded-3xl transition-all duration-500 hover:scale-[1.01] hover:shadow-[0_26px_80px_rgba(126,91,64,0.18)] sm:flex-row ${isReversed ? 'sm:flex-row-reverse' : ''}`}>
+        {/* Text */}
         <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between min-w-0">
           <div>
             <h3 className="text-base sm:text-lg font-black text-stone-800 dark:text-stone-100 mb-2 line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
@@ -49,7 +51,7 @@ export default function ArticleCard({ post }: { post: Post }) {
             )}
           </div>
         </div>
-        {/* Right: Cover */}
+        {/* Cover */}
         <div className="w-full sm:w-40 md:w-48 h-36 sm:h-auto flex-shrink-0 overflow-hidden">
           <img
             src={post.cover || "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=400&auto=format&fit=crop"}

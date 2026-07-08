@@ -247,3 +247,14 @@ input[type=range]::-webkit-slider-thumb {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ---- Page Visibility: Pause animations when page is hidden ---- */
+/* When the user switches to another tab or minimizes the browser, */
+/* all CSS animations are paused to save CPU/GPU resources and reduce heat. */
+/* Music playback continues normally (audio element is not affected by CSS). */
+html.page-hidden *,
+html.page-hidden *::before,
+html.page-hidden *::after {
+  animation-play-state: paused !important;
+  transition: none !important;
+}

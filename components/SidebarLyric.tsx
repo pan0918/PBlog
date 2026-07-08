@@ -8,10 +8,10 @@ export default function SidebarLyric() {
   if (!currentSong) return null;
 
   return (
-    <div className="bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl p-6 border border-white/40 dark:border-white/10 shadow-xl">
+    <div className="bg-white/80 dark:bg-slate-800/70 rounded-3xl p-6 border border-white/40 dark:border-white/10 shadow-xl">
       <h3 className="font-black text-slate-900 dark:text-white mb-4 border-l-4 border-indigo-500 pl-2 text-sm">NOW PLAYING</h3>
       <div className="flex items-center gap-3 mb-3">
-        <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0 animate-[spin_6s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
+        <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0 animate-[spin_8s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
           {currentSong.pic && (
             <Image
               src={currentSong.pic}

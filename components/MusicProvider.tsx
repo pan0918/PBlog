@@ -165,15 +165,43 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Keep music playing when page is hidden, but pause visual updates
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      if (document.hidden) {
+        // Page is hidden - music continues, but we can reduce update frequency
+        // The audio element will continue playing automatically
+        console.log('[MusicProvider] Page hidden, music continues playing');
+      } else {
+        // Page is visible again - resume normal updates
+        console.log('[MusicProvider] Page visible, resuming normal updates');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   // Parse lyrics when song changes
   useEffect(() => {
     if (currentSong) setParsedLyrics(parseLrc(currentSong.lrc));
   }, [currentSong]);
 
+  const lastLyricRef = useRef("");
+
   const lyricAt = useCallback((time: number) => {
     for (let i = parsedLyrics.length - 1; i >= 0; i--) {
       if (time >= parsedLyrics[i].time) {
-        return parsedLyrics[i].text;
+        const lyric = parsedLyrics[i].text;
+        // Only return new lyric if it's different from the last one
+        if (lyric !== lastLyricRef.current) {
+          lastLyricRef.current = lyric;
+          return lyric;
+        }
+        return ""; // Return empty to avoid unnecessary state update
       }
     }
     return "";
@@ -316,9 +344,28 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (audioRef.current) audioRef.current.volume = isMuted ? 0 : volume;
   }, [volume, isMuted]);
 
+  const lastUpdateTimeRef = useRef(0);
+  const isPageVisibleRef = useRef(true);
+
+  // Track page visibility
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isPageVisibleRef.current = !document.hidden;
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
     if (!audio) return;
+
+    // Throttle updates more aggressively when page is hidden
+    const now = performance.now();
+    const throttleMs = isPageVisibleRef.current ? 250 : 2000; // 2s when hidden
+    if (now - lastUpdateTimeRef.current < throttleMs) return;
+    lastUpdateTimeRef.current = now;
+
     const t = audio.currentTime;
     const dur = audio.duration;
     setCurrentTime(t);

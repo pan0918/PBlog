@@ -66,8 +66,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
 
             {/* Center Column */}
             <main className="flex-1 min-w-0 flex flex-col gap-6">
-              {posts.length > 0 ? posts.map((post: PostMeta) => (
-                <ArticleCard key={post.slug} post={post} />
+              {posts.length > 0 ? posts.map((post: PostMeta, index: number) => (
+                <ArticleCard key={post.slug} post={post} index={startIndex + index} />
               )) : (
                 <div className="soft-glass-panel rounded-3xl p-12 text-center">
                   <p className="text-slate-400 dark:text-slate-500 font-bold">暂无文章</p>

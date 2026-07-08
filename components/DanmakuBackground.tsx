@@ -9,11 +9,12 @@ interface DanmakuItem {
   duration: number;
 }
 
-const MAX_DANMAKU_ITEMS = 6;
+const MAX_DANMAKU_ITEMS = 4;
 
 export default function DanmakuBackground() {
   const [items, setItems] = useState<DanmakuItem[]>([]);
   const counterRef = useRef(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const list = siteConfig.danmakuList;
@@ -33,10 +34,30 @@ export default function DanmakuBackground() {
     };
 
     const initialTimer = window.setTimeout(addDanmaku, 1200);
-    const interval = window.setInterval(addDanmaku, 6500);
+    intervalRef.current = window.setInterval(addDanmaku, 6500);
+
+    // Pause danmaku when page is hidden
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (intervalRef.current) {
+          window.clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      } else {
+        if (!intervalRef.current) {
+          intervalRef.current = window.setInterval(addDanmaku, 6500);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       window.clearTimeout(initialTimer);
-      window.clearInterval(interval);
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
@@ -54,7 +75,7 @@ export default function DanmakuBackground() {
           100% { transform: translate3d(calc(-100vw - 100%), 0, 0); opacity: 0; }
         }
       `}</style>
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-[1]" aria-hidden="true">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-[1]" aria-hidden="true" style={{ contain: 'strict' }}>
         {items.map(item => (
           <div
             key={item.id}
