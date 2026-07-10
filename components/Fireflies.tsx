@@ -1,107 +1,87 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useMemo, type CSSProperties } from "react";
+import { useEffectQuality, type EffectQuality } from "./EffectQualityProvider";
 
-interface Firefly {
-  id: number;
-  top: string;
-  left: string;
-  size: number;
-  breatheDuration: number;
-  breatheDelay: number;
-  floatDuration: number;
-  floatDelay: number;
-  floatPath: string;
+const FIREFLY_BUDGETS: Record<EffectQuality, number> = {
+  high: 20,
+  low: 10,
+  static: 5,
+};
+
+type FireflyMotionStyle = CSSProperties & {
+  "--firefly-top": string;
+  "--firefly-left": string;
+  "--firefly-float-duration": string;
+  "--firefly-float-delay": string;
+};
+
+type FireflyGlowStyle = CSSProperties & {
+  "--firefly-glow-size": string;
+  "--firefly-glow-offset": string;
+  "--firefly-pulse-duration": string;
+  "--firefly-pulse-delay": string;
+};
+
+function pseudoRandom(seed: number) {
+  const value = Math.sin(seed * 999.91) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function effectValue(value: number, unit: string) {
+  return `${value.toFixed(3)}${unit}`;
 }
 
 export default function Fireflies() {
-  const [flies, setFlies] = useState<Firefly[]>([]);
-
-  useEffect(() => {
-    const generated: Firefly[] = Array.from({ length: 15 }).map((_, i) => ({
-      id: i,
-      top: `${Math.random() * 100}%`,
-      left: `${Math.random() * 100}%`,
-      size: 3 + Math.random() * 4,
-      breatheDuration: 3 + Math.random() * 5,
-      breatheDelay: Math.random() * -10,
-      floatDuration: 15 + Math.random() * 20,
-      floatDelay: Math.random() * -20,
-      floatPath: `float${Math.floor(Math.random() * 4) + 1}`,
-    }));
-    setFlies(generated);
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setFlies(prev => prev.slice(0, 5));
-      } else {
-        setFlies(generated);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+  const { quality } = useEffectQuality();
+  const flies = useMemo(
+    () => Array.from({ length: FIREFLY_BUDGETS[quality] }, (_, index) => {
+      const seed = index + 1;
+      return {
+        id: index,
+        top: pseudoRandom(seed) * 100,
+        left: pseudoRandom(seed + 31) * 100,
+        size: 3 + pseudoRandom(seed + 67) * 4,
+        pulseDuration: 3 + pseudoRandom(seed + 101) * 5,
+        pulseDelay: -pseudoRandom(seed + 137) * 10,
+        floatDuration: 15 + pseudoRandom(seed + 173) * 20,
+        floatDelay: -pseudoRandom(seed + 211) * 20,
+        path: (index % 4) + 1,
+      };
+    }),
+    [quality],
+  );
 
   return (
-    <div className="fixed inset-0 w-full h-full pointer-events-none z-10 overflow-hidden mix-blend-screen" style={{ contain: 'strict' }}>
-      <style>{`
-        @keyframes fireflyBreathe {
-          0%, 100% {
-            opacity: 0;
-            transform: scale(0.3);
-          }
-          50% {
-            opacity: 1;
-            transform: scale(1.2);
-            box-shadow: 0 0 10px 3px rgba(100, 255, 150, 0.8), 0 0 20px 6px rgba(50, 255, 100, 0.4);
-          }
-        }
-        @keyframes float1 {
-          0%, 100% { transform: translate(0, 0); }
-          33% { transform: translate(10vw, -15vh); }
-          66% { transform: translate(-5vw, -20vh); }
-        }
-        @keyframes float2 {
-          0%, 100% { transform: translate(0, 0); }
-          33% { transform: translate(-12vw, 10vh); }
-          66% { transform: translate(8vw, 15vh); }
-        }
-        @keyframes float3 {
-          0%, 100% { transform: translate(0, 0); }
-          33% { transform: translate(15vw, 15vh); }
-          66% { transform: translate(-10vw, 5vh); }
-        }
-        @keyframes float4 {
-          0%, 100% { transform: translate(0, 0); }
-          33% { transform: translate(-15vw, -10vh); }
-          66% { transform: translate(10vw, -15vh); }
-        }
-      `}</style>
+    <div
+      className="effect-layer fixed inset-0 z-10 h-full w-full overflow-hidden pointer-events-none mix-blend-screen"
+      style={{ contain: "strict" }}
+      aria-hidden="true"
+    >
+      {flies.map((fly) => {
+        const motionStyle: FireflyMotionStyle = {
+          "--firefly-top": effectValue(fly.top, "%"),
+          "--firefly-left": effectValue(fly.left, "%"),
+          "--firefly-float-duration": effectValue(fly.floatDuration, "s"),
+          "--firefly-float-delay": effectValue(fly.floatDelay, "s"),
+        };
+        const glowStyle: FireflyGlowStyle = {
+          "--firefly-glow-size": effectValue(fly.size * 7, "px"),
+          "--firefly-glow-offset": effectValue(fly.size * -3, "px"),
+          "--firefly-pulse-duration": effectValue(fly.pulseDuration, "s"),
+          "--firefly-pulse-delay": effectValue(fly.pulseDelay, "s"),
+        };
 
-      {flies.map(fly => (
-        <div
-          key={fly.id}
-          className="absolute"
-          style={{
-            top: fly.top,
-            left: fly.left,
-            animation: `${fly.floatPath} ${fly.floatDuration}s ease-in-out infinite`,
-            animationDelay: `${fly.floatDelay}s`,
-          }}
-        >
+        return (
           <div
-            className="rounded-full"
-            style={{
-              width: `${fly.size}px`,
-              height: `${fly.size}px`,
-              backgroundColor: 'rgba(200, 255, 200, 0.9)',
-              animation: `fireflyBreathe ${fly.breatheDuration}s ease-in-out infinite`,
-              animationDelay: `${fly.breatheDelay}s`,
-            }}
-          />
-        </div>
-      ))}
+            key={fly.id}
+            className={`effect-firefly-motion effect-firefly-path-${fly.path}`}
+            style={motionStyle}
+          >
+            <div className="effect-firefly-glow" style={glowStyle} />
+          </div>
+        );
+      })}
     </div>
   );
 }

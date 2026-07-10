@@ -1,78 +1,70 @@
 "use client";
-import { useState, useEffect, useMemo } from 'react';
-import { useTheme } from './ThemeProvider';
+
+import { useMemo, type CSSProperties } from "react";
+import { useEffectQuality, type EffectQuality } from "./EffectQualityProvider";
+
+const GRASS_BUDGETS: Record<EffectQuality, number> = {
+  high: 30,
+  low: 15,
+  static: 10,
+};
+
+type GrassStyle = CSSProperties & {
+  "--grass-left": string;
+  "--grass-width": string;
+  "--grass-height": string;
+  "--grass-duration": string;
+  "--grass-delay": string;
+};
+
+function pseudoRandom(seed: number) {
+  const value = Math.sin(seed * 999.91) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function effectValue(value: number, unit: string) {
+  return `${value.toFixed(3)}${unit}`;
+}
 
 export default function WindyGrass() {
-  const { isDark } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const [bladesCount, setBladesCount] = useState(30);
-
-  const bladesData = useMemo(() => {
-    if (!mounted) return [];
-    return Array.from({ length: bladesCount }, (_, i) => {
-      const x = (i / bladesCount) * 100 + (Math.random() - 0.5) * 2.4;
-      const height = 26 + Math.random() * 48;
-      const width = 1.5 + Math.random() * 2.8;
-      const duration = 1.6 + Math.random() * 2.2;
-      const delay = Math.random() * 2;
-      return { x, height, width, duration, delay, key: i };
-    });
-  }, [mounted, bladesCount]);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setBladesCount(10);
-      } else {
-        setBladesCount(30);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  if (!mounted) return null;
+  const { quality } = useEffectQuality();
+  const blades = useMemo(
+    () => Array.from({ length: GRASS_BUDGETS[quality] }, (_, index) => {
+      const seed = index + 1;
+      const count = GRASS_BUDGETS[quality];
+      return {
+        id: index,
+        left: (index / count) * 100 + (pseudoRandom(seed) - 0.5) * 2.4,
+        height: 26 + pseudoRandom(seed + 37) * 48,
+        width: 1.5 + pseudoRandom(seed + 73) * 2.8,
+        duration: 1.6 + pseudoRandom(seed + 109) * 2.2,
+        delay: -pseudoRandom(seed + 149) * 2,
+      };
+    }),
+    [quality],
+  );
 
   return (
-    <>
-      <style>{`
-        @keyframes swayGrass {
-          0%, 100% { transform: rotate(-5deg); }
-          50% { transform: rotate(5deg); }
-        }
-      `}</style>
-      <div
-        className="fixed bottom-0 left-0 right-0 h-24 overflow-hidden pointer-events-none z-[5]"
-        style={{
-          WebkitMaskImage: 'linear-gradient(to top, black 12%, rgba(0,0,0,0.78) 52%, transparent 100%)',
-          maskImage: 'linear-gradient(to top, black 12%, rgba(0,0,0,0.78) 52%, transparent 100%)',
-          contain: 'strict',
-        }}
-      >
-        {bladesData.map((b) => (
-          <div
-            key={b.key}
-            className="absolute bottom-0 will-change-transform"
-            style={{
-              left: `${b.x}%`,
-              width: `${b.width}px`,
-              height: `${b.height}px`,
-              background: isDark
-                ? `linear-gradient(to top, rgba(151,124,88,0.28), rgba(151,124,88,0.04))`
-                : `linear-gradient(to top, rgba(90,165,106,0.42), rgba(90,165,106,0.08))`,
-              borderRadius: '50% 50% 0 0',
-              transformOrigin: 'bottom center',
-              animation: `swayGrass ${b.duration}s ease-in-out ${b.delay}s infinite`,
-            }}
-          />
-        ))}
-      </div>
-    </>
+    <div
+      className="effect-layer fixed bottom-0 left-0 right-0 z-[5] h-24 overflow-hidden pointer-events-none"
+      style={{
+        WebkitMaskImage: "linear-gradient(to top, black 12%, rgba(0,0,0,0.78) 52%, transparent 100%)",
+        maskImage: "linear-gradient(to top, black 12%, rgba(0,0,0,0.78) 52%, transparent 100%)",
+        contain: "strict",
+      }}
+      aria-hidden="true"
+    >
+      {blades.map((blade) => {
+        const style: GrassStyle = {
+          "--grass-left": effectValue(blade.left, "%"),
+          "--grass-width": effectValue(blade.width, "px"),
+          "--grass-height": effectValue(blade.height, "px"),
+          "--grass-duration": effectValue(blade.duration, "s"),
+          "--grass-delay": effectValue(blade.delay, "s"),
+        };
+
+        return <div key={blade.id} className="effect-grass-blade" style={style} />;
+      })}
+    </div>
   );
 }

@@ -257,3 +257,217 @@ html.page-hidden *::after {
   animation-play-state: paused !important;
   transition: none !important;
 }
+
+/* ---- Decorative effect layers ---- */
+
+.site-gradient-layer {
+  position: fixed;
+  inset: -8%;
+  z-index: -8;
+  opacity: 0.55;
+  transform-origin: center;
+  animation: site-gradient-drift 30s ease-in-out infinite;
+}
+
+.dark .site-gradient-layer {
+  opacity: 0.1;
+}
+
+.site-ambient-glow {
+  position: fixed;
+  inset: 0;
+  z-index: -7;
+  background:
+    radial-gradient(ellipse at 12% 10%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.34) 34%, transparent 72%),
+    radial-gradient(ellipse at 88% 90%, rgba(240, 205, 176, 0.28) 0%, rgba(240, 205, 176, 0.17) 34%, transparent 72%);
+}
+
+.dark .site-ambient-glow {
+  background:
+    radial-gradient(ellipse at 12% 10%, rgba(120, 53, 15, 0.1) 0%, rgba(120, 53, 15, 0.06) 34%, transparent 72%),
+    radial-gradient(ellipse at 88% 90%, rgba(124, 45, 18, 0.1) 0%, rgba(124, 45, 18, 0.06) 34%, transparent 72%);
+}
+
+.effect-firefly-motion {
+  position: absolute;
+  top: var(--firefly-top);
+  left: var(--firefly-left);
+  animation-duration: var(--firefly-float-duration);
+  animation-delay: var(--firefly-float-delay);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.effect-firefly-path-1 { animation-name: site-firefly-float-1; }
+.effect-firefly-path-2 { animation-name: site-firefly-float-2; }
+.effect-firefly-path-3 { animation-name: site-firefly-float-3; }
+.effect-firefly-path-4 { animation-name: site-firefly-float-4; }
+
+.effect-firefly-glow {
+  width: var(--firefly-glow-size);
+  height: var(--firefly-glow-size);
+  margin: var(--firefly-glow-offset);
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(220, 255, 220, 0.95) 0% 9%,
+    rgba(100, 255, 150, 0.8) 18%,
+    rgba(50, 255, 100, 0.38) 42%,
+    transparent 72%
+  );
+  animation: site-firefly-pulse var(--firefly-pulse-duration) ease-in-out var(--firefly-pulse-delay) infinite;
+}
+
+.effect-sakura-petal {
+  position: absolute;
+  top: -20px;
+  left: var(--sakura-left);
+  width: var(--sakura-size);
+  height: var(--sakura-height);
+  border-radius: 100% 0 100% 0;
+  background: linear-gradient(135deg, #fbb6ce 0%, #f687b3 50%, #ed64a6 100%);
+  opacity: 0.7;
+  animation: site-sakura-fall var(--sakura-duration) linear var(--sakura-delay) infinite;
+}
+
+.effect-grass-blade {
+  position: absolute;
+  bottom: 0;
+  left: var(--grass-left);
+  width: var(--grass-width);
+  height: var(--grass-height);
+  border-radius: 50% 50% 0 0;
+  background: linear-gradient(to top, rgba(90, 165, 106, 0.42), rgba(90, 165, 106, 0.08));
+  transform-origin: bottom center;
+  animation: site-grass-sway var(--grass-duration) ease-in-out var(--grass-delay) infinite;
+}
+
+.dark .effect-grass-blade {
+  background: linear-gradient(to top, rgba(151, 124, 88, 0.28), rgba(151, 124, 88, 0.04));
+}
+
+.effect-danmaku-track {
+  position: absolute;
+  color: rgba(130, 116, 106, 0.11);
+  font-size: 0.875rem;
+  font-weight: 900;
+  line-height: 1.25rem;
+  white-space: nowrap;
+  user-select: none;
+  animation-name: site-danmaku-travel;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.dark .effect-danmaku-track {
+  color: rgba(238, 233, 228, 0.055);
+}
+
+html.effects-low .site-gradient-layer {
+  animation-duration: 48s;
+}
+
+html.effects-low .soft-glass-panel {
+  backdrop-filter: blur(8px) saturate(110%);
+  -webkit-backdrop-filter: blur(8px) saturate(110%);
+}
+
+html.effects-low .soft-glass-panel-strong {
+  backdrop-filter: blur(12px) saturate(125%);
+  -webkit-backdrop-filter: blur(12px) saturate(125%);
+}
+
+html.effects-low .soft-glass-panel-slate {
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+}
+
+html.effects-paused .effect-layer *,
+html.effects-static .effect-layer * {
+  animation-play-state: paused !important;
+}
+
+html.effects-static .site-gradient-layer,
+html.effects-static .effect-firefly-motion,
+html.effects-static .effect-firefly-glow,
+html.effects-static .effect-sakura-petal,
+html.effects-static .effect-grass-blade {
+  animation: none;
+}
+
+html.effects-static .site-gradient-layer {
+  transform: translate3d(0, 0, 0) scale(1.04);
+}
+
+html.effects-static .effect-firefly-glow {
+  opacity: 0.68;
+  transform: scale(0.82);
+}
+
+html.effects-static .effect-sakura-petal {
+  top: var(--sakura-static-top);
+  opacity: 0.58;
+  transform: rotate(var(--sakura-rotation));
+}
+
+html.effects-static .effect-grass-blade {
+  transform: rotate(0deg);
+}
+
+@media (min-width: 768px) {
+  .effect-danmaku-track {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+}
+
+@keyframes site-gradient-drift {
+  0%, 100% { transform: translate3d(-2%, -1%, 0) scale(1.04); }
+  50% { transform: translate3d(2%, 1%, 0) scale(1.04); }
+}
+
+@keyframes site-firefly-pulse {
+  0%, 100% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes site-firefly-float-1 {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  33% { transform: translate3d(10vw, -15vh, 0); }
+  66% { transform: translate3d(-5vw, -20vh, 0); }
+}
+
+@keyframes site-firefly-float-2 {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  33% { transform: translate3d(-12vw, 10vh, 0); }
+  66% { transform: translate3d(8vw, 15vh, 0); }
+}
+
+@keyframes site-firefly-float-3 {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  33% { transform: translate3d(15vw, 15vh, 0); }
+  66% { transform: translate3d(-10vw, 5vh, 0); }
+}
+
+@keyframes site-firefly-float-4 {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  33% { transform: translate3d(-15vw, -10vh, 0); }
+  66% { transform: translate3d(10vw, -15vh, 0); }
+}
+
+@keyframes site-sakura-fall {
+  0% { opacity: 0; transform: translate3d(0, -20px, 0) rotate(var(--sakura-rotation)); }
+  10%, 90% { opacity: 0.7; }
+  100% { opacity: 0; transform: translate3d(var(--sakura-drift), 100vh, 0) rotate(calc(var(--sakura-rotation) + 720deg)); }
+}
+
+@keyframes site-grass-sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+
+@keyframes site-danmaku-travel {
+  0% { opacity: 0; transform: translate3d(0, 0, 0); }
+  12%, 86% { opacity: 0.72; }
+  100% { opacity: 0; transform: translate3d(calc(-100vw - 100%), 0, 0); }
+}

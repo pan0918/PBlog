@@ -33,18 +33,16 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <SplashScreen />
             <MusicProvider>
               <div id="app-mount-root" className="flex-1 flex flex-col min-h-screen">
-                <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
+                <div className="effect-layer fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
                   {!siteConfig.useGradient && <BackgroundSlider />}
                   <div className="absolute inset-0 z-[-9] bg-[#fff8f1]/70 dark:bg-stone-950/35 transition-colors duration-300"></div>
-                  <div id="site-gradient-animation" className="absolute inset-0 z-[-8] opacity-55 dark:opacity-10 transition-opacity duration-300 transform-gpu" style={{ background: `linear-gradient(-45deg, ${siteConfig.themeColors.join(', ')})`, backgroundSize: '400% 400%', animation: 'gradientMove 30s ease infinite' }}></div>
-                  <div className="absolute top-[-12%] left-[-10%] w-[44%] h-[44%] bg-white/55 dark:bg-amber-900/10 blur-[40px] rounded-full z-[-7]"></div>
-                  <div className="absolute bottom-[-12%] right-[-10%] w-[44%] h-[44%] bg-[#f0cdb0]/28 dark:bg-orange-900/10 blur-[50px] rounded-full z-[-7]"></div>
+                  <div className="site-gradient-layer" style={{ background: `linear-gradient(-45deg, ${siteConfig.themeColors.join(', ')})` }} />
+                  <div className="site-ambient-glow" />
                 </div>
                 <ClientDecorations />
 
                 <div className="relative z-10 flex-1 flex flex-col">{children}</div>
               </div>
-              <style suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `@keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }` }} />
             </MusicProvider>
           </EffectQualityProvider>
         </ThemeProvider>

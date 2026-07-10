@@ -29,8 +29,10 @@ test("homepage uses soft cream background and wave tokens", async () => {
   assert.match(layout, /<ClientDecorations \/>/);
   assert.match(decorations, /<BackgroundEffects \/>/);
   assert.doesNotMatch(layout, /style=\{\{\s*background:\s*'var\(--page-bg\)'\s*\}\}/);
-  assert.match(danmaku, /MAX_DANMAKU_ITEMS = 6/);
-  assert.match(danmaku, /onAnimationEnd=\{\(\) => removeDanmaku\(item\.id\)\}/);
+  assert.match(danmaku, /high:\s*6/);
+  assert.match(danmaku, /low:\s*3/);
+  assert.match(danmaku, /static:\s*0/);
+  assert.doesNotMatch(danmaku, /onAnimationEnd|setInterval|setItems/);
   assert.match(danmaku, /left:\s*'100vw'/);
   assert.match(projects, /soft-glass-panel-strong/);
   assert.match(projects, /from-amber-400 to-orange-500/);

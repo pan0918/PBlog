@@ -1,72 +1,73 @@
 "use client";
-import { useState, useEffect, useMemo } from 'react';
+
+import { useMemo, type CSSProperties } from "react";
+import { useEffectQuality, type EffectQuality } from "./EffectQualityProvider";
+
+const SAKURA_BUDGETS: Record<EffectQuality, number> = {
+  high: 14,
+  low: 8,
+  static: 5,
+};
+
+type SakuraStyle = CSSProperties & {
+  "--sakura-left": string;
+  "--sakura-size": string;
+  "--sakura-height": string;
+  "--sakura-duration": string;
+  "--sakura-delay": string;
+  "--sakura-rotation": string;
+  "--sakura-drift": string;
+  "--sakura-static-top": string;
+};
+
+function pseudoRandom(seed: number) {
+  const value = Math.sin(seed * 999.91) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function effectValue(value: number, unit: string) {
+  return `${value.toFixed(3)}${unit}`;
+}
 
 export default function Sakura() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const [petalsCount, setPetalsCount] = useState(8);
-
-  const petals = useMemo(() => {
-    if (!mounted) return [];
-    return Array.from({ length: petalsCount }, (_, i) => {
-      const x = Math.random() * 100;
-      const size = 8 + Math.random() * 12;
-      const duration = 8 + Math.random() * 7;
-      const delay = Math.random() * 10;
-      const rotate = Math.random() * 360;
-      return { x, size, duration, delay, rotate, key: i };
-    });
-  }, [mounted, petalsCount]);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setPetalsCount(3);
-      } else {
-        setPetalsCount(8);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  if (!mounted) return null;
+  const { quality } = useEffectQuality();
+  const petals = useMemo(
+    () => Array.from({ length: SAKURA_BUDGETS[quality] }, (_, index) => {
+      const seed = index + 1;
+      return {
+        id: index,
+        left: pseudoRandom(seed) * 100,
+        size: 8 + pseudoRandom(seed + 29) * 12,
+        duration: 8 + pseudoRandom(seed + 61) * 7,
+        delay: -pseudoRandom(seed + 97) * 15,
+        rotation: pseudoRandom(seed + 131) * 360,
+        drift: 70 + pseudoRandom(seed + 167) * 60,
+        staticTop: 10 + pseudoRandom(seed + 199) * 80,
+      };
+    }),
+    [quality],
+  );
 
   return (
-    <>
-      <style>{`
-        @keyframes sakuraFall {
-          0% { transform: translateY(-20px) rotate(0deg) translateX(0); opacity: 0; }
-          10% { opacity: 0.7; }
-          90% { opacity: 0.7; }
-          100% { transform: translateY(100vh) rotate(720deg) translateX(100px); opacity: 0; }
-        }
-      `}</style>
-      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none" style={{ contain: 'strict' }}>
-        {petals.map((p) => (
-          <div
-            key={p.key}
-            className="absolute will-change-transform"
-            style={{
-              left: `${p.x}%`,
-              top: '-20px',
-              width: `${p.size}px`,
-              height: `${p.size * 0.6}px`,
-              background: `linear-gradient(135deg, #fbb6ce 0%, #f687b3 50%, #ed64a6 100%)`,
-              borderRadius: '100% 0 100% 0',
-              opacity: 0.7,
-              transform: `rotate(${p.rotate}deg)`,
-              animation: `sakuraFall ${p.duration}s linear ${p.delay}s infinite`,
-              filter: 'blur(0.5px)',
-            }}
-          />
-        ))}
-      </div>
-    </>
+    <div
+      className="effect-layer absolute inset-0 h-full w-full overflow-hidden pointer-events-none"
+      style={{ contain: "strict" }}
+      aria-hidden="true"
+    >
+      {petals.map((petal) => {
+        const style: SakuraStyle = {
+          "--sakura-left": effectValue(petal.left, "%"),
+          "--sakura-size": effectValue(petal.size, "px"),
+          "--sakura-height": effectValue(petal.size * 0.6, "px"),
+          "--sakura-duration": effectValue(petal.duration, "s"),
+          "--sakura-delay": effectValue(petal.delay, "s"),
+          "--sakura-rotation": effectValue(petal.rotation, "deg"),
+          "--sakura-drift": effectValue(petal.drift, "px"),
+          "--sakura-static-top": effectValue(petal.staticTop, "%"),
+        };
+
+        return <div key={petal.id} className="effect-sakura-petal" style={style} />;
+      })}
+    </div>
   );
 }

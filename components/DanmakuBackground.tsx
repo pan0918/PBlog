@@ -1,97 +1,66 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
-import { siteConfig } from '../siteConfig';
 
-interface DanmakuItem {
-  id: number;
-  text: string;
-  top: number;
-  duration: number;
+import { useMemo } from "react";
+import { siteConfig } from "../siteConfig";
+import { useEffectQuality, type EffectQuality } from "./EffectQualityProvider";
+
+const DANMAKU_BUDGETS: Record<EffectQuality, number> = {
+  high: 6,
+  low: 3,
+  static: 0,
+};
+
+function pseudoRandom(seed: number) {
+  const value = Math.sin(seed * 999.91) * 43758.5453;
+  return value - Math.floor(value);
 }
 
-const MAX_DANMAKU_ITEMS = 4;
+function effectValue(value: number, unit: string) {
+  return `${value.toFixed(3)}${unit}`;
+}
 
 export default function DanmakuBackground() {
-  const [items, setItems] = useState<DanmakuItem[]>([]);
-  const counterRef = useRef(0);
-  const intervalRef = useRef<number | null>(null);
-
-  useEffect(() => {
+  const { quality } = useEffectQuality();
+  const tracks = useMemo(() => {
     const list = siteConfig.danmakuList;
-    if (!list.length) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!list.length) return [];
 
-    const addDanmaku = () => {
-      const id = ++counterRef.current;
-      const text = list[Math.floor(Math.random() * list.length)];
-      const newItem: DanmakuItem = {
-        id,
-        text,
-        top: 18 + Math.random() * 52,
-        duration: 24 + Math.random() * 10,
+    return Array.from({ length: DANMAKU_BUDGETS[quality] }, (_, index) => {
+      const seed = index + 1;
+      const duration = 24 + pseudoRandom(seed + 47) * 10;
+      return {
+        id: index,
+        text: list[Math.floor(pseudoRandom(seed + 13) * list.length)],
+        top: 18 + pseudoRandom(seed + 79) * 52,
+        duration,
+        delay: -pseudoRandom(seed + 113) * duration,
       };
-      setItems(prev => [...prev.slice(-(MAX_DANMAKU_ITEMS - 1)), newItem]);
-    };
+    });
+  }, [quality]);
 
-    const initialTimer = window.setTimeout(addDanmaku, 1200);
-    intervalRef.current = window.setInterval(addDanmaku, 6500);
-
-    // Pause danmaku when page is hidden
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        if (intervalRef.current) {
-          window.clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-      } else {
-        if (!intervalRef.current) {
-          intervalRef.current = window.setInterval(addDanmaku, 6500);
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.clearTimeout(initialTimer);
-      if (intervalRef.current) {
-        window.clearInterval(intervalRef.current);
-      }
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
-
-  const removeDanmaku = (id: number) => {
-    setItems(prev => prev.filter(item => item.id !== id));
-  };
+  if (quality === "static") return null;
+  if (!tracks.length) return null;
 
   return (
-    <>
-      <style>{`
-        @keyframes danmakuFloat {
-          0% { transform: translate3d(0, 0, 0); opacity: 0; }
-          12% { opacity: 0.72; }
-          86% { opacity: 0.72; }
-          100% { transform: translate3d(calc(-100vw - 100%), 0, 0); opacity: 0; }
-        }
-      `}</style>
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-[1]" aria-hidden="true" style={{ contain: 'strict' }}>
-        {items.map(item => (
-          <div
-            key={item.id}
-            className="absolute whitespace-nowrap text-[rgba(130,116,106,0.11)] dark:text-[rgba(238,233,228,0.055)] font-black text-sm md:text-base select-none will-change-transform"
-            style={{
-              left: '100vw',
-              top: `${item.top}%`,
-              animation: `danmakuFloat ${item.duration}s linear`,
-              animationFillMode: 'forwards',
-            }}
-            onAnimationEnd={() => removeDanmaku(item.id)}
-          >
-            {item.text}
-          </div>
-        ))}
-      </div>
-    </>
+    <div
+      className="effect-layer fixed inset-0 z-[1] overflow-hidden pointer-events-none"
+      aria-hidden="true"
+      style={{ contain: "strict" }}
+    >
+      {tracks.map((track) => (
+        <div
+          key={track.id}
+          className="effect-danmaku-track"
+          style={{
+            left: '100vw',
+            top: effectValue(track.top, "%"),
+            animationDuration: effectValue(track.duration, "s"),
+            animationDelay: effectValue(track.delay, "s"),
+          }}
+        >
+          {track.text}
+        </div>
+      ))}
+    </div>
   );
 }
