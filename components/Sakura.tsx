@@ -1,13 +1,8 @@
 "use client";
 
 import { useMemo, type CSSProperties } from "react";
-import { useEffectQuality, type EffectQuality } from "./EffectQualityProvider";
-
-const SAKURA_BUDGETS: Record<EffectQuality, number> = {
-  high: 14,
-  low: 8,
-  static: 5,
-};
+import { useEffectQuality } from "./EffectQualityProvider";
+import { EFFECT_BUDGETS, effectValue, pseudoRandom } from "../lib/effects";
 
 type SakuraStyle = CSSProperties & {
   "--sakura-left": string;
@@ -20,19 +15,10 @@ type SakuraStyle = CSSProperties & {
   "--sakura-static-top": string;
 };
 
-function pseudoRandom(seed: number) {
-  const value = Math.sin(seed * 999.91) * 43758.5453;
-  return value - Math.floor(value);
-}
-
-function effectValue(value: number, unit: string) {
-  return `${value.toFixed(3)}${unit}`;
-}
-
 export default function Sakura() {
   const { quality } = useEffectQuality();
   const petals = useMemo(
-    () => Array.from({ length: SAKURA_BUDGETS[quality] }, (_, index) => {
+    () => Array.from({ length: EFFECT_BUDGETS.sakura[quality] }, (_, index) => {
       const seed = index + 1;
       return {
         id: index,

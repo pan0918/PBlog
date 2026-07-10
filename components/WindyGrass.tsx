@@ -1,13 +1,8 @@
 "use client";
 
 import { useMemo, type CSSProperties } from "react";
-import { useEffectQuality, type EffectQuality } from "./EffectQualityProvider";
-
-const GRASS_BUDGETS: Record<EffectQuality, number> = {
-  high: 30,
-  low: 15,
-  static: 10,
-};
+import { useEffectQuality } from "./EffectQualityProvider";
+import { EFFECT_BUDGETS, effectValue, pseudoRandom } from "../lib/effects";
 
 type GrassStyle = CSSProperties & {
   "--grass-left": string;
@@ -17,21 +12,12 @@ type GrassStyle = CSSProperties & {
   "--grass-delay": string;
 };
 
-function pseudoRandom(seed: number) {
-  const value = Math.sin(seed * 999.91) * 43758.5453;
-  return value - Math.floor(value);
-}
-
-function effectValue(value: number, unit: string) {
-  return `${value.toFixed(3)}${unit}`;
-}
-
 export default function WindyGrass() {
   const { quality } = useEffectQuality();
   const blades = useMemo(
-    () => Array.from({ length: GRASS_BUDGETS[quality] }, (_, index) => {
+    () => Array.from({ length: EFFECT_BUDGETS.grass[quality] }, (_, index) => {
       const seed = index + 1;
-      const count = GRASS_BUDGETS[quality];
+      const count = EFFECT_BUDGETS.grass[quality];
       return {
         id: index,
         left: (index / count) * 100 + (pseudoRandom(seed) - 0.5) * 2.4,

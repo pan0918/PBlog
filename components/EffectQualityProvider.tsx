@@ -1,8 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-
-export type EffectQuality = "high" | "low" | "static";
+import { resolveEffectQuality, type EffectQuality } from "../lib/effects";
 
 type EffectQualityState = {
   quality: EffectQuality;
@@ -18,12 +17,6 @@ const initialEffectQuality: EffectQualityState = {
 
 const EffectQualityContext = createContext<EffectQualityState>(initialEffectQuality);
 
-function resolveEffectQuality(reducedMotion: boolean): EffectQuality {
-  if (reducedMotion) return "static";
-  const cores = navigator.hardwareConcurrency ?? 4;
-  return window.innerWidth < 768 || cores <= 4 ? "low" : "high";
-}
-
 export function EffectQualityProvider({ children }: { children: ReactNode }) {
   const [quality, setQuality] = useState<EffectQuality>("high");
   const [isVisible, setIsVisible] = useState(true);
@@ -31,7 +24,11 @@ export function EffectQualityProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const updateQuality = () => setQuality(resolveEffectQuality(mediaQuery.matches));
+    const updateQuality = () => setQuality(resolveEffectQuality({
+      reducedMotion: mediaQuery.matches,
+      viewportWidth: window.innerWidth,
+      hardwareConcurrency: navigator.hardwareConcurrency,
+    }));
     const updateVisibility = () => setIsVisible(!document.hidden);
 
     updateQuality();

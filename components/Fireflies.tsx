@@ -1,13 +1,8 @@
 "use client";
 
 import { useMemo, type CSSProperties } from "react";
-import { useEffectQuality, type EffectQuality } from "./EffectQualityProvider";
-
-const FIREFLY_BUDGETS: Record<EffectQuality, number> = {
-  high: 20,
-  low: 10,
-  static: 5,
-};
+import { useEffectQuality } from "./EffectQualityProvider";
+import { EFFECT_BUDGETS, effectValue, pseudoRandom } from "../lib/effects";
 
 type FireflyMotionStyle = CSSProperties & {
   "--firefly-top": string;
@@ -23,19 +18,10 @@ type FireflyGlowStyle = CSSProperties & {
   "--firefly-pulse-delay": string;
 };
 
-function pseudoRandom(seed: number) {
-  const value = Math.sin(seed * 999.91) * 43758.5453;
-  return value - Math.floor(value);
-}
-
-function effectValue(value: number, unit: string) {
-  return `${value.toFixed(3)}${unit}`;
-}
-
 export default function Fireflies() {
   const { quality } = useEffectQuality();
   const flies = useMemo(
-    () => Array.from({ length: FIREFLY_BUDGETS[quality] }, (_, index) => {
+    () => Array.from({ length: EFFECT_BUDGETS.fireflies[quality] }, (_, index) => {
       const seed = index + 1;
       return {
         id: index,

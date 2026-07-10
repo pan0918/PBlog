@@ -2,22 +2,8 @@
 
 import { useMemo } from "react";
 import { siteConfig } from "../siteConfig";
-import { useEffectQuality, type EffectQuality } from "./EffectQualityProvider";
-
-const DANMAKU_BUDGETS: Record<EffectQuality, number> = {
-  high: 6,
-  low: 3,
-  static: 0,
-};
-
-function pseudoRandom(seed: number) {
-  const value = Math.sin(seed * 999.91) * 43758.5453;
-  return value - Math.floor(value);
-}
-
-function effectValue(value: number, unit: string) {
-  return `${value.toFixed(3)}${unit}`;
-}
+import { useEffectQuality } from "./EffectQualityProvider";
+import { EFFECT_BUDGETS, effectValue, pseudoRandom } from "../lib/effects";
 
 export default function DanmakuBackground() {
   const { quality } = useEffectQuality();
@@ -25,7 +11,7 @@ export default function DanmakuBackground() {
     const list = siteConfig.danmakuList;
     if (!list.length) return [];
 
-    return Array.from({ length: DANMAKU_BUDGETS[quality] }, (_, index) => {
+    return Array.from({ length: EFFECT_BUDGETS.danmaku[quality] }, (_, index) => {
       const seed = index + 1;
       const duration = 24 + pseudoRandom(seed + 47) * 10;
       return {

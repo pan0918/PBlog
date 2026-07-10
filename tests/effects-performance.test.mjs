@@ -12,25 +12,15 @@ const readEffectSources = () => Promise.all([
 test("particle layers use deterministic fixed quality budgets", async () => {
   const [fireflies, sakura, grass, danmaku] = await readEffectSources();
 
-  assert.match(fireflies, /high:\s*20/);
-  assert.match(fireflies, /low:\s*10/);
-  assert.match(fireflies, /static:\s*5/);
-  assert.match(sakura, /high:\s*14/);
-  assert.match(sakura, /low:\s*8/);
-  assert.match(sakura, /static:\s*5/);
-  assert.match(grass, /high:\s*30/);
-  assert.match(grass, /low:\s*15/);
-  assert.match(grass, /static:\s*10/);
-  assert.match(danmaku, /high:\s*6/);
-  assert.match(danmaku, /low:\s*3/);
-  assert.match(danmaku, /static:\s*0/);
-
   for (const source of [fireflies, sakura, grass, danmaku]) {
     assert.match(source, /useEffectQuality\(\)/);
-    assert.match(source, /function pseudoRandom\(seed: number\)/);
-    assert.match(source, /Math\.sin\(seed \* 999\.91\) \* 43758\.5453/);
+    assert.match(source, /from ["']\.\.\/lib\/effects["']/);
+    assert.match(source, /EFFECT_BUDGETS/);
+    assert.match(source, /pseudoRandom/);
+    assert.match(source, /effectValue/);
     assert.match(source, /useMemo\([\s\S]*\[quality\]/);
-    assert.doesNotMatch(source, /Math\.random|visibilitychange/);
+    assert.doesNotMatch(source, /function (?:pseudoRandom|effectValue)\(/);
+    assert.doesNotMatch(source, /(?:FIREFLY|SAKURA|GRASS|DANMAKU)_BUDGETS|Math\.random|visibilitychange/);
   }
 });
 
@@ -66,8 +56,8 @@ test("deterministic effect styles quantize values across server and browser runt
   const [fireflies, sakura, grass, danmaku] = await readEffectSources();
 
   for (const source of [fireflies, sakura, grass, danmaku]) {
-    assert.match(source, /function effectValue\(value: number, unit: string\)/);
-    assert.match(source, /value\.toFixed\(3\)/);
+    assert.match(source, /effectValue/);
+    assert.doesNotMatch(source, /toFixed\(3\)/);
   }
 
   assert.match(fireflies, /effectValue\(fly\.top, "%"\)/);
@@ -99,4 +89,17 @@ test("global effect CSS pauses layers and animates only compositor-safe properti
   assert.match(layout, /className="site-ambient-glow"/);
   assert.doesNotMatch(layout, /backgroundSize:\s*['"]400% 400%/);
   assert.doesNotMatch(layout, /gradientMove|backgroundPosition|blur-\[(?:40|50)px\]/);
+});
+
+test("CSS hides high-quality DOM immediately for lower pre-paint quality classes", async () => {
+  const globals = await readFile("app/globals.css", "utf8");
+
+  assert.match(globals, /html\.effects-low \.effect-firefly-motion:nth-child\(n \+ 11\)/);
+  assert.match(globals, /html\.effects-low \.effect-sakura-petal:nth-child\(n \+ 9\)/);
+  assert.match(globals, /html\.effects-low \.effect-grass-blade:nth-child\(n \+ 16\)/);
+  assert.match(globals, /html\.effects-low \.effect-danmaku-track:nth-child\(n \+ 4\)/);
+  assert.match(globals, /html\.effects-static \.effect-firefly-motion:nth-child\(n \+ 6\)/);
+  assert.match(globals, /html\.effects-static \.effect-sakura-petal:nth-child\(n \+ 6\)/);
+  assert.match(globals, /html\.effects-static \.effect-grass-blade:nth-child\(n \+ 11\)/);
+  assert.match(globals, /html\.effects-static \.effect-danmaku-track:nth-child\(n \+ 1\)/);
 });

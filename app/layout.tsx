@@ -26,6 +26,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             __html: `(function(){try{var t=localStorage.getItem('blog-theme');var d=document.documentElement;if(t==='dark'){d.classList.add('dark');}else{d.classList.remove('dark');}}catch(e){document.documentElement.classList.remove('dark');}})();`,
           }}
         />
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var d=document.documentElement;var r=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var q=r?'static':(window.innerWidth<768||(navigator.hardwareConcurrency||4)<=4?'low':'high');d.classList.remove('effects-high','effects-low','effects-static','effects-paused');d.classList.add('effects-'+q);if(document.hidden)d.classList.add('effects-paused');})();`,
+          }}
+        />
       </head>
       <body className="w-screen overflow-x-hidden min-h-full flex flex-col relative transition-colors duration-300 font-serif warm-page-surface">
         <ThemeProvider>

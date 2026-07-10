@@ -391,7 +391,8 @@ html.effects-static .site-gradient-layer,
 html.effects-static .effect-firefly-motion,
 html.effects-static .effect-firefly-glow,
 html.effects-static .effect-sakura-petal,
-html.effects-static .effect-grass-blade {
+html.effects-static .effect-grass-blade,
+html.effects-static .effect-danmaku-track {
   animation: none;
 }
 
@@ -412,6 +413,27 @@ html.effects-static .effect-sakura-petal {
 
 html.effects-static .effect-grass-blade {
   transform: rotate(0deg);
+}
+
+html.effects-low .effect-firefly-motion:nth-child(n + 11),
+html.effects-low .effect-sakura-petal:nth-child(n + 9),
+html.effects-low .effect-grass-blade:nth-child(n + 16),
+html.effects-low .effect-danmaku-track:nth-child(n + 4),
+html.effects-static .effect-firefly-motion:nth-child(n + 6),
+html.effects-static .effect-sakura-petal:nth-child(n + 6),
+html.effects-static .effect-grass-blade:nth-child(n + 11),
+html.effects-static .effect-danmaku-track:nth-child(n + 1) {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-gradient-layer,
+  .effect-layer *,
+  .effect-layer *::before,
+  .effect-layer *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 @media (min-width: 768px) {
