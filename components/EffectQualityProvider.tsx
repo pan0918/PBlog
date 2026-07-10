@@ -20,16 +20,23 @@ const EffectQualityContext = createContext<EffectQualityState>(initialEffectQual
 export function EffectQualityProvider({ children }: { children: ReactNode }) {
   const [quality, setQuality] = useState<EffectQuality>("high");
   const [isVisible, setIsVisible] = useState(true);
+  const [hasResolvedQuality, setHasResolvedQuality] = useState(false);
   const isActive = isVisible && quality !== "static";
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const updateQuality = () => setQuality(resolveEffectQuality({
-      reducedMotion: mediaQuery.matches,
-      viewportWidth: window.innerWidth,
-      hardwareConcurrency: navigator.hardwareConcurrency,
-    }));
-    const updateVisibility = () => setIsVisible(!document.hidden);
+    const updateQuality = () => {
+      setQuality(resolveEffectQuality({
+        reducedMotion: mediaQuery.matches,
+        viewportWidth: window.innerWidth,
+        hardwareConcurrency: navigator.hardwareConcurrency,
+      }));
+      setHasResolvedQuality(true);
+    };
+    const updateVisibility = () => {
+      setIsVisible(!document.hidden);
+      setHasResolvedQuality(true);
+    };
 
     updateQuality();
     updateVisibility();
@@ -45,6 +52,8 @@ export function EffectQualityProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!hasResolvedQuality) return;
+
     const root = document.documentElement;
     root.classList.remove("effects-high", "effects-low", "effects-static", "effects-paused");
     root.classList.add(`effects-${quality}`);
@@ -53,7 +62,7 @@ export function EffectQualityProvider({ children }: { children: ReactNode }) {
     return () => {
       root.classList.remove("effects-high", "effects-low", "effects-static", "effects-paused");
     };
-  }, [quality, isActive]);
+  }, [hasResolvedQuality, quality, isActive]);
 
   const value = useMemo(
     () => ({ quality, isVisible, isActive }),

@@ -6,14 +6,26 @@ type EffectQualityInput = {
   hardwareConcurrency?: number;
 };
 
-type EffectLayer = "fireflies" | "sakura" | "grass" | "danmaku";
+export type EffectKind = "fireflies" | "sakura" | "grass" | "danmaku";
 
 export const EFFECT_BUDGETS = {
   fireflies: { high: 20, low: 10, static: 5 },
   sakura: { high: 14, low: 8, static: 5 },
   grass: { high: 30, low: 15, static: 10 },
   danmaku: { high: 6, low: 3, static: 0 },
-} as const satisfies Record<EffectLayer, Record<EffectQuality, number>>;
+} as const satisfies Record<EffectKind, Record<EffectQuality, number>>;
+
+export function getEffectBudget(kind: EffectKind, quality: EffectQuality) {
+  return EFFECT_BUDGETS[kind][quality];
+}
+
+export function createFixedEffectList<T>(
+  kind: EffectKind,
+  quality: EffectQuality,
+  factory: (index: number) => T,
+) {
+  return Array.from({ length: getEffectBudget(kind, quality) }, (_, index) => factory(index));
+}
 
 export function resolveEffectQuality({
   reducedMotion,

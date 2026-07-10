@@ -2,7 +2,7 @@
 
 import { useMemo, type CSSProperties } from "react";
 import { useEffectQuality } from "./EffectQualityProvider";
-import { EFFECT_BUDGETS, effectValue, pseudoRandom } from "../lib/effects";
+import { createFixedEffectList, effectValue, getEffectBudget, pseudoRandom } from "../lib/effects";
 
 type GrassStyle = CSSProperties & {
   "--grass-left": string;
@@ -15,18 +15,20 @@ type GrassStyle = CSSProperties & {
 export default function WindyGrass() {
   const { quality } = useEffectQuality();
   const blades = useMemo(
-    () => Array.from({ length: EFFECT_BUDGETS.grass[quality] }, (_, index) => {
-      const seed = index + 1;
-      const count = EFFECT_BUDGETS.grass[quality];
-      return {
-        id: index,
-        left: (index / count) * 100 + (pseudoRandom(seed) - 0.5) * 2.4,
-        height: 26 + pseudoRandom(seed + 37) * 48,
-        width: 1.5 + pseudoRandom(seed + 73) * 2.8,
-        duration: 1.6 + pseudoRandom(seed + 109) * 2.2,
-        delay: -pseudoRandom(seed + 149) * 2,
-      };
-    }),
+    () => {
+      const count = getEffectBudget("grass", quality);
+      return createFixedEffectList("grass", quality, (index) => {
+        const seed = index + 1;
+        return {
+          id: index,
+          left: (index / count) * 100 + (pseudoRandom(seed) - 0.5) * 2.4,
+          height: 26 + pseudoRandom(seed + 37) * 48,
+          width: 1.5 + pseudoRandom(seed + 73) * 2.8,
+          duration: 1.6 + pseudoRandom(seed + 109) * 2.2,
+          delay: -pseudoRandom(seed + 149) * 2,
+        };
+      });
+    },
     [quality],
   );
 

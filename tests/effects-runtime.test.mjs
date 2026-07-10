@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   EFFECT_BUDGETS,
+  createFixedEffectList,
   effectValue,
+  getEffectBudget,
   pseudoRandom,
   resolveEffectQuality,
 } from "../lib/effects.ts";
@@ -21,6 +23,21 @@ test("EFFECT_BUDGETS centralizes every decorative layer budget", () => {
     grass: { high: 30, low: 15, static: 10 },
     danmaku: { high: 6, low: 3, static: 0 },
   });
+});
+
+test("fixed effect lists use every component budget and remain stable", () => {
+  for (const kind of Object.keys(EFFECT_BUDGETS)) {
+    for (const quality of ["high", "low", "static"]) {
+      const first = createFixedEffectList(kind, quality, (index) => ({ index, kind, quality }));
+      const second = createFixedEffectList(kind, quality, (index) => ({ index, kind, quality }));
+
+      assert.equal(first.length, getEffectBudget(kind, quality));
+      assert.equal(second.length, getEffectBudget(kind, quality));
+      assert.deepEqual(first, second);
+    }
+  }
+
+  assert.deepEqual(createFixedEffectList("danmaku", "static", (index) => index), []);
 });
 
 test("effect utility values are deterministic and quantized to three decimals", () => {

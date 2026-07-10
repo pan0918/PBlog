@@ -15,12 +15,12 @@ test("particle layers use deterministic fixed quality budgets", async () => {
   for (const source of [fireflies, sakura, grass, danmaku]) {
     assert.match(source, /useEffectQuality\(\)/);
     assert.match(source, /from ["']\.\.\/lib\/effects["']/);
-    assert.match(source, /EFFECT_BUDGETS/);
+    assert.match(source, /createFixedEffectList/);
     assert.match(source, /pseudoRandom/);
     assert.match(source, /effectValue/);
     assert.match(source, /useMemo\([\s\S]*\[quality\]/);
     assert.doesNotMatch(source, /function (?:pseudoRandom|effectValue)\(/);
-    assert.doesNotMatch(source, /(?:FIREFLY|SAKURA|GRASS|DANMAKU)_BUDGETS|Math\.random|visibilitychange/);
+    assert.doesNotMatch(source, /(?:EFFECT_BUDGETS|FIREFLY|SAKURA|GRASS|DANMAKU)_BUDGETS|Math\.random|visibilitychange/);
   }
 });
 

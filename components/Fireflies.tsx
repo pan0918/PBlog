@@ -2,7 +2,7 @@
 
 import { useMemo, type CSSProperties } from "react";
 import { useEffectQuality } from "./EffectQualityProvider";
-import { EFFECT_BUDGETS, effectValue, pseudoRandom } from "../lib/effects";
+import { createFixedEffectList, effectValue, pseudoRandom } from "../lib/effects";
 
 type FireflyMotionStyle = CSSProperties & {
   "--firefly-top": string;
@@ -21,7 +21,7 @@ type FireflyGlowStyle = CSSProperties & {
 export default function Fireflies() {
   const { quality } = useEffectQuality();
   const flies = useMemo(
-    () => Array.from({ length: EFFECT_BUDGETS.fireflies[quality] }, (_, index) => {
+    () => createFixedEffectList("fireflies", quality, (index) => {
       const seed = index + 1;
       return {
         id: index,

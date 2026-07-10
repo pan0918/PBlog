@@ -29,7 +29,7 @@ test("homepage uses soft cream background and wave tokens", async () => {
   assert.match(layout, /<ClientDecorations \/>/);
   assert.match(decorations, /<BackgroundEffects \/>/);
   assert.doesNotMatch(layout, /style=\{\{\s*background:\s*'var\(--page-bg\)'\s*\}\}/);
-  assert.match(danmaku, /EFFECT_BUDGETS\.danmaku/);
+  assert.match(danmaku, /createFixedEffectList\("danmaku", quality/);
   assert.doesNotMatch(danmaku, /onAnimationEnd|setInterval|setItems/);
   assert.match(danmaku, /left:\s*'100vw'/);
   assert.match(projects, /soft-glass-panel-strong/);

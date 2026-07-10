@@ -2,7 +2,7 @@
 
 import { useMemo, type CSSProperties } from "react";
 import { useEffectQuality } from "./EffectQualityProvider";
-import { EFFECT_BUDGETS, effectValue, pseudoRandom } from "../lib/effects";
+import { createFixedEffectList, effectValue, pseudoRandom } from "../lib/effects";
 
 type SakuraStyle = CSSProperties & {
   "--sakura-left": string;
@@ -18,7 +18,7 @@ type SakuraStyle = CSSProperties & {
 export default function Sakura() {
   const { quality } = useEffectQuality();
   const petals = useMemo(
-    () => Array.from({ length: EFFECT_BUDGETS.sakura[quality] }, (_, index) => {
+    () => createFixedEffectList("sakura", quality, (index) => {
       const seed = index + 1;
       return {
         id: index,

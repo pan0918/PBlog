@@ -18,6 +18,10 @@ test("effect quality uses shared runtime decisions and pre-paint root classes", 
   assert.match(provider, /hardwareConcurrency:\s*navigator\.hardwareConcurrency/);
   assert.match(provider, /visibilitychange/);
   assert.match(provider, /removeEventListener/);
+  assert.match(provider, /const \[hasResolvedQuality, setHasResolvedQuality\] = useState\(false\)/);
+  assert.match(provider, /setHasResolvedQuality\(true\)/);
+  assert.match(provider, /if \(!hasResolvedQuality\) return;/);
+  assert.match(provider, /\[hasResolvedQuality, quality, isActive\]/);
   assert.match(layout, /<EffectQualityProvider>/);
   assert.match(layout, /prefers-reduced-motion: reduce/);
   assert.match(layout, /hardwareConcurrency/);
