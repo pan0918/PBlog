@@ -103,3 +103,28 @@ test("CSS hides high-quality DOM immediately for lower pre-paint quality classes
   assert.match(globals, /html\.effects-static \.effect-grass-blade:nth-child\(n \+ 11\)/);
   assert.match(globals, /html\.effects-static \.effect-danmaku-track:nth-child\(n \+ 1\)/);
 });
+
+test("canvas effects bound pixel and animation work by effect quality", async () => {
+  const [click, hero] = await Promise.all([
+    readFile("components/ClickEffect.tsx", "utf8"),
+    readFile("components/HeroBanner.tsx", "utf8"),
+  ]);
+
+  assert.match(click, /useEffectQuality\(\)/);
+  assert.match(click, /high:\s*\{[^}]*fps:\s*30[^}]*dpr:\s*1\.5[^}]*maxParticles:\s*12/s);
+  assert.match(click, /low:\s*\{[^}]*fps:\s*20[^}]*dpr:\s*1\.25[^}]*maxParticles:\s*6/s);
+  assert.match(click, /quality === ["']static["']/);
+  assert.match(click, /isVisible/);
+  assert.match(click, /1000 \/ fps/);
+  assert.match(click, /Math\.min\([^)]*maxParticles/);
+  assert.match(click, /ctx\.setTransform\(dpr, 0, 0, dpr, 0, 0\)/);
+  assert.match(click, /cancelAnimationFrame/);
+
+  assert.match(hero, /useEffectQuality\(\)/);
+  assert.match(hero, /quality === ["']high["'] \? 30 : 20/);
+  assert.match(hero, /Math\.min\([^)]*1\.5/);
+  assert.match(hero, /quality === ["']static["']/);
+  assert.match(hero, /isVisible/);
+  assert.match(hero, /1000 \/ fps/);
+  assert.match(hero, /cancelAnimationFrame/);
+});

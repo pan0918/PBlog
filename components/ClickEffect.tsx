@@ -1,91 +1,171 @@
 "use client";
-import { useEffect, useRef, useCallback } from 'react';
+
+import { useCallback, useEffect, useRef } from "react";
+import { useEffectQuality } from "./EffectQualityProvider";
+
+type Particle = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  alpha: number;
+  size: number;
+  color: string;
+};
+
+const CLICK_EFFECT_BUDGETS = {
+  high: { fps: 30, dpr: 1.5, maxParticles: 12 },
+  low: { fps: 20, dpr: 1.25, maxParticles: 6 },
+} as const;
+
+const PARTICLE_COLORS = ["#818cf8", "#a78bfa", "#c084fc", "#e879f9", "#f472b6"];
 
 export default function ClickEffect() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const particlesRef = useRef<{ x: number; y: number; vx: number; vy: number; alpha: number; size: number; color: string }[]>([]);
+  const particlesRef = useRef<Particle[]>([]);
   const animIdRef = useRef<number>(0);
   const isRunningRef = useRef(false);
+  const { quality, isVisible } = useEffectQuality();
+  const budget = quality === "static" ? null : CLICK_EFFECT_BUDGETS[quality];
+
+  const stopAnimation = useCallback(() => {
+    cancelAnimationFrame(animIdRef.current);
+    animIdRef.current = 0;
+    isRunningRef.current = false;
+  }, []);
 
   const startAnimation = useCallback(() => {
-    if (isRunningRef.current) return;
-    isRunningRef.current = true;
+    if (!budget || !isVisible || document.hidden || isRunningRef.current) return;
 
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
 
-    const animate = () => {
-      const particles = particlesRef.current;
-      if (particles.length === 0) {
+    const { fps } = budget;
+    const frameInterval = 1000 / fps;
+    let lastFrameTime: number | null = null;
+    isRunningRef.current = true;
+
+    const animate = (timestamp: number) => {
+      if (document.hidden || !isVisible) {
         isRunningRef.current = false;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
         return;
       }
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.05;
-        p.alpha -= 0.02;
-        if (p.alpha <= 0) { particles.splice(i, 1); continue; }
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = p.color;
+      const elapsed = lastFrameTime === null ? frameInterval : timestamp - lastFrameTime;
+      if (elapsed < frameInterval) {
+        animIdRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      lastFrameTime = timestamp;
+      const delta = Math.min(elapsed, frameInterval * 2) / (1000 / 60);
+      const particles = particlesRef.current;
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+      for (let index = particles.length - 1; index >= 0; index -= 1) {
+        const particle = particles[index];
+        particle.x += particle.vx * delta;
+        particle.y += particle.vy * delta;
+        particle.vy += 0.05 * delta;
+        particle.alpha -= 0.02 * delta;
+
+        if (particle.alpha <= 0) {
+          particles.splice(index, 1);
+          continue;
+        }
+
+        ctx.globalAlpha = particle.alpha;
+        ctx.fillStyle = particle.color;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
         ctx.fill();
       }
+      ctx.globalAlpha = 1;
+
+      if (particles.length === 0) {
+        isRunningRef.current = false;
+        animIdRef.current = 0;
+        return;
+      }
+
       animIdRef.current = requestAnimationFrame(animate);
     };
-    animate();
-  }, []);
+
+    animIdRef.current = requestAnimationFrame(animate);
+  }, [budget, isVisible]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    if (!budget) {
+      particlesRef.current = [];
+      stopAnimation();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, budget.dpr);
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
-    resize();
-    window.addEventListener('resize', resize);
 
-    const colors = ['#818cf8', '#a78bfa', '#c084fc', '#e879f9', '#f472b6'];
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopAnimation();
+      } else if (particlesRef.current.length > 0) {
+        startAnimation();
+      }
+    };
 
-    const handleClick = (e: MouseEvent) => {
-      for (let i = 0; i < 8; i++) {
-        const angle = (Math.PI * 2 / 8) * i + Math.random() * 0.5;
+    const handleClick = (event: MouseEvent) => {
+      if (!isVisible || document.hidden) return;
+
+      const particleCount = Math.min(8, budget.maxParticles);
+      for (let index = 0; index < particleCount; index += 1) {
+        const angle = (Math.PI * 2 / particleCount) * index + Math.random() * 0.5;
         const speed = 2 + Math.random() * 3;
         particlesRef.current.push({
-          x: e.clientX,
-          y: e.clientY,
+          x: event.clientX,
+          y: event.clientY,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
           alpha: 1,
           size: 3 + Math.random() * 4,
-          color: colors[Math.floor(Math.random() * colors.length)],
+          color: PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)],
         });
+      }
+
+      if (particlesRef.current.length > budget.maxParticles) {
+        particlesRef.current.splice(0, particlesRef.current.length - budget.maxParticles);
       }
       startAnimation();
     };
-    window.addEventListener('click', handleClick);
+
+    resize();
+    window.addEventListener("resize", resize);
+    window.addEventListener("click", handleClick);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    if (isVisible && particlesRef.current.length > 0) startAnimation();
 
     return () => {
-      window.removeEventListener('resize', resize);
-      window.removeEventListener('click', handleClick);
-      cancelAnimationFrame(animIdRef.current);
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("click", handleClick);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      stopAnimation();
     };
-  }, [startAnimation]);
+  }, [budget, isVisible, startAnimation, stopAnimation]);
 
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 z-[9998] pointer-events-none"
-      style={{ width: '100vw', height: '100vh' }}
+      style={{ width: "100vw", height: "100vh" }}
     />
   );
 }

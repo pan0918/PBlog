@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from './ThemeProvider';
+import { useEffectQuality } from './EffectQualityProvider';
 
 const WAVE_HEIGHT = 126;
 const WAVE_COLORS = {
@@ -23,7 +24,9 @@ const WAVE_COLORS = {
 function WaveCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { isDark } = useTheme();
+  const { quality, isVisible } = useEffectQuality();
   const animRef = useRef<number>(0);
+  const timeRef = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -31,9 +34,10 @@ function WaveCanvas() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let time = 0;
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const fps = quality === 'high' ? 30 : 20;
+    const frameInterval = 1000 / fps;
     const palette = isDark ? WAVE_COLORS.dark : WAVE_COLORS.light;
+    let lastFrameTime: number | null = null;
 
     const drawLayer = (
       w: number,
@@ -50,8 +54,8 @@ function WaveCanvas() {
 
       for (let x = 0; x <= w; x += 3) {
         const y = baseline
-          + Math.sin(x * 0.0062 + time * speed + offset) * amplitude
-          + Math.sin(x * 0.0125 + time * speed * 0.72 + offset) * (amplitude * 0.45);
+          + Math.sin(x * 0.0062 + timeRef.current * speed + offset) * amplitude
+          + Math.sin(x * 0.0125 + timeRef.current * speed * 0.72 + offset) * (amplitude * 0.45);
         ctx.lineTo(x, y);
       }
 
@@ -77,15 +81,10 @@ function WaveCanvas() {
       drawLayer(w, h, 0, 10, palette.back, 0.62, h * 0.46);
       drawLayer(w, h, 1.7, 8, palette.main, 0.82, h * 0.58);
       drawLayer(w, h, 3.1, 5.5, palette.front, 0.48, h * 0.69);
-
-      if (!reduceMotion) {
-        time += 0.022;
-        animRef.current = requestAnimationFrame(draw);
-      }
     };
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       canvas.style.height = `${WAVE_HEIGHT}px`;
       canvas.width = Math.floor(window.innerWidth * dpr);
       canvas.height = Math.floor(WAVE_HEIGHT * dpr);
@@ -93,14 +92,32 @@ function WaveCanvas() {
       draw();
     };
 
+    const animate = (timestamp: number) => {
+      if (!isVisible || quality === 'static') return;
+
+      const elapsed = lastFrameTime === null ? frameInterval : timestamp - lastFrameTime;
+      if (lastFrameTime === null || elapsed >= frameInterval) {
+        const delta = Math.min(lastFrameTime === null ? frameInterval : elapsed, frameInterval * 2);
+        timeRef.current += 0.022 * (delta / (1000 / 60));
+        lastFrameTime = timestamp;
+        draw();
+      }
+      animRef.current = requestAnimationFrame(animate);
+    };
+
     resize();
     window.addEventListener('resize', resize);
+
+    if (quality !== 'static' && isVisible) {
+      animRef.current = requestAnimationFrame(animate);
+    }
 
     return () => {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animRef.current);
+      animRef.current = 0;
     };
-  }, [isDark]);
+  }, [isDark, isVisible, quality]);
 
   return (
     <canvas
