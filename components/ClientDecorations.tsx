@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import FloatingPlayer from './FloatingPlayer';
 import GlobalToolbox from './GlobalToolbox';
@@ -13,21 +12,6 @@ import BackgroundEffects from './BackgroundEffects';
 export default function ClientDecorations() {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith('/admin');
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        document.documentElement.classList.add('page-hidden');
-      } else {
-        document.documentElement.classList.remove('page-hidden');
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    handleVisibilityChange();
-
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
 
   return (
     <>
