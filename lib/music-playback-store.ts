@@ -1,12 +1,10 @@
 export type PlaybackSnapshot = {
-  progress: number;
   currentTime: number;
   duration: number;
   currentLyric: string;
 };
 
 const EMPTY_SNAPSHOT: PlaybackSnapshot = {
-  progress: 0,
   currentTime: 0,
   duration: 0,
   currentLyric: "",
@@ -14,6 +12,11 @@ const EMPTY_SNAPSHOT: PlaybackSnapshot = {
 
 let snapshot: PlaybackSnapshot = EMPTY_SNAPSHOT;
 const listeners = new Set<() => void>();
+
+function hasChanges(previous: PlaybackSnapshot, next: PlaybackSnapshot) {
+  return (Object.keys(next) as Array<keyof PlaybackSnapshot>)
+    .some((key) => !Object.is(previous[key], next[key]));
+}
 
 export const musicPlaybackStore = {
   getSnapshot(): PlaybackSnapshot {
@@ -26,12 +29,16 @@ export const musicPlaybackStore = {
   },
 
   update(partial: Partial<PlaybackSnapshot>) {
-    snapshot = { ...snapshot, ...partial };
+    const next = { ...snapshot, ...partial };
+    if (!hasChanges(snapshot, next)) return;
+    snapshot = next;
     listeners.forEach((listener) => listener());
   },
 
   reset(next: Partial<PlaybackSnapshot> = {}) {
-    snapshot = { ...EMPTY_SNAPSHOT, ...next };
+    const nextSnapshot = { ...EMPTY_SNAPSHOT, ...next };
+    if (!hasChanges(snapshot, nextSnapshot)) return;
+    snapshot = nextSnapshot;
     listeners.forEach((listener) => listener());
   },
 };

@@ -19,7 +19,7 @@ function MusicProgressBar({
   containerClassName = "flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 font-bold mb-3",
   timeClassName = "w-10 tabular-nums",
 }: MusicProgressBarProps) {
-  const { handleSeek } = useMusic();
+  const { seekToPercent } = useMusic();
   const { progress, currentTime, duration } = useMusicPlayback();
 
   return (
@@ -30,7 +30,7 @@ function MusicProgressBar({
         min="0"
         max="100"
         value={progress}
-        onChange={(e) => handleSeek(Number(e.target.value))}
+        onChange={(e) => seekToPercent(Number(e.target.value))}
         className={rangeClassName}
         style={{ background: `linear-gradient(to right, ${accentColor} ${progress}%, ${trackColor} ${progress}%)` }}
       />

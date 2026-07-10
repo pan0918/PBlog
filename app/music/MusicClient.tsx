@@ -8,7 +8,7 @@ import { formatTime } from '../../lib/utils';
 export default function MusicClient() {
   const {
     playlist, currentIndex, currentSong, isPlaying,
-    isLoading, togglePlay, nextSong, prevSong, handleSeek,
+    isLoading, togglePlay, nextSong, prevSong, seekToPercent, seekToSeconds,
     playSong, playMode, togglePlayMode, volume, setVolume, isMuted, toggleMute,
   } = useMusic();
   const { progress, currentTime, duration, currentLyric } = useMusicPlayback();
@@ -151,7 +151,7 @@ export default function MusicClient() {
           {/* Controls */}
           <div className="w-full mt-auto relative z-20">
             <div className="w-full flex flex-col gap-1.5 mb-6 md:mb-8 px-1 md:px-3">
-              <input type="range" min="0" max="100" value={progress || 0} onChange={(e) => handleSeek(Number(e.target.value))} className="w-full h-1 md:h-1.5 rounded-full appearance-none cursor-pointer" style={{ background: `linear-gradient(to right, #4f46e5 ${progress}%, rgba(0,0,0,0.15) 0)` }} />
+              <input type="range" min="0" max="100" value={progress || 0} onChange={(e) => seekToPercent(Number(e.target.value))} className="w-full h-1 md:h-1.5 rounded-full appearance-none cursor-pointer" style={{ background: `linear-gradient(to right, #4f46e5 ${progress}%, rgba(0,0,0,0.15) 0)` }} />
               <div className="flex justify-between text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 tabular-nums"><span>{formatTime(currentTime)}</span><span>{formatTime(duration)}</span></div>
             </div>
             <div className="w-full flex items-center justify-between px-1 md:px-2 lg:px-4">
@@ -212,7 +212,7 @@ export default function MusicClient() {
                       return (
                         <div key={i} ref={isActive ? activeLyricRef : null}
                           className={`transition-all duration-700 cursor-pointer px-2 md:px-4 rounded-2xl ${isActive ? 'opacity-100 scale-105 py-2 md:py-3 bg-white/10' : 'opacity-20 hover:opacity-40'}`}
-                          onClick={() => duration > 0 && handleSeek((line.time / duration) * 100)}>
+                          onClick={() => seekToSeconds(line.time)}>
                           <p className={`font-black tracking-tight leading-relaxed transition-all duration-700 ${isActive ? 'text-lg md:text-2xl text-indigo-600 dark:text-indigo-400' : 'text-sm md:text-lg text-slate-700 dark:text-slate-300'}`} style={isActive ? { textShadow: '0 0 20px rgba(99,102,241,0.15)' } : {}}>{line.text}</p>
                         </div>
                       );

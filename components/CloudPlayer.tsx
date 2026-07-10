@@ -1,11 +1,11 @@
 "use client";
 import { memo, useState } from 'react';
-import { useMusic, useMusicPlayback } from './MusicProvider';
+import { useCurrentLyric, useMusic } from './MusicProvider';
 import { useRouter } from 'next/navigation';
 import MusicProgressBar from './MusicProgressBar';
 
 const CloudPlayerLyric = memo(function CloudPlayerLyric() {
-  const { currentLyric } = useMusicPlayback();
+  const currentLyric = useCurrentLyric();
   if (!currentLyric) return null;
   return (
     <div className="relative z-10 mb-2 h-6 overflow-hidden">

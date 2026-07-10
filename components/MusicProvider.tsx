@@ -49,7 +49,8 @@ interface MusicContextValue {
   togglePlay: () => void;
   nextSong: () => void;
   prevSong: () => void;
-  handleSeek: (time: number) => void;
+  seekToSeconds: (seconds: number) => void;
+  seekToPercent: (percent: number) => void;
   playSong: (index: number) => void;
   setVolume: (v: number) => void;
   toggleMute: () => void;
@@ -87,12 +88,6 @@ const MusicContext = createContext<MusicContextValue | null>(null);
 export function MusicProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pendingPlayRef = useRef(false);
-  const pendingSeekRatioRef = useRef<number | null>(null);
-  const endedRef = useRef(false);
-  const blobUrlRef = useRef<string | null>(null);
-  const blobReadyIndexRef = useRef<number | null>(null);
-  const blobAbortRef = useRef<AbortController | null>(null);
-  const preparingBlobIndexRef = useRef<number | null>(null);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -101,7 +96,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [isMuted, setIsMuted] = useState(false);
   const [playMode, setPlayMode] = useState<PlayMode>("loop");
   const [parsedLyrics, setParsedLyrics] = useState<LyricLine[]>([]);
-  const [audioSrc, setAudioSrc] = useState("");
   const [songs, setSongs] = useState<Song[]>(FALLBACK_SONGS);
 
   const currentSong = songs[currentIndex];
@@ -126,22 +120,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    return () => {
-      blobAbortRef.current?.abort();
-      if (blobUrlRef.current) {
-        URL.revokeObjectURL(blobUrlRef.current);
-        blobUrlRef.current = null;
-      }
-      if (audio) {
-        audio.pause();
-        audio.src = '';
-        audio.load();
-      }
-    };
-  }, []);
-
-  useEffect(() => {
     if (currentSong) setParsedLyrics(parseLrc(currentSong.lrc));
   }, [currentSong]);
 
@@ -155,24 +133,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
     return "";
   }, [parsedLyrics]);
-
-  const applyPendingSeek = useCallback((audio: HTMLAudioElement) => {
-    const ratio = pendingSeekRatioRef.current;
-    const dur = audio.duration;
-    if (ratio === null || !dur || !isFinite(dur)) return;
-
-    const target = Math.max(0, Math.min(1, ratio)) * dur;
-    audio.currentTime = target;
-    const lyric = lyricAt(target);
-    lastLyricRef.current = lyric;
-    musicPlaybackStore.update({
-      currentTime: target,
-      progress: ratio * 100,
-      duration: dur,
-      currentLyric: lyric || musicPlaybackStore.getSnapshot().currentLyric,
-    });
-    pendingSeekRatioRef.current = null;
-  }, [lyricAt]);
 
   const requestPlayback = useCallback((deferUntilCanPlay = false) => {
     pendingPlayRef.current = true;
@@ -192,73 +152,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
-  const prepareSeekableBlob = useCallback((song: Song, index: number) => {
-    if (blobReadyIndexRef.current === index && blobUrlRef.current) return;
-    if (preparingBlobIndexRef.current === index) return;
-
-    blobAbortRef.current?.abort();
-    const controller = new AbortController();
-    blobAbortRef.current = controller;
-    preparingBlobIndexRef.current = index;
-
-    fetch(song.url, { signal: controller.signal })
-      .then((res) => {
-        if (!res.ok) throw new Error(`Failed to prepare seekable audio: ${res.status}`);
-        return res.blob();
-      })
-      .then((blob) => {
-        if (controller.signal.aborted) return;
-        const url = URL.createObjectURL(blob);
-        if (blobUrlRef.current) {
-          URL.revokeObjectURL(blobUrlRef.current);
-        }
-        blobUrlRef.current = url;
-        blobReadyIndexRef.current = index;
-        if (pendingSeekRatioRef.current !== null && currentIndex === index) {
-          pendingPlayRef.current = true;
-          setAudioSrc(url);
-        }
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted) {
-          console.warn("[MusicProvider] Seekable audio fallback failed", error);
-        }
-      })
-      .finally(() => {
-        if (blobAbortRef.current === controller) {
-          blobAbortRef.current = null;
-        }
-        if (preparingBlobIndexRef.current === index) {
-          preparingBlobIndexRef.current = null;
-        }
-      });
-  }, [currentIndex]);
-
-  const ensureSeekableSource = useCallback(() => {
-    if (blobReadyIndexRef.current !== currentIndex || !blobUrlRef.current) {
-      musicPlaybackStore.update({ currentLyric: "♪ 正在准备跳转 ♪" });
-      pendingPlayRef.current = true;
-      if (currentSong) {
-        void prepareSeekableBlob(currentSong, currentIndex);
-      }
-      return false;
-    }
-
-    if (audioSrc !== blobUrlRef.current) {
-      musicPlaybackStore.update({ currentLyric: "♪ 正在定位 ♪" });
-      pendingPlayRef.current = true;
-      setAudioSrc(blobUrlRef.current);
-      return false;
-    }
-
-    return true;
-  }, [audioSrc, currentIndex, currentSong, prepareSeekableBlob]);
-
   const switchSong = useCallback((nextIndex: number, shouldPlay: boolean) => {
     if (nextIndex < 0 || nextIndex >= songs.length) return;
 
-    endedRef.current = false;
-    pendingSeekRatioRef.current = null;
+    audioRef.current?.pause();
     if (shouldPlay) {
       requestPlayback(true);
     } else {
@@ -270,24 +167,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!currentSong) return;
-    blobAbortRef.current?.abort();
-    blobAbortRef.current = null;
-    preparingBlobIndexRef.current = null;
-    if (blobUrlRef.current) {
-      URL.revokeObjectURL(blobUrlRef.current);
-      blobUrlRef.current = null;
-    }
-    blobReadyIndexRef.current = null;
-
     lastLyricRef.current = "";
-    musicPlaybackStore.reset({ currentLyric: "♪ 正在缓冲 ♪" });
-    setAudioSrc(currentSong.url);
-
-    const audio = audioRef.current;
-    if (audio) {
-      audio.pause();
-      audio.load();
-    }
+    musicPlaybackStore.reset();
+    audioRef.current?.pause();
   }, [currentIndex, currentSong]);
 
   useEffect(() => {
@@ -310,8 +192,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (!audio) return;
 
     const now = performance.now();
-    const throttleMs = isPageVisibleRef.current ? 500 : 2000;
-    if (now - lastUpdateTimeRef.current < throttleMs) return;
+    if (!isPageVisibleRef.current || now - lastUpdateTimeRef.current < 200) return;
     lastUpdateTimeRef.current = now;
 
     const t = audio.currentTime;
@@ -320,31 +201,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       currentTime: t,
     };
 
-    if (dur && isFinite(dur)) {
+    if (Number.isFinite(dur) && dur > 0) {
       playbackPatch.duration = dur;
-      if (dur > 0) {
-        playbackPatch.progress = (t / dur) * 100;
-      }
-
-      if (dur > 0 && t >= dur - 0.3 && !endedRef.current) {
-        endedRef.current = true;
-        if (playMode === "single") {
-          audio.currentTime = 0;
-          requestPlayback();
-        } else if (playMode === "random") {
-          switchSong(Math.floor(Math.random() * songs.length), true);
-        } else {
-          switchSong((currentIndex + 1) % songs.length, true);
-        }
-        return;
-      }
-      if (t < dur - 1) {
-        endedRef.current = false;
-      }
     }
 
     const nextLyric = lyricAt(t);
-    if (nextLyric && nextLyric !== lastLyricRef.current) {
+    if (nextLyric !== lastLyricRef.current) {
       lastLyricRef.current = nextLyric;
       playbackPatch.currentLyric = nextLyric;
     }
@@ -352,37 +214,35 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     musicPlaybackStore.update(playbackPatch);
   };
 
-  const handleLoadedMetadata = () => {
+  const handleDurationChange = () => {
     const audio = audioRef.current;
     if (!audio) return;
     const dur = audio.duration;
-    if (dur && isFinite(dur)) {
+    if (Number.isFinite(dur) && dur > 0) {
       musicPlaybackStore.update({ duration: dur });
-      applyPendingSeek(audio);
     }
   };
 
   const handleCanPlay = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    applyPendingSeek(audio);
+    setIsLoading(false);
     if (!pendingPlayRef.current) return;
+    requestPlayback();
+  }, [requestPlayback]);
 
-    audio.play()
-      .then(() => {
-        pendingPlayRef.current = false;
-        setIsPlaying(true);
-      })
-      .catch(() => {
-        pendingPlayRef.current = false;
-        setIsPlaying(false);
-      });
-  }, [applyPendingSeek]);
+  const handlePlaying = useCallback(() => {
+    pendingPlayRef.current = false;
+    setIsLoading(false);
+    setIsPlaying(true);
+  }, []);
+
+  const handleAudioError = useCallback(() => {
+    pendingPlayRef.current = false;
+    setIsLoading(false);
+    setIsPlaying(false);
+  }, []);
 
   const handleEnded = useCallback(() => {
     const audio = audioRef.current;
-    endedRef.current = true;
     if (playMode === "single" && audio) {
       audio.currentTime = 0;
       requestPlayback();
@@ -433,30 +293,32 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [currentIndex, isPlaying, playMode, requestPlayback, songs.length, switchSong]);
 
-  const handleSeek = useCallback((time: number) => {
+  const seekToSeconds = useCallback((requestedSeconds: number) => {
     const audio = audioRef.current;
-    const ratio = Math.max(0, Math.min(100, time)) / 100;
-    pendingSeekRatioRef.current = ratio;
-    musicPlaybackStore.update({ progress: ratio * 100 });
+    if (!audio || audio.readyState < HTMLMediaElement.HAVE_METADATA) return;
+    if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
 
-    if (!ensureSeekableSource()) return;
-
-    if (audio) {
-      const dur = audio.duration;
-      if (dur && isFinite(dur)) {
-        const target = ratio * dur;
-        audio.currentTime = target;
-        const lyric = lyricAt(target);
-        lastLyricRef.current = lyric;
-        musicPlaybackStore.update({
-          currentTime: target,
-          currentLyric: lyric || musicPlaybackStore.getSnapshot().currentLyric,
-        });
-        pendingSeekRatioRef.current = null;
-      }
-    }
+    const target = Math.max(
+      0,
+      Math.min(requestedSeconds, Math.max(0, audio.duration - 0.05)),
+    );
+    audio.currentTime = target;
+    const nextLyric = lyricAt(target);
+    lastLyricRef.current = nextLyric;
+    musicPlaybackStore.update({
+      currentTime: target,
+      duration: audio.duration,
+      currentLyric: nextLyric,
+    });
     requestPlayback();
-  }, [ensureSeekableSource, lyricAt, requestPlayback]);
+  }, [lyricAt, requestPlayback]);
+
+  const seekToPercent = useCallback((percent: number) => {
+    const audio = audioRef.current;
+    if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
+    const normalized = Math.max(0, Math.min(100, percent));
+    seekToSeconds(audio.duration * normalized / 100);
+  }, [seekToSeconds]);
 
   const playSong = useCallback((index: number) => {
     if (index < 0 || index >= songs.length) return;
@@ -489,7 +351,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     togglePlay,
     nextSong,
     prevSong,
-    handleSeek,
+    seekToSeconds,
+    seekToPercent,
     playSong,
     setVolume,
     toggleMute,
@@ -506,7 +369,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     togglePlay,
     nextSong,
     prevSong,
-    handleSeek,
+    seekToSeconds,
+    seekToPercent,
     playSong,
     setVolume,
     toggleMute,
@@ -519,12 +383,18 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       {currentSong && (
         <audio
           ref={audioRef}
-          src={audioSrc || currentSong.url}
+          src={currentSong.url}
           preload="metadata"
           crossOrigin="anonymous"
           onTimeUpdate={handleTimeUpdate}
-          onLoadedMetadata={handleLoadedMetadata}
+          onLoadedMetadata={handleDurationChange}
+          onDurationChange={handleDurationChange}
+          onSeeking={() => setIsLoading(true)}
+          onSeeked={() => setIsLoading(false)}
+          onWaiting={() => setIsLoading(true)}
           onCanPlay={handleCanPlay}
+          onPlaying={handlePlaying}
+          onError={handleAudioError}
           onEnded={handleEnded}
         />
       )}
@@ -541,9 +411,21 @@ export function useMusic(): MusicContextValue {
 }
 
 export function useMusicPlayback() {
-  return useSyncExternalStore(
+  const snapshot = useSyncExternalStore(
     musicPlaybackStore.subscribe,
     musicPlaybackStore.getSnapshot,
     musicPlaybackStore.getSnapshot,
+  );
+  return {
+    ...snapshot,
+    progress: snapshot.duration > 0 ? snapshot.currentTime / snapshot.duration * 100 : 0,
+  };
+}
+
+export function useCurrentLyric(): string {
+  return useSyncExternalStore(
+    musicPlaybackStore.subscribe,
+    () => musicPlaybackStore.getSnapshot().currentLyric,
+    () => "",
   );
 }

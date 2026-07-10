@@ -1,10 +1,10 @@
 "use client";
 import { memo } from 'react';
-import { useMusic, useMusicPlayback } from './MusicProvider';
+import { useCurrentLyric, useMusic } from './MusicProvider';
 import Image from 'next/image';
 
 const SidebarLyricLine = memo(function SidebarLyricLine() {
-  const { currentLyric } = useMusicPlayback();
+  const currentLyric = useCurrentLyric();
   if (!currentLyric) return null;
   return <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 truncate">{currentLyric}</p>;
 });
