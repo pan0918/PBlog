@@ -247,7 +247,10 @@ input[type=range]::-webkit-slider-thumb {
   display: none;
 }
 
-/* ---- Page Visibility: Pause animations when page is hidden ---- */
+/* ---- Effect quality: pause CSS animations and transitions when inactive ---- */
+html.effects-paused *,
+html.effects-paused *::before,
+html.effects-paused *::after,
 html.page-hidden *,
 html.page-hidden *::before,
 html.page-hidden *::after {
