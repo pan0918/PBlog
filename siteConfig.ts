@@ -106,6 +106,7 @@ export const siteConfig: SiteConfig = {
     qq: "3285024778",
     twitter: "https://x.com/Frudlk3j",
     xiaohongshu: "https://www.xiaohongshu.com/user/profile/619bb654000000001000cd64",
+    wechat: "PCK15058370886",
   },
   counts: { photos: 0 },
   chatterTitle: "留言墙",
