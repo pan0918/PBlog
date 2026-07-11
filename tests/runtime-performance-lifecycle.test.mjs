@@ -39,6 +39,10 @@ test("weather and view count requests abort when components unmount", async () =
   assert.match(weather, /AbortController/);
   assert.match(weather, /signal: controller\.signal/);
   assert.match(weather, /controller\.abort\(\)/);
+  assert.match(weather, /navigator\.geolocation/);
+  assert.match(weather, /YUEQING_LOCATION/);
+  assert.match(weather, /buildWeatherUrl/);
+  assert.doesNotMatch(weather, /wttr\.in/);
 
   assert.match(viewCount, /AbortController/);
   assert.match(viewCount, /signal: controller\.signal/);
