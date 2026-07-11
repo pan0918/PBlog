@@ -31,6 +31,15 @@ test("lyric components subscribe without reacting to timeline updates", async ()
   assert.match(sidebarLyric, /useCurrentLyric\(\)/);
 });
 
+test("homepage player stays mounted while audio is buffering", async () => {
+  const cloudPlayer = await readFile("components/CloudPlayer.tsx", "utf8");
+
+  assert.doesNotMatch(cloudPlayer, /if\s*\(\s*isLoading\s*\)/);
+  assert.doesNotMatch(cloudPlayer, /CONNECTING/);
+  assert.match(cloudPlayer, /data-cloud-player-shell/);
+  assert.match(cloudPlayer, /aria-busy="true"/);
+});
+
 test("decorative layers remain mounted regardless of music playback", async () => {
   const decorations = await readFile("components/ClientDecorations.tsx", "utf8");
 

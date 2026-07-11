@@ -15,25 +15,34 @@ const CloudPlayerLyric = memo(function CloudPlayerLyric() {
 });
 
 export default function CloudPlayer() {
-  const { playlist, currentSong, isPlaying, isLoading, togglePlay, nextSong, prevSong, playMode, togglePlayMode, volume, setVolume, isMuted, toggleMute } = useMusic();
+  const { playlist, currentSong, isPlaying, togglePlay, nextSong, prevSong, playMode, togglePlayMode, volume, setVolume, isMuted, toggleMute } = useMusic();
   const router = useRouter();
-
-  if (isLoading) {
-    return (
-      <div className="soft-glass-panel flex w-full flex-col items-center justify-center rounded-3xl p-6 transition-colors duration-700">
-        <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-amber-500 border-t-transparent"></div>
-        <span className="animate-pulse text-sm font-bold tracking-widest text-stone-800 dark:text-white">CONNECTING...</span>
-      </div>
-    );
-  }
 
   if (playlist.length === 0 || !currentSong) {
     return (
-      <div className="soft-glass-panel flex w-full flex-col items-center justify-center rounded-3xl p-6 transition-all duration-700">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 shadow-inner opacity-70 dark:bg-stone-700">
-          <svg className="w-8 h-8 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+      <div
+        data-cloud-player-shell
+        aria-busy="true"
+        aria-label="首页音乐播放器正在加载"
+        className="soft-glass-panel flex min-h-[270px] w-full flex-col justify-between rounded-3xl p-6 transition-colors duration-700"
+      >
+        <div className="mb-6 mt-2 flex items-center gap-5">
+          <div className="h-20 w-20 flex-shrink-0 rounded-full border-2 border-white/50 bg-stone-200/60 shadow-lg dark:bg-stone-700/60" />
+          <div className="flex-1 space-y-3">
+            <div className="h-4 w-24 rounded-sm bg-amber-500/20" />
+            <div className="h-5 w-3/4 rounded-full bg-stone-200/65 dark:bg-stone-700/60" />
+            <div className="h-3 w-2/5 rounded-full bg-stone-200/55 dark:bg-stone-700/50" />
+          </div>
         </div>
-        <span className="text-xs font-bold uppercase tracking-widest text-stone-500 dark:text-stone-400">No Music Available</span>
+        <div className="h-3 w-4/5 rounded-full bg-amber-500/15" />
+        <div className="mt-auto pt-5">
+          <div className="mb-5 h-1.5 w-full rounded-full bg-white/40 shadow-inner dark:bg-stone-700/50" />
+          <div className="flex items-center justify-center gap-5">
+            <div className="h-6 w-6 rounded-full bg-stone-200/60 dark:bg-stone-700/50" />
+            <div className="h-12 w-12 rounded-full border-2 border-white/60 bg-amber-500/35" />
+            <div className="h-6 w-6 rounded-full bg-stone-200/60 dark:bg-stone-700/50" />
+          </div>
+        </div>
       </div>
     );
   }
