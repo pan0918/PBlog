@@ -27,6 +27,16 @@ test("seek controls use explicit percent and seconds APIs", async () => {
   assert.match(musicPage, /seekToSeconds\(line\.time\)/);
 });
 
+test("audio seeking keeps the lyric scroller mounted", async () => {
+  const musicPage = await readFile("app/music/MusicClient.tsx", "utf8");
+
+  assert.doesNotMatch(musicPage, /if\s*\(\s*isLoading\s*\|\|\s*!currentSong\s*\)/);
+  assert.doesNotMatch(musicPage, /唤醒音频引擎/);
+  assert.match(musicPage, /if\s*\(\s*!currentSong\s*\)/);
+  assert.match(musicPage, /data-player-shell/);
+  assert.match(musicPage, /aria-busy="true"/);
+});
+
 test("music cover art uses optimized Next images", async () => {
   const [config, musicPage, floatingPlayer, sidebarLyric] = await Promise.all([
     readFile("next.config.ts", "utf8"),

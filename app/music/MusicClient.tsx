@@ -8,7 +8,7 @@ import { formatTime } from '../../lib/utils';
 export default function MusicClient() {
   const {
     playlist, currentIndex, currentSong, isPlaying,
-    isLoading, togglePlay, nextSong, prevSong, seekToPercent, seekToSeconds,
+    togglePlay, nextSong, prevSong, seekToPercent, seekToSeconds,
     playSong, playMode, togglePlayMode, volume, setVolume, isMuted, toggleMute,
   } = useMusic();
   const { progress, currentTime, duration, currentLyric } = useMusicPlayback();
@@ -99,11 +99,36 @@ export default function MusicClient() {
     );
   };
 
-  if (isLoading || !currentSong) {
+  if (!currentSong) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 gap-4 animate-pulse">
-        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-        <span className="font-black text-slate-500 tracking-widest text-sm">唤醒音频引擎中...</span>
+      <div
+        data-player-shell
+        aria-busy="true"
+        aria-label="音乐播放器正在加载"
+        className="relative flex flex-col md:grid md:grid-cols-12 gap-6 md:gap-8 w-full md:items-stretch md:h-[calc(100vh-320px)] md:min-h-[600px] md:max-h-[720px]"
+      >
+        <div className="md:col-span-5 flex flex-col items-center justify-center bg-white/60 dark:bg-slate-800/60 border border-white/40 dark:border-white/10 rounded-[32px] shadow-2xl p-6 md:p-10 min-h-[460px] sm:min-h-[500px] md:min-h-0">
+          <div className="w-40 h-40 sm:w-48 sm:h-48 lg:w-64 lg:h-64 rounded-full bg-slate-200/70 dark:bg-slate-700/60 border-[4px] md:border-[6px] border-white/70 dark:border-slate-600/70 shadow-xl" />
+          <div className="mt-8 h-6 w-2/3 max-w-52 rounded-full bg-slate-200/70 dark:bg-slate-700/60" />
+          <div className="mt-3 h-3 w-1/3 max-w-28 rounded-full bg-slate-200/60 dark:bg-slate-700/50" />
+          <div className="mt-auto w-full pt-10">
+            <div className="h-1.5 w-full rounded-full bg-slate-200/70 dark:bg-slate-700/60" />
+            <div className="mt-7 flex items-center justify-center gap-6">
+              <div className="h-8 w-8 rounded-full bg-slate-200/60 dark:bg-slate-700/50" />
+              <div className="h-16 w-16 lg:h-20 lg:w-20 rounded-full bg-indigo-400/30 dark:bg-indigo-500/25" />
+              <div className="h-8 w-8 rounded-full bg-slate-200/60 dark:bg-slate-700/50" />
+            </div>
+          </div>
+        </div>
+
+        <div className="md:col-span-7 flex flex-col bg-white/60 dark:bg-slate-800/60 border border-white/40 dark:border-white/10 rounded-[32px] shadow-2xl overflow-hidden h-[450px] md:h-auto">
+          <div className="mt-6 mx-auto h-10 w-48 md:w-64 rounded-full bg-slate-200/70 dark:bg-slate-700/60" />
+          <div className="flex-1 flex flex-col items-center justify-center gap-6 px-10">
+            {[72, 88, 64, 80, 56].map((width) => (
+              <div key={width} className="h-4 rounded-full bg-slate-200/60 dark:bg-slate-700/50" style={{ width: `${width}%` }} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
