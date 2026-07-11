@@ -8,6 +8,7 @@ import BackgroundSlider from "../components/BackgroundSlider";
 import SplashScreen from "../components/SplashScreen";
 import ClientDecorations from '../components/ClientDecorations';
 import { EffectQualityProvider } from "../components/EffectQualityProvider";
+import { ToastProvider } from "../components/ToastProvider";
 
 export const metadata: Metadata = {
   title: siteConfig.title,
@@ -47,7 +48,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 </div>
                 <ClientDecorations />
 
-                <div className="relative z-10 flex-1 flex flex-col">{children}</div>
+                <ToastProvider>
+                  <div className="relative z-10 flex-1 flex flex-col">{children}</div>
+                </ToastProvider>
               </div>
             </MusicProvider>
           </EffectQualityProvider>

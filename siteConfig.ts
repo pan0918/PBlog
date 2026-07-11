@@ -79,7 +79,7 @@ export const siteConfig: SiteConfig = {
   title: "Frud's Blog",
   faviconUrl: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782456852356_icon.png",
   authorName: "Frud_",
-  bio: "在数据与Agent之间搭桥，用代码训练会思考的系统，也用文字记录一个研究生的好奇与温度。",
+  bio: "Never forget what you are. The rest of the world will not. Wear it like armor, and it can never be used to hurt you.",
   navTitle: "Frud",
   navSuffix: "'s ",
   navAfter: "Blog",

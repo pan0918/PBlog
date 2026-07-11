@@ -162,7 +162,7 @@ export default function HeroBanner() {
             className="mt-4 text-sm font-medium text-white/90 md:text-lg"
             style={{ textShadow: '0 3px 18px rgba(30, 22, 18, 0.45)' }}
           >
-            代码与AI之间的桥梁，用代码训练会思考的系统
+            穷则独善其身，达则兼善天下
           </motion.p>
         </div>
       </div>

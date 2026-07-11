@@ -10,7 +10,6 @@ import WeatherCard from '../components/WeatherCard';
 import CalendarCard from '../components/CalendarCard';
 import SiteDashboard from '../components/SiteDashboard';
 import SiteStats from '../components/SiteStats';
-import { ToastProvider } from '../components/ToastProvider';
 import { getAllPosts, type PostMeta } from '../lib/posts';
 import HeroBanner from '../components/HeroBanner';
 import { db } from '../lib/db';
@@ -44,7 +43,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
   const { momentCount, photoCount } = await getCounts();
 
   return (
-    <ToastProvider>
     <div className="min-h-screen relative pb-12">
       <Navbar />
       <HeroBanner />
@@ -113,6 +111,5 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
         </div>
       </PageTransition>
     </div>
-    </ToastProvider>
   );
 }

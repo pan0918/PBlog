@@ -8,7 +8,7 @@ export default function ClientSocials() {
   const { showToast } = useToast();
   const copy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    showToast(`${label}已复制`, 'success');
+    showToast(`${label}已复制到剪贴板: ${text}`, 'success');
   };
 
   return (
