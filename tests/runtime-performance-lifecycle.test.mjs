@@ -42,6 +42,14 @@ test("weather and view count requests abort when components unmount", async () =
   assert.match(weather, /navigator\.geolocation/);
   assert.match(weather, /YUEQING_LOCATION/);
   assert.match(weather, /buildWeatherUrl/);
+  assert.match(weather, /buildReverseGeocodeUrl/);
+  assert.match(weather, /buildCitySearchUrl/);
+  assert.match(weather, /enableHighAccuracy:\s*true/);
+  assert.match(weather, /maximumAge:\s*0/);
+  assert.match(weather, /window\.setTimeout/);
+  assert.match(weather, /localStorage/);
+  assert.match(weather, /恢复自动定位/);
+  assert.doesNotMatch(weather, /name:\s*["']当前位置["']/);
   assert.doesNotMatch(weather, /wttr\.in/);
 
   assert.match(viewCount, /AbortController/);

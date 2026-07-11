@@ -12,7 +12,15 @@ export interface WeatherLocation {
   name: string;
   latitude: number;
   longitude: number;
-  isCurrentLocation: boolean;
+  source: LocationSource;
+}
+
+export type LocationSource = "gps" | "ip" | "manual" | "default";
+
+export interface CitySearchResult {
+  id: string;
+  detail: string;
+  location: WeatherLocation;
 }
 
 export interface WeatherCondition {
@@ -29,7 +37,7 @@ export interface WeatherHour extends WeatherCondition {
 
 export interface WeatherViewModel extends WeatherCondition {
   city: string;
-  isCurrentLocation: boolean;
+  locationSource: LocationSource;
   temperature: number;
   apparentTemperature: number;
   humidity: number;
@@ -67,8 +75,70 @@ export const YUEQING_LOCATION: WeatherLocation = {
   name: "乐清市",
   latitude: 28.116,
   longitude: 120.9834,
-  isCurrentLocation: false,
+  source: "default",
 };
+
+export function buildReverseGeocodeUrl(coordinates?: {
+  latitude: number;
+  longitude: number;
+}): string {
+  const params = new URLSearchParams({ localityLanguage: "zh" });
+  if (coordinates) {
+    params.set("latitude", String(coordinates.latitude));
+    params.set("longitude", String(coordinates.longitude));
+  }
+  return `https://api.bigdatacloud.net/data/reverse-geocode-client?${params.toString()}`;
+}
+
+export function parseReverseGeocodeResponse(
+  data: Record<string, unknown>,
+  source: "gps" | "ip",
+): WeatherLocation {
+  const latitude = Number(data.latitude);
+  const longitude = Number(data.longitude);
+  const nameCandidates = [data.city, data.locality, data.principalSubdivision];
+  const name = nameCandidates.find((value): value is string => typeof value === "string" && value.trim().length > 0)?.trim();
+
+  if (!name || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    throw new Error("Incomplete reverse geocoding response");
+  }
+
+  return { name, latitude, longitude, source };
+}
+
+export function buildCitySearchUrl(query: string): string {
+  const params = new URLSearchParams({
+    name: query.trim(),
+    count: "5",
+    language: "zh",
+    format: "json",
+  });
+  return `https://geocoding-api.open-meteo.com/v1/search?${params.toString()}`;
+}
+
+export function parseCitySearchResponse(data: Record<string, unknown>): CitySearchResult[] {
+  if (!Array.isArray(data.results)) return [];
+
+  return data.results.flatMap((entry): CitySearchResult[] => {
+    if (!entry || typeof entry !== "object") return [];
+    const item = entry as Record<string, unknown>;
+    const name = typeof item.name === "string" ? item.name.trim() : "";
+    const latitude = Number(item.latitude);
+    const longitude = Number(item.longitude);
+    if (!name || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return [];
+
+    const detail = [item.admin1, item.country]
+      .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+      .filter((value, index, values) => values.indexOf(value) === index)
+      .join(" · ");
+
+    return [{
+      id: String(item.id ?? `${latitude},${longitude}`),
+      detail,
+      location: { name, latitude, longitude, source: "manual" },
+    }];
+  });
+}
 
 export function buildWeatherUrl(location: WeatherLocation): string {
   const params = new URLSearchParams({
@@ -132,7 +202,7 @@ export function normalizeWeatherResponse(
 
   return {
     city: location.name,
-    isCurrentLocation: location.isCurrentLocation,
+    locationSource: location.source,
     temperature: Math.round(data.current.temperature_2m),
     apparentTemperature: Math.round(data.current.apparent_temperature),
     humidity: Math.round(data.current.relative_humidity_2m),

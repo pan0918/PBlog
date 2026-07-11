@@ -3,9 +3,13 @@ import test from "node:test";
 
 import {
   YUEQING_LOCATION,
+  buildCitySearchUrl,
+  buildReverseGeocodeUrl,
   buildWeatherUrl,
   getWeatherCondition,
   normalizeWeatherResponse,
+  parseCitySearchResponse,
+  parseReverseGeocodeResponse,
 } from "../lib/weather.ts";
 
 test("weather requests use Yueqing fallback and every displayed Open-Meteo field", () => {
@@ -13,7 +17,7 @@ test("weather requests use Yueqing fallback and every displayed Open-Meteo field
     name: "乐清市",
     latitude: 28.116,
     longitude: 120.9834,
-    isCurrentLocation: false,
+    source: "default",
   });
 
   const url = new URL(buildWeatherUrl(YUEQING_LOCATION));
@@ -27,6 +31,73 @@ test("weather requests use Yueqing fallback and every displayed Open-Meteo field
   assert.match(url.searchParams.get("daily") || "", /temperature_2m_min/);
 });
 
+test("reverse geocoding distinguishes GPS coordinates from IP fallback", () => {
+  const gpsUrl = new URL(buildReverseGeocodeUrl({ latitude: 31.2304, longitude: 121.4737 }));
+  assert.equal(gpsUrl.searchParams.get("latitude"), "31.2304");
+  assert.equal(gpsUrl.searchParams.get("longitude"), "121.4737");
+  assert.equal(gpsUrl.searchParams.get("localityLanguage"), "zh");
+
+  const ipUrl = new URL(buildReverseGeocodeUrl());
+  assert.equal(ipUrl.searchParams.has("latitude"), false);
+  assert.equal(ipUrl.searchParams.has("longitude"), false);
+
+  assert.deepEqual(parseReverseGeocodeResponse({
+    latitude: 31.2304,
+    longitude: 121.4737,
+    city: "上海市",
+    locality: "黄浦区",
+    principalSubdivision: "上海市",
+    lookupSource: "reverseGeocoding",
+  }, "gps"), {
+    name: "上海市",
+    latitude: 31.2304,
+    longitude: 121.4737,
+    source: "gps",
+  });
+
+  assert.deepEqual(parseReverseGeocodeResponse({
+    latitude: 30.2741,
+    longitude: 120.1551,
+    city: "杭州市",
+    locality: "杭州市",
+    principalSubdivision: "浙江省",
+    lookupSource: "ipGeolocation",
+  }, "ip"), {
+    name: "杭州市",
+    latitude: 30.2741,
+    longitude: 120.1551,
+    source: "ip",
+  });
+});
+
+test("manual city search returns localized choices with administrative context", () => {
+  const url = new URL(buildCitySearchUrl("深圳"));
+  assert.equal(url.origin, "https://geocoding-api.open-meteo.com");
+  assert.equal(url.searchParams.get("name"), "深圳");
+  assert.equal(url.searchParams.get("language"), "zh");
+  assert.equal(url.searchParams.get("count"), "5");
+
+  assert.deepEqual(parseCitySearchResponse({
+    results: [{
+      id: 1795565,
+      name: "深圳市",
+      latitude: 22.54554,
+      longitude: 114.0683,
+      admin1: "广东省",
+      country: "中国",
+    }],
+  }), [{
+    id: "1795565",
+    detail: "广东省 · 中国",
+    location: {
+      name: "深圳市",
+      latitude: 22.54554,
+      longitude: 114.0683,
+      source: "manual",
+    },
+  }]);
+});
+
 test("WMO weather codes map to concise Chinese conditions and icon kinds", () => {
   assert.deepEqual(getWeatherCondition(0), { label: "晴朗", icon: "sun" });
   assert.deepEqual(getWeatherCondition(2), { label: "局部多云", icon: "cloud-sun" });
@@ -34,8 +105,8 @@ test("WMO weather codes map to concise Chinese conditions and icon kinds", () =>
   assert.deepEqual(getWeatherCondition(95), { label: "雷暴", icon: "storm" });
 });
 
-test("forecast normalization starts with now and keeps only future hours", () => {
-  const location = { ...YUEQING_LOCATION, name: "当前位置", isCurrentLocation: true };
+test("forecast normalization starts with now and preserves the location source", () => {
+  const location = { ...YUEQING_LOCATION, name: "上海市", source: "gps" };
   const result = normalizeWeatherResponse({
     current: {
       time: "2026-07-11T14:15",
@@ -59,7 +130,8 @@ test("forecast normalization starts with now and keeps only future hours", () =>
     },
   }, location);
 
-  assert.equal(result.city, "当前位置");
+  assert.equal(result.city, "上海市");
+  assert.equal(result.locationSource, "gps");
   assert.equal(result.temperature, 30);
   assert.equal(result.high, 32);
   assert.equal(result.low, 25);
