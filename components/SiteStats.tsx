@@ -1,22 +1,16 @@
-"use client";
 import { siteConfig } from '../siteConfig';
+import { formatRelativeUpdateTime } from '../lib/site-stats';
 
 interface SiteStatsProps {
-  lastPostDate: string;
+  lastUpdatedAt: string;
 }
 
-export default function SiteStats({ lastPostDate }: SiteStatsProps) {
+export default function SiteStats({ lastUpdatedAt }: SiteStatsProps) {
   const launchDate = new Date(siteConfig.buildDate);
   const now = new Date();
   const days = Math.floor((now.getTime() - launchDate.getTime()) / (1000 * 60 * 60 * 24));
 
-  const lastDate = new Date(lastPostDate);
-  const diffMs = now.getTime() - lastDate.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  let lastUpdate = '刚刚';
-  if (diffDays > 365) lastUpdate = `${Math.floor(diffDays / 365)} 年前`;
-  else if (diffDays > 30) lastUpdate = `${Math.floor(diffDays / 30)} 个月前`;
-  else if (diffDays > 0) lastUpdate = `${diffDays} 天前`;
+  const lastUpdate = formatRelativeUpdateTime(lastUpdatedAt, now);
 
   const items = [
     { icon: '🕐', label: '运行天数', value: `${days} 天` },

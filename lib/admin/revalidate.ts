@@ -1,6 +1,8 @@
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 export function revalidateAfterPost(slugs: Array<string | null | undefined> = []) {
+  revalidateTag('posts', 'max');
+  revalidateTag('homepage-stats', 'max');
   revalidatePath('/');
   revalidatePath('/timeline');
   revalidatePath('/about');
@@ -10,6 +12,7 @@ export function revalidateAfterPost(slugs: Array<string | null | undefined> = []
 }
 
 export function revalidateAfterMoment() {
+  revalidateTag('homepage-stats', 'max');
   revalidatePath('/');
   revalidatePath('/moments');
 }
@@ -34,6 +37,7 @@ export function revalidateAfterAlbum() {
 }
 
 export function revalidateAfterPhoto() {
+  revalidateTag('homepage-stats', 'max');
   revalidatePath('/');
   revalidatePath('/photowall');
 }

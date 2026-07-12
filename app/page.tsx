@@ -12,41 +12,28 @@ import SiteDashboard from '../components/SiteDashboard';
 import SiteStats from '../components/SiteStats';
 import { getAllPosts, type PostMeta } from '../lib/posts';
 import HeroBanner from '../components/HeroBanner';
-import { db } from '../lib/db';
+import { getHomepageCounts } from '../lib/home-data';
 
 const POSTS_PER_PAGE = 5;
-
-async function getCounts() {
-  let momentCount = 0;
-  let photoCount = 0;
-  try {
-    const momentsResult = await db.execute(`SELECT COUNT(*) as count FROM moments WHERE status = 'published' AND deleted_at IS NULL`);
-    momentCount = Number(momentsResult.rows[0]?.count ?? 0);
-  } catch {}
-  try {
-    const photosResult = await db.execute(`SELECT COUNT(*) as count FROM photos WHERE deleted_at IS NULL`);
-    photoCount = Number(photosResult.rows[0]?.count ?? 0);
-  } catch {}
-  return { momentCount, photoCount };
-}
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const params = await searchParams;
   const currentPage = Math.max(1, parseInt(params.page || '1', 10) || 1);
 
-  const allPosts = await getAllPosts();
+  const [allPosts, { momentCount, photoCount, lastPostUpdatedAt }] = await Promise.all([
+    getAllPosts(),
+    getHomepageCounts(),
+  ]);
   const totalPages = Math.max(1, Math.ceil(allPosts.length / POSTS_PER_PAGE));
   const safePage = Math.min(currentPage, totalPages);
   const startIndex = (safePage - 1) * POSTS_PER_PAGE;
   const posts = allPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
 
-  const { momentCount, photoCount } = await getCounts();
-
   return (
     <div className="min-h-screen relative pb-12">
       <Navbar />
       <HeroBanner />
-      <PageTransition>
+      <PageTransition duration={0.28}>
         <div className="w-full max-w-7xl mx-auto -mt-12 md:-mt-14 px-4 sm:px-6 lg:px-10 relative z-10">
           {/* Top Search */}
           <SearchBar posts={allPosts} />
@@ -59,7 +46,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
               <ProfileCard postCount={allPosts.length} momentCount={momentCount} photoCount={photoCount} />
               <NavigationCard />
               <SiteDashboard />
-              <SiteStats lastPostDate={allPosts[0]?.date || siteConfig.buildDate} />
+              <SiteStats lastUpdatedAt={lastPostUpdatedAt || siteConfig.buildDate} />
             </aside>
 
             {/* Center Column */}

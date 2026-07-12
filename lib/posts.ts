@@ -10,6 +10,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
 import { katexOptions } from './markdown';
+import { unstable_cache } from 'next/cache';
 
 export interface PostMeta {
   slug: string;
@@ -25,29 +26,33 @@ export interface PostMeta {
 }
 
 /** 前台：获取所有已发布文章 */
-export async function getAllPosts(): Promise<PostMeta[]> {
+async function queryAllPosts(): Promise<PostMeta[]> {
   try {
     const result = await db.execute(`
       SELECT p.slug, p.title, p.published_at, p.summary, p.cover_url, p.content, p.view_count,
-             c.name as category_name
+             c.name as category_name,
+             COALESCE((
+               SELECT json_group_array(t.name)
+               FROM post_tags pt
+               JOIN tags t ON t.id = pt.tag_id
+               WHERE pt.post_id = p.id
+             ), '[]') as tags_json
       FROM posts p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.status = 'published' AND p.deleted_at IS NULL
       ORDER BY p.is_pinned DESC, p.published_at DESC, p.created_at DESC
     `);
 
-    const posts: PostMeta[] = [];
-    for (const row of result.rows) {
+    return result.rows.map((row) => {
       const r = row as Record<string, unknown>;
-      // Get tags for this post
-      const tagsResult = await db.execute({
-        sql: `SELECT t.name FROM tags t JOIN post_tags pt ON pt.tag_id = t.id WHERE pt.post_id = (SELECT id FROM posts WHERE slug = ?)`,
-        args: [r.slug as string],
-      });
-      const tags = tagsResult.rows.map((t: Record<string, unknown>) => t.name as string);
-
       const rawDate = (r.published_at as string) || '1970-01-01';
-      posts.push({
+      let tags: string[] = [];
+      try {
+        const parsed = JSON.parse((r.tags_json as string) || '[]');
+        if (Array.isArray(parsed)) tags = parsed.filter((tag): tag is string => typeof tag === 'string');
+      } catch {}
+
+      return {
         slug: r.slug as string,
         title: (r.title as string) || '',
         date: rawDate,
@@ -58,14 +63,19 @@ export async function getAllPosts(): Promise<PostMeta[]> {
         formattedDate: formatUpdateTime(rawDate),
         content: (r.content as string) || '',
         viewCount: (r.view_count as number) || 0,
-      });
-    }
-    return posts;
+      };
+    });
   } catch {
     // Fallback: if DB not configured, return empty
     return [];
   }
 }
+
+export const getAllPosts = unstable_cache(
+  queryAllPosts,
+  ['published-posts'],
+  { tags: ['posts'], revalidate: 300 },
+);
 
 /** 获取文章详情（含 Markdown 渲染） */
 export async function getPostBySlug(slug: string): Promise<{
