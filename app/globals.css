@@ -189,6 +189,35 @@ input[type=range]::-webkit-slider-thumb {
   scrollbar-color: rgba(180, 83, 9, 0.3) transparent;
 }
 
+.message-wall-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(112, 139, 197, 0.55) rgba(255, 255, 255, 0.12);
+  scrollbar-gutter: stable;
+}
+
+.message-wall-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.message-wall-scroll::-webkit-scrollbar-track {
+  margin-block: 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.message-wall-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(145, 169, 222, 0.48), rgba(93, 122, 184, 0.68));
+}
+
+.message-wall-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(126, 153, 213, 0.72), rgba(76, 108, 176, 0.82));
+}
+
+.dark .message-wall-scroll {
+  scrollbar-color: rgba(145, 169, 231, 0.52) rgba(255, 255, 255, 0.08);
+}
+
 /* ---- Shared prose styles for article / about pages ---- */
 
 .prose h1 { font-size: 1.8rem !important; font-weight: 900 !important; margin-bottom: 1.2rem !important; margin-top: 2rem !important; line-height: 1.3 !important; color: inherit !important; scroll-margin-top: 6rem; }

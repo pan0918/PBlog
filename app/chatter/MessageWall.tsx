@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { WallMessage } from "../../lib/messageWall";
 
@@ -51,6 +51,14 @@ function fmtTime(iso: string) {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+function getMessageTextClass(length: number) {
+  if (length > 160) return "text-[11px] leading-[1.45] tracking-[0.015em]";
+  if (length > 110) return "text-[12px] leading-[1.5] tracking-[0.02em]";
+  if (length > 70) return "text-[13px] leading-[1.55] tracking-[0.025em]";
+  if (length > 36) return "text-[15px] leading-[1.65] tracking-[0.04em]";
+  return "text-[18px] leading-[1.75] tracking-[0.07em]";
+}
+
 function Pin({ color }: { color: string }) {
   const gradientId = `pin-${color.replace("#", "")}`;
   return (
@@ -83,23 +91,16 @@ function Tape({ color }: { color: string }) {
   );
 }
 
-function StickyNote({ msg, index }: { msg: WallMessage; index: number }) {
+function StickyNoteContent({ msg, index }: { msg: WallMessage; index: number }) {
   const color = NOTE_COLORS[msg.colorIndex % NOTE_COLORS.length];
   const scatter = SCATTER[index % SCATTER.length];
   const decoration = DECORATIONS[index % DECORATIONS.length];
 
   return (
-    <motion.article
-      layout
-      initial={{ opacity: 0, y: 24, scale: 0.92, rotate: scatter.rotate - 2 }}
-      animate={{ opacity: 1, y: scatter.y, scale: 1, rotate: scatter.rotate }}
-      exit={{ opacity: 0, y: -16, scale: 0.86 }}
-      transition={{ type: "spring", stiffness: 160, damping: 18, delay: Math.min(index * 0.035, 0.25) }}
-      className="relative mx-auto h-[168px] w-[178px] sm:h-[178px] sm:w-[184px]"
-    >
+    <>
       {scatter.tape ? <Tape color={color.accent} /> : <Pin color={color.pin} />}
       <div
-        className="relative flex h-full flex-col overflow-hidden px-7 pb-5 pt-8 ring-1 ring-white/65 dark:ring-white/35"
+        className="relative flex min-h-[190px] flex-col overflow-hidden px-5 pb-4 pt-8 ring-1 ring-white/65 dark:ring-white/35"
         style={{
           backgroundColor: color.bg,
           color: color.text,
@@ -115,25 +116,59 @@ function StickyNote({ msg, index }: { msg: WallMessage; index: number }) {
         />
         <div className="pointer-events-none absolute bottom-0 right-0 h-14 w-14 bg-white/45 shadow-[-8px_-8px_18px_rgba(97,116,150,0.12)]" style={{ clipPath: "polygon(100% 0, 0 100%, 100% 100%)" }} />
         <p
-          className="relative z-10 min-h-[74px] whitespace-pre-wrap break-words text-[19px] leading-[1.8] tracking-[0.08em] line-clamp-3 sm:text-[20px]"
+          className={`relative z-10 whitespace-pre-wrap break-words ${getMessageTextClass(msg.content.length)}`}
           style={{ fontFamily: "var(--font-handwriting), var(--font-serif-stack), serif" }}
         >
           {msg.content}
         </p>
-        <div className="relative z-10 mt-auto h-px w-full bg-slate-500/10" />
-        <div className="relative z-10 mt-3 space-y-1.5 text-[12px] leading-none text-slate-600/70" style={{ fontFamily: "var(--font-serif-stack), serif" }}>
-          <div className="flex items-center gap-2">
+        <div className="relative z-10 mt-4 h-px w-full bg-slate-500/10" />
+        <div className="relative z-10 mt-2.5 space-y-1.5 text-[11px] leading-none text-slate-600/75" style={{ fontFamily: "var(--font-serif-stack), serif" }}>
+          <div className="flex items-center gap-1.5 font-bold text-slate-700/75">
+            <UserMiniIcon />
+            <span className="min-w-0 truncate" title={msg.author?.trim() || "匿名"}>{msg.author?.trim() || "匿名"}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
             <CalendarIcon />
             <span>{fmtDate(msg.createdAt)}</span>
-          </div>
-          <div className="flex items-center gap-2">
+            <span aria-hidden="true">·</span>
             <ClockIcon />
             <span>{fmtTime(msg.createdAt)}</span>
           </div>
         </div>
         <div className="pointer-events-none absolute bottom-4 right-4 z-10 opacity-55">{decoration}</div>
       </div>
-    </motion.article>
+    </>
+  );
+}
+
+function StickyNote({ msg, index, animated }: { msg: WallMessage; index: number; animated: boolean }) {
+  const scatter = SCATTER[index % SCATTER.length];
+  const className = "relative mx-auto w-[178px] sm:w-[184px]";
+
+  if (animated) {
+    return (
+      <motion.article
+        initial={{ opacity: 0, y: 24, scale: 0.94, rotate: scatter.rotate - 2 }}
+        animate={{ opacity: 1, y: scatter.y, scale: 1, rotate: scatter.rotate }}
+        transition={{ type: "spring", stiffness: 160, damping: 18, delay: Math.min(index * 0.035, 0.25) }}
+        className={className}
+      >
+        <StickyNoteContent msg={msg} index={index} />
+      </motion.article>
+    );
+  }
+
+  return (
+    <article
+      className={className}
+      style={{
+        transform: `translateY(${scatter.y}px) rotate(${scatter.rotate}deg)`,
+        contentVisibility: "auto",
+        containIntrinsicSize: "184px 220px",
+      }}
+    >
+      <StickyNoteContent msg={msg} index={index} />
+    </article>
   );
 }
 
@@ -144,8 +179,31 @@ export default function MessageWall({ initialMessages }: { initialMessages: Wall
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showScrollHint, setShowScrollHint] = useState(initialMessages.length > 10);
 
-  const visibleMessages = useMemo(() => initialMessages.slice(0, 10), [initialMessages]);
+  const updateScrollHint = useCallback(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const { scrollHeight, scrollTop, clientHeight } = container;
+    setShowScrollHint(scrollHeight - scrollTop - clientHeight > 8);
+  }, []);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const frame = requestAnimationFrame(updateScrollHint);
+    const observer = new ResizeObserver(updateScrollHint);
+    observer.observe(container);
+    window.addEventListener("resize", updateScrollHint);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", updateScrollHint);
+    };
+  }, [initialMessages.length, updateScrollHint]);
 
   const submit = async () => {
     const content = messageText.trim();
@@ -214,18 +272,33 @@ export default function MessageWall({ initialMessages }: { initialMessages: Wall
         <div className="pointer-events-none absolute inset-0 hidden bg-[radial-gradient(circle_at_18%_12%,rgba(176,196,255,0.18),transparent_34%),radial-gradient(circle_at_82%_32%,rgba(111,137,205,0.18),transparent_40%),linear-gradient(135deg,rgba(202,218,255,0.12),rgba(40,55,95,0.18))] dark:block" />
         <DoodleTrail />
 
-        {visibleMessages.length === 0 ? (
+        {initialMessages.length === 0 ? (
           <div className="relative z-10 flex min-h-[330px] flex-col items-center justify-center text-center">
             <div className="mb-4 rounded-full border border-white/70 bg-white/[0.35] px-5 py-2 text-sm font-bold text-[#6b83ad] shadow-sm backdrop-blur-md dark:border-white/20 dark:bg-white/10 dark:text-[#dbe8ff]">这面墙还很安静</div>
             <p className="text-sm text-[#7b8fb2] dark:text-[#b5c7ef]">在下方写下第一张便签吧</p>
           </div>
         ) : (
-          <div className="relative z-10 grid min-h-[390px] grid-cols-1 gap-x-7 gap-y-10 px-1 py-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-            <AnimatePresence mode="popLayout">
-              {visibleMessages.map((msg, index) => (
-                <StickyNote key={msg.id} msg={msg} index={index} />
+          <div
+            ref={scrollRef}
+            role="region"
+            aria-label="留言便签墙"
+            tabIndex={0}
+            onScroll={updateScrollHint}
+            className="message-wall-scroll relative z-10 h-[620px] overflow-y-auto overscroll-contain px-1 py-8 sm:px-2 md:h-[600px] md:px-1"
+          >
+            <div className="grid grid-cols-1 items-start gap-x-7 gap-y-10 pb-16 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+              {initialMessages.map((msg, index) => (
+                <StickyNote key={msg.id} msg={msg} index={index} animated={index < 10} />
               ))}
-            </AnimatePresence>
+            </div>
+          </div>
+        )}
+
+        {showScrollHint && initialMessages.length > 0 && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex h-24 items-end justify-center bg-gradient-to-t from-[#dceafa]/95 via-[#e8f2ff]/65 to-transparent pb-4 dark:from-[#0c1630]/95 dark:via-[#101d38]/70" aria-hidden="true">
+            <span className="rounded-full border border-white/65 bg-white/55 px-4 py-1.5 text-[11px] font-bold tracking-[0.12em] text-[#617dab] shadow-sm backdrop-blur-md dark:border-white/20 dark:bg-[#26375b]/70 dark:text-[#c7d7ff]">
+              ↓ 向下查看更多留言
+            </span>
           </div>
         )}
       </div>
@@ -334,6 +407,15 @@ function ClockIcon() {
     <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5l3 2" />
+    </svg>
+  );
+}
+
+function UserMiniIcon() {
+  return (
+    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
     </svg>
   );
 }

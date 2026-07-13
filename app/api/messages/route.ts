@@ -15,13 +15,13 @@ function getClientIp(request: NextRequest): string {
 
 export async function GET() {
   try {
-    const messages = await getApprovedMessages(100);
+    const messages = await getApprovedMessages();
     const formatted = messages.map(m => ({
       id: m.id,
       content: m.content,
-      author: m.author,
+      author: m.author?.trim() || '匿名',
       colorIndex: Math.abs(hashCode(m.id)) % 10,
-      createdAt: m.approved_at || m.created_at,
+      createdAt: m.created_at,
     }));
     return NextResponse.json({ messages: formatted });
   } catch {

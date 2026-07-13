@@ -11,11 +11,10 @@ export interface MessageRecord {
   deleted_at: string | null;
 }
 
-export async function getApprovedMessages(limit = 100): Promise<MessageRecord[]> {
-  const result = await db.execute({
-    sql: `SELECT * FROM messages WHERE status = 'approved' AND deleted_at IS NULL ORDER BY approved_at DESC, created_at DESC LIMIT ?`,
-    args: [limit],
-  });
+export async function getApprovedMessages(): Promise<MessageRecord[]> {
+  const result = await db.execute(
+    `SELECT * FROM messages WHERE status = 'approved' AND deleted_at IS NULL ORDER BY created_at DESC`
+  );
   return result.rows as unknown as MessageRecord[];
 }
 

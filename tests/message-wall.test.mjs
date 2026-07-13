@@ -14,6 +14,54 @@ test("chatter page no longer stores public messages in the browser", async () =>
   assert.match(page, /<MessageWall initialMessages=\{messages\}/);
 });
 
+test("approved messages use the complete submission-time ordered dataset", async () => {
+  const [wall, page, route, repository] = await Promise.all([
+    readFile("app/chatter/MessageWall.tsx", "utf8"),
+    readFile("app/chatter/page.tsx", "utf8"),
+    readFile("app/api/messages/route.ts", "utf8"),
+    readFile("lib/db/messages.ts", "utf8"),
+  ]);
+
+  assert.doesNotMatch(repository, /LIMIT\s+\?/i);
+  assert.match(repository, /ORDER BY created_at DESC/i);
+  assert.doesNotMatch(page, /getApprovedMessages\(10\)/);
+  assert.doesNotMatch(route, /getApprovedMessages\(100\)/);
+  assert.match(page, /createdAt:\s*m\.created_at/);
+  assert.match(route, /createdAt:\s*m\.created_at/);
+  assert.doesNotMatch(page, /approved_at\s*\|\|/);
+  assert.doesNotMatch(route, /approved_at\s*\|\|/);
+  assert.doesNotMatch(wall, /slice\(0,\s*10\)/);
+});
+
+test("message wall scrolls vertically with responsive height and a one-way hint", async () => {
+  const [wall, styles] = await Promise.all([
+    readFile("app/chatter/MessageWall.tsx", "utf8"),
+    readFile("app/globals.css", "utf8"),
+  ]);
+
+  assert.match(wall, /overflow-y-auto/);
+  assert.match(wall, /h-\[620px\]/);
+  assert.match(wall, /md:h-\[600px\]/);
+  assert.match(wall, /lg:grid-cols-5/);
+  assert.match(wall, /onScroll=\{updateScrollHint\}/);
+  assert.match(wall, /scrollHeight\s*-\s*scrollTop\s*-\s*clientHeight/);
+  assert.match(wall, /向下查看更多留言/);
+  assert.match(wall, /\{showScrollHint\s*&&/);
+  assert.match(styles, /\.message-wall-scroll/);
+  assert.match(styles, /scrollbar-width:\s*thin/);
+});
+
+test("sticky notes show the author and full adaptive content with bounded animation", async () => {
+  const wall = await readFile("app/chatter/MessageWall.tsx", "utf8");
+
+  assert.match(wall, /msg\.author\?\.trim\(\)\s*\|\|\s*["']匿名["']/);
+  assert.doesNotMatch(wall, /line-clamp/);
+  assert.match(wall, /getMessageTextClass\(msg\.content\.length\)/);
+  assert.match(wall, /animated=\{index < 10\}/);
+  assert.match(wall, /contentVisibility:\s*["']auto["']/);
+  assert.doesNotMatch(wall, /<AnimatePresence mode=["']popLayout["']>/);
+});
+
 test("message API stores pending submissions and protects against basic abuse", async () => {
   const [route, repository] = await Promise.all([
     readFile("app/api/messages/route.ts", "utf8"),

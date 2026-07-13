@@ -5,14 +5,14 @@ import { siteConfig } from '../../siteConfig';
 import { getApprovedMessages } from '../../lib/db/messages';
 
 export default async function ChatterPage() {
-  const dbMessages = await getApprovedMessages(10);
+  const dbMessages = await getApprovedMessages();
 
   const messages = dbMessages.map(m => ({
     id: m.id,
     content: m.content,
-    author: m.author,
+    author: m.author?.trim() || '匿名',
     colorIndex: Math.abs(hashCode(m.id)) % 10,
-    createdAt: m.approved_at || m.created_at,
+    createdAt: m.created_at,
   }));
 
   return (
