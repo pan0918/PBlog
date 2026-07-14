@@ -219,7 +219,7 @@ export default function MusicClient() {
         {/* Right: Lyrics & Playlist */}
         <div className="md:col-span-7 flex flex-col bg-white/60 dark:bg-slate-800/60 border border-white/40 dark:border-white/10 rounded-[32px] shadow-2xl relative transition-colors duration-700 overflow-hidden h-[450px] md:h-auto shrink-0">
           {/* Tab Switcher */}
-          <div className="flex items-center justify-center gap-1 p-1 mt-4 md:mt-6 mx-auto bg-white/70 dark:bg-slate-900/70 rounded-full shadow-inner border border-white/40 w-48 md:w-64 z-20 shrink-0">
+          <div className="flex items-center justify-center gap-1 p-1 mt-4 md:mt-6 mx-auto bg-white/70 dark:bg-slate-900/70 rounded-full shadow-inner border border-white/40 w-48 md:w-64 shrink-0">
             <button onClick={() => setActiveTab('lyrics')} className={`flex-1 py-1.5 md:py-2 rounded-full font-black text-xs md:text-[13px] transition-all ${activeTab === 'lyrics' ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-500'}`}>歌词</button>
             <button onClick={() => setActiveTab('playlist')} className={`flex-1 py-1.5 md:py-2 rounded-full font-black text-xs md:text-[13px] transition-all ${activeTab === 'playlist' ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-500'}`}>歌单</button>
           </div>
@@ -228,8 +228,8 @@ export default function MusicClient() {
             {/* Lyrics Panel */}
             {activeTab === 'lyrics' && (
               <div className="absolute inset-0 flex flex-col h-full">
-                <div className="absolute top-0 left-0 right-0 h-32 md:h-40 bg-gradient-to-b from-white/60 dark:from-slate-800/80 to-transparent z-10 pointer-events-none" />
-                <div className="absolute bottom-0 left-0 right-0 h-32 md:h-40 bg-gradient-to-t from-white/60 dark:from-slate-800/80 to-transparent z-10 pointer-events-none" />
+                <div className="absolute top-0 left-0 right-0 h-32 md:h-40 bg-gradient-to-b from-white/60 dark:from-slate-800/80 to-transparent pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 h-32 md:h-40 bg-gradient-to-t from-white/60 dark:from-slate-800/80 to-transparent pointer-events-none" />
                 <div ref={lyricContainerRef} className="h-full overflow-y-auto scroll-smooth relative px-4 md:px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)', maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)' }}>
                   <div className="py-[30vh] md:py-[35vh] flex flex-col gap-4 md:gap-6 text-center lg:px-10">
                     {parsedLyrics.length > 0 ? parsedLyrics.map((line, i) => {
@@ -256,12 +256,12 @@ export default function MusicClient() {
 
             {/* Playlist Panel */}
             {activeTab === 'playlist' && (
-              <div className="absolute inset-0 px-4 md:px-8 pb-4 md:pb-8 pt-2 md:pt-4 flex flex-col">
-                <div className="relative w-full max-w-md mx-auto group mb-4 md:mb-8 shrink-0">
-                  <div className="absolute inset-0 bg-indigo-500/5 blur-lg group-focus-within:bg-indigo-500/10 transition-all rounded-full" />
+              <div className="absolute inset-0 px-4 md:px-8 pb-4 md:pb-8 pt-2 md:pt-4 flex flex-col relative z-10">
+                <div className="relative z-20 w-full max-w-md mx-auto group mb-4 md:mb-8 shrink-0">
+                  <div data-playlist-search-glow className="pointer-events-none absolute inset-0 bg-indigo-500/5 blur-lg group-focus-within:bg-indigo-500/10 transition-all rounded-full" />
                   <svg className="w-4 h-4 md:w-5 md:h-5 absolute left-4 top-1/2 -translate-y-1/2 z-10 text-slate-400 group-focus-within:text-indigo-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                  <input type="text" placeholder="搜索音轨..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full h-10 md:h-12 pl-10 md:pl-12 pr-10 bg-white/50 dark:bg-slate-900/70 border border-white/50 dark:border-white/10 rounded-full text-xs md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/40 shadow-inner transition-all" />
-                  {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-black/10 rounded-full transition-colors"><svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>}
+                  <input type="search" placeholder="搜索音轨..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} aria-label="搜索歌单" autoComplete="off" className="relative z-10 w-full h-10 md:h-12 pl-10 md:pl-12 pr-10 bg-white/50 dark:bg-slate-900/70 border border-white/50 dark:border-white/10 rounded-full text-xs md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/40 shadow-inner transition-all" />
+                  {searchQuery && <button type="button" onClick={() => setSearchQuery('')} aria-label="清空歌单搜索" className="absolute right-4 top-1/2 z-20 -translate-y-1/2 p-1.5 hover:bg-black/10 rounded-full transition-colors"><svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>}
                 </div>
                 <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-2 md:gap-2.5" style={{ scrollbarWidth: 'none' }}>
                   {filteredPlaylist.map((song, idx) => {

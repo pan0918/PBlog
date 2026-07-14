@@ -55,3 +55,11 @@ test("music cover art uses optimized Next images", async () => {
     assert.match(source, /quality=\{75\}/);
   }
 });
+
+test("playlist search keeps decorative layers out of the input hit target", async () => {
+  const musicPage = await readFile("app/music/MusicClient.tsx", "utf8");
+
+  assert.match(musicPage, /data-playlist-search-glow[^>]*className="[^"]*pointer-events-none[^"]*"/);
+  assert.match(musicPage, /aria-label="搜索歌单"[^>]*className="[^"]*relative z-10[^"]*"/);
+  assert.match(musicPage, /aria-label="清空歌单搜索"[^>]*className="[^"]*z-20[^"]*"/);
+});
