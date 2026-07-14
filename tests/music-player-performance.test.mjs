@@ -63,3 +63,28 @@ test("playlist search keeps decorative layers out of the input hit target", asyn
   assert.match(musicPage, /aria-label="搜索歌单"[^>]*className="[^"]*relative z-10[^"]*"/);
   assert.match(musicPage, /aria-label="清空歌单搜索"[^>]*className="[^"]*z-20[^"]*"/);
 });
+
+test("non-range audio keeps a pending seek until the target becomes buffered", async () => {
+  let seeking;
+  try {
+    seeking = await import("../lib/music-seeking.ts");
+  } catch {}
+  assert.ok(seeking, "music seeking helpers should exist");
+
+  const ranges = {
+    length: 2,
+    start: (index) => [0, 80][index],
+    end: (index) => [30, 120][index],
+  };
+  assert.equal(seeking.isTimeInRanges(ranges, 20), true);
+  assert.equal(seeking.isTimeInRanges(ranges, 90), true);
+  assert.equal(seeking.isTimeInRanges(ranges, 60), false);
+
+  const provider = await readFile("components/MusicProvider.tsx", "utf8");
+  assert.match(provider, /retryPendingSeek/);
+  assert.match(provider, /onProgress=\{retryPendingSeek\}/);
+  assert.match(provider, /onSeeked=\{handleSeeked\}/);
+  assert.match(provider, /pendingSeekRef\.current\s*=\s*target/);
+  assert.match(provider, /isTimeInRanges\(audio\.buffered,\s*target/);
+  assert.doesNotMatch(provider, /const target = pendingSeekRef\.current;\s*pendingSeekRef\.current = null;/);
+});

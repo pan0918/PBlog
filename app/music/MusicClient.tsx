@@ -224,10 +224,10 @@ export default function MusicClient() {
             <button onClick={() => setActiveTab('playlist')} className={`flex-1 py-1.5 md:py-2 rounded-full font-black text-xs md:text-[13px] transition-all ${activeTab === 'playlist' ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-500'}`}>歌单</button>
           </div>
 
-          <div className="flex-1 relative mt-2 flex flex-col overflow-hidden">
+          <div className="flex-1 relative mt-2 flex flex-col min-h-0">
             {/* Lyrics Panel */}
             {activeTab === 'lyrics' && (
-              <div className="absolute inset-0 flex flex-col h-full">
+              <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
                 <div className="absolute top-0 left-0 right-0 h-32 md:h-40 bg-gradient-to-b from-white/60 dark:from-slate-800/80 to-transparent pointer-events-none" />
                 <div className="absolute bottom-0 left-0 right-0 h-32 md:h-40 bg-gradient-to-t from-white/60 dark:from-slate-800/80 to-transparent pointer-events-none" />
                 <div ref={lyricContainerRef} className="h-full overflow-y-auto scroll-smooth relative px-4 md:px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)', maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)' }}>
@@ -256,7 +256,7 @@ export default function MusicClient() {
 
             {/* Playlist Panel */}
             {activeTab === 'playlist' && (
-              <div className="absolute inset-0 px-4 md:px-8 pb-4 md:pb-8 pt-2 md:pt-4 flex flex-col relative z-10">
+              <div className="flex-1 min-h-0 px-4 md:px-8 pb-4 md:pb-8 pt-2 md:pt-4 flex flex-col relative z-10 overflow-hidden">
                 <div className="relative z-20 w-full max-w-md mx-auto group mb-4 md:mb-8 shrink-0">
                   <div data-playlist-search-glow className="pointer-events-none absolute inset-0 bg-indigo-500/5 blur-lg group-focus-within:bg-indigo-500/10 transition-all rounded-full" />
                   <svg className="w-4 h-4 md:w-5 md:h-5 absolute left-4 top-1/2 -translate-y-1/2 z-10 text-slate-400 group-focus-within:text-indigo-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>

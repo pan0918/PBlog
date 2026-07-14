@@ -12,6 +12,7 @@ import React, {
   type ReactNode,
 } from "react";
 import { musicPlaybackStore } from "../lib/music-playback-store";
+import { isTimeInRanges } from "../lib/music-seeking";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -88,6 +89,7 @@ const MusicContext = createContext<MusicContextValue | null>(null);
 export function MusicProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pendingPlayRef = useRef(false);
+  const pendingSeekRef = useRef<number | null>(null);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -168,8 +170,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!currentSong) return;
     lastLyricRef.current = "";
+    pendingSeekRef.current = null;
     musicPlaybackStore.reset();
-    audioRef.current?.pause();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.preload = "metadata";
+    }
   }, [currentIndex, currentSong]);
 
   useEffect(() => {
@@ -223,11 +229,56 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const retryPendingSeek = useCallback(() => {
+    const audio = audioRef.current;
+    const target = pendingSeekRef.current;
+    if (!audio || target === null || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
+
+    const clamped = Math.max(0, Math.min(target, audio.duration - 0.05));
+    if (!isTimeInRanges(audio.buffered, clamped)) return;
+
+    audio.currentTime = clamped;
+    audio.preload = "metadata";
+    pendingSeekRef.current = null;
+    const nextLyric = lyricAt(clamped);
+    lastLyricRef.current = nextLyric;
+    musicPlaybackStore.update({
+      currentTime: clamped,
+      duration: audio.duration,
+      currentLyric: nextLyric,
+    });
+    setIsLoading(false);
+
+    if (pendingPlayRef.current) requestPlayback();
+  }, [lyricAt, requestPlayback]);
+
   const handleCanPlay = useCallback(() => {
     setIsLoading(false);
+
+    if (pendingSeekRef.current !== null) {
+      retryPendingSeek();
+      if (pendingSeekRef.current !== null) {
+        const audio = audioRef.current;
+        if (audio) audio.preload = "auto";
+        setIsLoading(true);
+      }
+      return;
+    }
+
     if (!pendingPlayRef.current) return;
     requestPlayback();
-  }, [requestPlayback]);
+  }, [requestPlayback, retryPendingSeek]);
+
+  const handleSeeked = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    setIsLoading(false);
+
+    const target = pendingSeekRef.current;
+    if (target === null || Math.abs(audio.currentTime - target) > 0.75) return;
+    pendingSeekRef.current = null;
+    audio.preload = "metadata";
+  }, []);
 
   const handlePlaying = useCallback(() => {
     pendingPlayRef.current = false;
@@ -295,14 +346,35 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const seekToSeconds = useCallback((requestedSeconds: number) => {
     const audio = audioRef.current;
-    if (!audio || audio.readyState < HTMLMediaElement.HAVE_METADATA) return;
-    if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+    if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) {
+      pendingSeekRef.current = requestedSeconds;
+      return;
+    }
+    if (audio.readyState < HTMLMediaElement.HAVE_METADATA) {
+      pendingSeekRef.current = requestedSeconds;
+      return;
+    }
 
     const target = Math.max(
       0,
       Math.min(requestedSeconds, Math.max(0, audio.duration - 0.05)),
     );
+    pendingSeekRef.current = target;
+
+    const canSeekImmediately =
+      isTimeInRanges(audio.seekable, target) || isTimeInRanges(audio.buffered, target);
+    if (!canSeekImmediately) {
+      pendingPlayRef.current = true;
+      setIsPlaying(true);
+      setIsLoading(true);
+      audio.pause();
+      audio.preload = "auto";
+      audio.load();
+      return;
+    }
+
     audio.currentTime = target;
+    pendingSeekRef.current = null;
     const nextLyric = lyricAt(target);
     lastLyricRef.current = nextLyric;
     musicPlaybackStore.update({
@@ -389,8 +461,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleDurationChange}
           onDurationChange={handleDurationChange}
+          onProgress={retryPendingSeek}
           onSeeking={() => setIsLoading(true)}
-          onSeeked={() => setIsLoading(false)}
+          onSeeked={handleSeeked}
           onWaiting={() => setIsLoading(true)}
           onCanPlay={handleCanPlay}
           onPlaying={handlePlaying}
