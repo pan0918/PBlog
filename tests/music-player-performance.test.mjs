@@ -88,3 +88,32 @@ test("non-range audio keeps a pending seek until the target becomes buffered", a
   assert.match(provider, /isTimeInRanges\(audio\.buffered,\s*target/);
   assert.doesNotMatch(provider, /const target = pendingSeekRef\.current;\s*pendingSeekRef\.current = null;/);
 });
+
+test("lyrics prepare the next line 300ms early without waiting for throttled progress", async () => {
+  let lyricTiming;
+  try {
+    lyricTiming = await import("../lib/music-lyrics.ts");
+  } catch {}
+  assert.ok(lyricTiming, "music lyric timing helpers should exist");
+
+  const lyrics = [
+    { time: 5, text: "上一句" },
+    { time: 10, text: "下一句" },
+    { time: 15, text: "再下一句" },
+  ];
+
+  assert.equal(lyricTiming.LYRIC_DISPLAY_LEAD_SECONDS, 0.3);
+  assert.equal(lyricTiming.getActiveLyricIndex(lyrics, 9.69), 0);
+  assert.equal(lyricTiming.getActiveLyricIndex(lyrics, 9.7), 1);
+  assert.equal(lyricTiming.getNextLyricDelayMs(lyrics, 9.5), 200);
+  assert.equal(lyricTiming.getNextLyricDelayMs(lyrics, 15), null);
+
+  const [provider, musicPage] = await Promise.all([
+    readFile("components/MusicProvider.tsx", "utf8"),
+    readFile("app/music/MusicClient.tsx", "utf8"),
+  ]);
+  assert.match(provider, /lyricSyncTimerRef/);
+  assert.match(provider, /setTimeout\(/);
+  assert.match(provider, /onPause=\{clearLyricSyncTimer\}/);
+  assert.match(musicPage, /getActiveLyricIndex\(parsedLyrics, currentTime\)/);
+});

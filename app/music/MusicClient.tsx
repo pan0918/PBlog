@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMusic, useMusicPlayback, type Song, type LyricLine } from '../../components/MusicProvider';
 import { formatTime } from '../../lib/utils';
+import { getActiveLyricIndex } from '../../lib/music-lyrics';
 
 export default function MusicClient() {
   const {
@@ -46,10 +47,7 @@ export default function MusicClient() {
   }, [currentSong]);
 
   const activeLyricIndex = useMemo(() => {
-    if (!parsedLyrics.length) return -1;
-    let idx = parsedLyrics.findIndex((l) => l.time > currentTime) - 1;
-    if (idx === -2) idx = parsedLyrics.length - 1;
-    return Math.max(0, idx);
+    return getActiveLyricIndex(parsedLyrics, currentTime);
   }, [currentTime, parsedLyrics]);
 
   useEffect(() => {

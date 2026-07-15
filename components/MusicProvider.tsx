@@ -13,6 +13,10 @@ import React, {
 } from "react";
 import { musicPlaybackStore } from "../lib/music-playback-store";
 import { isTimeInRanges } from "../lib/music-seeking";
+import {
+  getActiveLyricIndex,
+  getNextLyricDelayMs,
+} from "../lib/music-lyrics";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -90,6 +94,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pendingPlayRef = useRef(false);
   const pendingSeekRef = useRef<number | null>(null);
+  const lyricSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lyricSyncCallbackRef = useRef<() => void>(() => {});
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -128,12 +134,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const lastLyricRef = useRef("");
 
   const lyricAt = useCallback((time: number) => {
-    for (let i = parsedLyrics.length - 1; i >= 0; i--) {
-      if (time >= parsedLyrics[i].time) {
-        return parsedLyrics[i].text;
-      }
-    }
-    return "";
+    const index = getActiveLyricIndex(parsedLyrics, time);
+    return index >= 0 ? parsedLyrics[index].text : "";
   }, [parsedLyrics]);
 
   const requestPlayback = useCallback((deferUntilCanPlay = false) => {
@@ -171,6 +173,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (!currentSong) return;
     lastLyricRef.current = "";
     pendingSeekRef.current = null;
+    if (lyricSyncTimerRef.current !== null) {
+      clearTimeout(lyricSyncTimerRef.current);
+      lyricSyncTimerRef.current = null;
+    }
     musicPlaybackStore.reset();
     if (audioRef.current) {
       audioRef.current.pause();
@@ -193,9 +199,54 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
+  const handleDurationChange = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const dur = audio.duration;
+    if (Number.isFinite(dur) && dur > 0) {
+      musicPlaybackStore.update({ duration: dur });
+    }
+  };
+
+  const clearLyricSyncTimer = useCallback(() => {
+    if (lyricSyncTimerRef.current === null) return;
+    clearTimeout(lyricSyncTimerRef.current);
+    lyricSyncTimerRef.current = null;
+  }, []);
+
+  const syncLyricTimeline = useCallback(() => {
+    const audio = audioRef.current;
+    clearLyricSyncTimer();
+    if (!audio || parsedLyrics.length === 0) return;
+
+    const currentTime = audio.currentTime;
+    const nextLyric = lyricAt(currentTime);
+    if (nextLyric !== lastLyricRef.current) {
+      lastLyricRef.current = nextLyric;
+      musicPlaybackStore.update({ currentTime, currentLyric: nextLyric });
+    }
+
+    if (audio.paused || audio.ended) return;
+    const delayMs = getNextLyricDelayMs(parsedLyrics, currentTime);
+    if (delayMs === null) return;
+
+    lyricSyncTimerRef.current = setTimeout(
+      () => lyricSyncCallbackRef.current(),
+      Math.max(16, delayMs),
+    );
+  }, [clearLyricSyncTimer, lyricAt, parsedLyrics]);
+
+  useEffect(() => {
+    lyricSyncCallbackRef.current = syncLyricTimeline;
+    syncLyricTimeline();
+    return clearLyricSyncTimer;
+  }, [clearLyricSyncTimer, syncLyricTimeline]);
+
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
     if (!audio) return;
+
+    syncLyricTimeline();
 
     const now = performance.now();
     if (!isPageVisibleRef.current || now - lastUpdateTimeRef.current < 200) return;
@@ -211,22 +262,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       playbackPatch.duration = dur;
     }
 
-    const nextLyric = lyricAt(t);
-    if (nextLyric !== lastLyricRef.current) {
-      lastLyricRef.current = nextLyric;
-      playbackPatch.currentLyric = nextLyric;
-    }
-
     musicPlaybackStore.update(playbackPatch);
-  };
-
-  const handleDurationChange = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    const dur = audio.duration;
-    if (Number.isFinite(dur) && dur > 0) {
-      musicPlaybackStore.update({ duration: dur });
-    }
   };
 
   const retryPendingSeek = useCallback(() => {
@@ -247,10 +283,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       duration: audio.duration,
       currentLyric: nextLyric,
     });
+    syncLyricTimeline();
     setIsLoading(false);
 
     if (pendingPlayRef.current) requestPlayback();
-  }, [lyricAt, requestPlayback]);
+  }, [lyricAt, requestPlayback, syncLyricTimeline]);
 
   const handleCanPlay = useCallback(() => {
     setIsLoading(false);
@@ -278,13 +315,15 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (target === null || Math.abs(audio.currentTime - target) > 0.75) return;
     pendingSeekRef.current = null;
     audio.preload = "metadata";
-  }, []);
+    syncLyricTimeline();
+  }, [syncLyricTimeline]);
 
   const handlePlaying = useCallback(() => {
     pendingPlayRef.current = false;
     setIsLoading(false);
     setIsPlaying(true);
-  }, []);
+    syncLyricTimeline();
+  }, [syncLyricTimeline]);
 
   const handleAudioError = useCallback(() => {
     pendingPlayRef.current = false;
@@ -464,6 +503,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           onProgress={retryPendingSeek}
           onSeeking={() => setIsLoading(true)}
           onSeeked={handleSeeked}
+          onPause={clearLyricSyncTimer}
           onWaiting={() => setIsLoading(true)}
           onCanPlay={handleCanPlay}
           onPlaying={handlePlaying}
