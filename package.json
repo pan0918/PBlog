@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "photos:backfill": "tsx scripts/backfill-photo-derivatives.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",
