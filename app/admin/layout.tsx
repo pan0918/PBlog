@@ -29,6 +29,8 @@ const NAV_SECTIONS = [
       { name: '歌曲管理', href: '/admin/songs', icon: '🎵' },
       { name: '友链管理', href: '/admin/friends', icon: '🔗' },
       { name: '留言审核', href: '/admin/messages', icon: '💬' },
+      { name: '评论管理', href: '/admin/comments', icon: '🗨️' },
+      { name: '用户管理', href: '/admin/users', icon: '👥' },
       { name: '相册管理', href: '/admin/albums', icon: '📸' },
     ],
   },

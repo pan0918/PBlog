@@ -170,3 +170,55 @@ export async function toggleCommentLike(commentId: string, userId: string) {
     transaction.close();
   }
 }
+
+export type AdminCommentStatus = 'visible' | 'hidden' | 'spam' | 'deleted';
+
+export async function listAdminComments(input: { query?: string; status?: string; page?: number; pageSize?: number }) {
+  const page = Math.max(1, Math.trunc(input.page || 1));
+  const pageSize = Math.min(50, Math.max(1, Math.trunc(input.pageSize || 20)));
+  const where: string[] = [];
+  const args: Array<string | number> = [];
+  const query = input.query?.trim();
+  if (query) {
+    const pattern = `%${query}%`;
+    where.push(`(c.content LIKE ? OR u.username LIKE ? OR a.username LIKE ? OR p.title LIKE ?)`);
+    args.push(pattern, pattern, pattern, pattern);
+  }
+  if (input.status && ['visible', 'hidden', 'spam', 'deleted'].includes(input.status)) {
+    where.push('c.status = ?');
+    args.push(input.status);
+  }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const countResult = await db.execute({
+    sql: `SELECT COUNT(*) AS count FROM post_comments c
+          LEFT JOIN public_users u ON u.id = c.public_user_id
+          LEFT JOIN admin_users a ON a.id = c.admin_user_id
+          LEFT JOIN posts p ON p.id = c.post_id ${whereSql}`,
+    args,
+  });
+  const offset = (page - 1) * pageSize;
+  const result = await db.execute({
+    sql: `SELECT c.id, c.post_id, c.parent_id, c.content, c.status, c.created_at, c.edited_at,
+                 COALESCE(u.username, a.username, '已注销用户') AS author_name,
+                 CASE WHEN c.admin_user_id IS NOT NULL THEN 1 ELSE 0 END AS is_author,
+                 p.title AS post_title, p.slug AS post_slug
+          FROM post_comments c
+          LEFT JOIN public_users u ON u.id = c.public_user_id
+          LEFT JOIN admin_users a ON a.id = c.admin_user_id
+          LEFT JOIN posts p ON p.id = c.post_id
+          ${whereSql} ORDER BY c.created_at DESC, c.id DESC LIMIT ? OFFSET ?`,
+    args: [...args, pageSize, offset],
+  });
+  return { items: result.rows, total: Number(countResult.rows[0]?.count || 0), page, pageSize };
+}
+
+export async function updateAdminCommentStatus(id: string, status: AdminCommentStatus) {
+  if (!['visible', 'hidden', 'spam', 'deleted'].includes(status)) throw new Error('评论状态无效');
+  const now = new Date().toISOString();
+  const result = await db.execute({
+    sql: `UPDATE post_comments SET status = ?, deleted_at = CASE WHEN ? = 'deleted' THEN ? ELSE NULL END,
+          updated_at = ? WHERE id = ?`,
+    args: [status, status, now, now, id],
+  });
+  if (result.rowsAffected === 0) throw new Error('评论不存在');
+}

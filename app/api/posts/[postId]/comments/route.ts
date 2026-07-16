@@ -26,6 +26,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const key = await createPublicRateKey('comment', actor.id, getClientIp(request));
     const rate = await checkPublicRateLimit('comment', key, 5, 10 * 60 * 1000);
     if (!rate.allowed) return NextResponse.json({ ok: false, message: '评论太频繁，请稍后再试' }, { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds) } });
+    const hourlyRate = await checkPublicRateLimit('comment', key, 20, 60 * 60 * 1000);
+    if (!hourlyRate.allowed) return NextResponse.json({ ok: false, message: '评论太频繁，请稍后再试' }, { status: 429, headers: { 'Retry-After': String(hourlyRate.retryAfterSeconds) } });
     await recordPublicRateEvent('comment', key);
   }
   try {

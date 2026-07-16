@@ -35,7 +35,11 @@ test("public comment routes separate public reads, actor writes, ownership edits
   assert.match(postRoute, /export async function GET/);
   assert.match(postRoute, /resolveCommentActor/);
   assert.match(postRoute, /sanitizeCommentContent/);
+  assert.match(postRoute, /20, 60 \* 60 \* 1000/);
   assert.match(editRoute, /editComment/);
+  assert.match(editRoute, /comment-edit/);
+  assert.match(editRoute, /checkPublicRateLimit/);
+  assert.match(editRoute, /20, 60 \* 60 \* 1000/);
   assert.doesNotMatch(editRoute, /export async function DELETE/);
   assert.match(likeRoute, /requirePublicUser/);
   assert.match(likeRoute, /toggleCommentLike/);
