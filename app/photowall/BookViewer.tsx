@@ -2,10 +2,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { shouldBypassImageOptimizer } from "./imageDelivery";
 import { fitImageWithinViewport, type FittedImageSize } from "./imageSizing";
 
-interface Photo { url: string; caption?: string; }
+interface Photo { thumbnailUrl: string; previewUrl: string; originalUrl: string; caption?: string; }
 
 interface Album {
   id: string;
@@ -86,6 +85,15 @@ export default function BookViewer({ album, onClose }: BookViewerProps) {
         <div className="absolute top-6 left-6 z-[110] text-white/60 text-sm font-mono">
           {currentIndex + 1} / {total}
         </div>
+        <a
+          href={photo.originalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(event) => event.stopPropagation()}
+          className="absolute top-6 right-24 z-[110] rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold text-white/70 backdrop-blur-md transition-colors hover:bg-white/20 hover:text-white"
+        >
+          查看原图
+        </a>
 
         <div
           className="relative rounded-2xl overflow-hidden"
@@ -146,14 +154,14 @@ function Slide({ photo, direction }: { photo: Photo; direction: number }) {
     >
       {!size && <div className="absolute inset-0 bg-white/5 rounded-2xl animate-pulse" />}
       <Image
-        src={photo.url}
+        src={photo.previewUrl}
         alt={photo.caption || ""}
         fill
         sizes="85vw"
         quality={90}
+        unoptimized
         loading="eager"
         decoding="async"
-        unoptimized={shouldBypassImageOptimizer(photo.url)}
         onLoad={(event) => {
           const image = event.currentTarget;
           setSize(

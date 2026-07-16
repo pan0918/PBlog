@@ -3,9 +3,8 @@ import { useState, useMemo } from "react";
 import Image from "next/image";
 import { AnimatePresence } from "framer-motion";
 import BookViewer from "./BookViewer";
-import { shouldBypassImageOptimizer } from "./imageDelivery";
 
-interface Photo { url: string; caption?: string; }
+interface Photo { thumbnailUrl: string; previewUrl: string; originalUrl: string; caption?: string; }
 interface Album { id: string; title: string; description: string; cover: string; date: string; photos: Photo[]; }
 
 export default function PhotoWallClient({ albums }: { albums: Album[] }) {
@@ -53,13 +52,13 @@ export default function PhotoWallClient({ albums }: { albums: Album[] }) {
               <div className="absolute inset-0 bg-slate-300 dark:bg-slate-700 rounded-[4px] shadow-md transform rotate-6 translate-x-4 translate-y-2 group-hover:rotate-12 group-hover:translate-x-8 transition-all duration-500 border-[6px] border-white dark:border-slate-200 overflow-hidden opacity-60">
                 {album.photos[2] && (
                   <Image
-                    src={album.photos[2].url}
+                    src={album.photos[2].thumbnailUrl}
                     alt=""
                     fill
                     sizes="(max-width: 640px) 85vw, (max-width: 1024px) 42vw, 28vw"
                     quality={75}
+                    unoptimized
                     loading="lazy"
-                    unoptimized={shouldBypassImageOptimizer(album.photos[2].url)}
                     className="absolute inset-0 w-full h-full object-cover grayscale blur-[2px]"
                   />
                 )}
@@ -67,13 +66,13 @@ export default function PhotoWallClient({ albums }: { albums: Album[] }) {
               <div className="absolute inset-0 bg-slate-200 dark:bg-slate-600 rounded-[4px] shadow-lg transform -rotate-3 -translate-x-2 -translate-y-1 group-hover:-rotate-6 group-hover:-translate-x-6 transition-all duration-500 border-[6px] border-white dark:border-slate-200 overflow-hidden opacity-80 z-10">
                 {album.photos[1] && (
                   <Image
-                    src={album.photos[1].url}
+                    src={album.photos[1].thumbnailUrl}
                     alt=""
                     fill
                     sizes="(max-width: 640px) 85vw, (max-width: 1024px) 42vw, 28vw"
                     quality={75}
+                    unoptimized
                     loading="lazy"
-                    unoptimized={shouldBypassImageOptimizer(album.photos[1].url)}
                     className="absolute inset-0 w-full h-full object-cover grayscale-[50%]"
                   />
                 )}
@@ -85,8 +84,8 @@ export default function PhotoWallClient({ albums }: { albums: Album[] }) {
                   fill
                   sizes="(max-width: 640px) 85vw, (max-width: 1024px) 42vw, 28vw"
                   quality={75}
+                  unoptimized
                   loading={albumIndex === 0 ? "eager" : "lazy"}
-                  unoptimized={shouldBypassImageOptimizer(album.cover)}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-5">

@@ -10,16 +10,19 @@ export default async function PhotoWallPage() {
   const albums = await Promise.all(
     dbAlbums.map(async (a) => {
       const dbPhotos = await getPhotosByAlbumId(a.id);
+      const photos = dbPhotos.map(p => ({
+        thumbnailUrl: p.thumbnail_url || p.preview_url || p.image_url,
+        previewUrl: p.preview_url || p.image_url,
+        originalUrl: p.image_url,
+        caption: p.title || p.description || '',
+      }));
       return {
         id: a.slug,
         title: a.title,
         description: a.description || '',
-        cover: a.cover_url || '',
+        cover: photos[0]?.thumbnailUrl || a.cover_url || '',
         date: '',
-        photos: dbPhotos.map(p => ({
-          url: p.image_url,
-          caption: p.title || p.description || '',
-        })),
+        photos,
       };
     })
   );
