@@ -27,8 +27,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!rate.allowed) return NextResponse.json({ ok: false, message: '评论太频繁，请稍后再试' }, { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds) } });
   }
   try {
-    const id = await createComment({ postId, parentId: typeof body.parentId === 'string' ? body.parentId : null, content: parsed.content, actor });
-    return NextResponse.json({ ok: true, data: { id } }, { status: 201 });
+    const created = await createComment({ postId, parentId: typeof body.parentId === 'string' ? body.parentId : null, content: parsed.content, actor });
+    return NextResponse.json({ ok: true, data: created }, { status: 201 });
   } catch (writeError) {
     return NextResponse.json({ ok: false, message: writeError instanceof Error ? writeError.message : '评论失败' }, { status: 400 });
   }

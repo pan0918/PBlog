@@ -117,7 +117,13 @@ export default function CommentItem({
               autoFocus
               placeholder={`回复 ${comment.author.username}`}
               onCancel={() => setReplying(false)}
-              onSubmit={async (content) => { await onReply(content, comment.id); setReplying(false); setShowReplies(true); }}
+              onSubmit={async (content) => {
+                const topLevelId = comment.parentId || comment.id;
+                await onReply(content, topLevelId);
+                if (!isReply && !comment.repliesLoaded) await onLoadReplies(topLevelId);
+                setReplying(false);
+                setShowReplies(true);
+              }}
             />
           )}
         </div>

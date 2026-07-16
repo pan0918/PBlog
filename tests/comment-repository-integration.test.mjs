@@ -24,7 +24,8 @@ test("comment writes recheck user state and replies paginate without orphan coun
 
   const comments = await import("../lib/db/comments.ts");
   const actor = { kind: "user", id: "user-1", username: "Alice", sessionVersion: 1 };
-  const parentId = await comments.createComment({ postId: "post-1", content: "top", actor });
+  const createdParent = await comments.createComment({ postId: "post-1", content: "top", actor });
+  const parentId = createdParent.id;
   const base = Date.now();
   await setup.batch(Array.from({ length: 21 }, (_, index) => ({
     sql: "INSERT INTO post_comments VALUES (?, ?, ?, ?, NULL, ?, 'visible', NULL, ?, ?, NULL)",
@@ -41,6 +42,11 @@ test("comment writes recheck user state and replies paginate without orphan coun
   const finalReplies = await comments.listCommentReplies(parentId, replies.nextCursor, "user-1");
   assert.equal(finalReplies.comments.length, 1);
   assert.equal(finalReplies.nextCursor, null);
+  const nestedReply = await comments.createComment({ postId: "post-1", parentId: "reply-00", content: "nested reply", actor });
+  assert.equal(nestedReply.parentId, parentId);
+  const afterNestedReply = await comments.listComments("post-1");
+  assert.equal(afterNestedReply.total, 23);
+  assert.equal(afterNestedReply.comments[0].replyCount, 22);
 
   await assert.rejects(
     comments.createComment({ postId: "post-1", content: "stale", actor: { ...actor, sessionVersion: 0 } }),

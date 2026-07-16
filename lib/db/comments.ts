@@ -183,7 +183,7 @@ export async function createComment(input: { postId: string; parentId?: string |
       args: [id, input.postId, parentId, input.actor.kind === 'user' ? input.actor.id : null, input.actor.kind === 'admin' ? input.actor.id : null, input.content, now, now],
     });
     await transaction.commit();
-    return id;
+    return { id, parentId, createdAt: now };
   } finally {
     transaction.close();
   }

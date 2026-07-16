@@ -34,7 +34,7 @@ export default function CommentList({ data, onNeedAuth }: { data: CommentData; o
             comment={comment}
             session={data.session}
             onNeedAuth={onNeedAuth}
-            onReply={async (content, parentId) => { await data.submitComment(content, parentId); await data.loadReplies(parentId); }}
+            onReply={(content, parentId) => data.submitComment(content, parentId)}
             onLoadReplies={data.loadReplies}
             onLike={data.toggleLike}
             onEdit={data.editComment}

@@ -74,13 +74,37 @@ export function useCommentData(postId: string) {
   }, []);
 
   const submitComment = useCallback(async (content: string, parentId?: string | null) => {
-    await fetch(`/api/posts/${encodeURIComponent(postId)}/comments`, {
+    if (!session) throw new Error('请先登录');
+    const created = await fetch(`/api/posts/${encodeURIComponent(postId)}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content, parentId: parentId || null }),
-    }).then((response) => readJson<{ id: string }>(response));
-    await refresh();
-  }, [postId, refresh]);
+    }).then((response) => readJson<{ id: string; parentId: string | null; createdAt: string }>(response));
+    const nextComment: ArticleComment = {
+      id: created.id,
+      parentId: created.parentId,
+      content,
+      createdAt: created.createdAt,
+      editedAt: null,
+      likeCount: 0,
+      likedByViewer: false,
+      replyCount: 0,
+      repliesLoaded: true,
+      replyNextCursor: null,
+      author: { id: session.id, username: session.username, avatarUrl: session.avatarUrl, isAuthor: session.isAuthor },
+      replies: [],
+    };
+    setTotal((current) => current + 1);
+    if (!created.parentId) {
+      setComments((current) => [...current, nextComment]);
+      return;
+    }
+    setComments((current) => updateCommentTree(current, created.parentId!, (comment) => ({
+      ...comment,
+      replyCount: comment.replyCount + 1,
+      replies: comment.repliesLoaded ? [...comment.replies, nextComment] : comment.replies,
+    })));
+  }, [postId, session]);
 
   const loadMore = useCallback(async () => {
     if (!nextCursor || loadingMore) return;
@@ -108,7 +132,9 @@ export function useCommentData(postId: string) {
         .then((response) => readJson<CommentReplyPage>(response));
       setComments((current) => updateCommentTree(current, parentId, (comment) => ({
         ...comment,
-        replies: append ? [...comment.replies, ...page.comments] : page.comments,
+        replies: append
+          ? Array.from(new Map([...comment.replies, ...page.comments].map((reply) => [reply.id, reply])).values()).sort((left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id))
+          : page.comments,
         repliesLoaded: true,
         replyNextCursor: page.nextCursor,
       })));

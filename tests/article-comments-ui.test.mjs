@@ -19,6 +19,8 @@ test("comment UI has a shared hook with abort cleanup and targeted optimistic ro
   assert.match(source, /pendingLikes/);
   assert.match(source, /pendingEdits/);
   assert.match(source, /\.\.\.snapshot/);
+  assert.match(source, /created\.parentId/);
+  assert.doesNotMatch(source, /submitComment[\s\S]*?await refresh\(\)/);
   assert.doesNotMatch(source, /setComments\(previousComments\)/);
   assert.doesNotMatch(source, /setInterval/);
 });
@@ -46,6 +48,7 @@ test("comment surface supports accessible desktop and mobile states", async () =
   assert.match(item, /作者/);
   assert.match(item, /showReplies/);
   assert.match(item, /onLoadReplies/);
+  assert.match(item, /comment\.parentId \|\| comment\.id/);
   assert.match(item, /加载更多回复/);
   assert.match(item, /回复按时间正序/);
 });
