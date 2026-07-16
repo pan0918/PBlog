@@ -10,7 +10,6 @@ async function submitAuth(path: string, data: Record<string, string>) {
   if (!response.ok || !payload.ok) throw new Error(payload.message || '请求失败');
   return payload.data as CommentSession;
 }
-
 export default function AuthDialog({ open, onClose, onSuccess }: { open: boolean; onClose: () => void; onSuccess: (session: CommentSession) => void }) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +69,7 @@ export default function AuthDialog({ open, onClose, onSuccess }: { open: boolean
           {mode === 'register' && (
             <div>
               <label htmlFor="auth-confirm-password" className="text-sm font-bold text-slate-700 dark:text-slate-200">确认密码</label>
-              <input id="auth-confirm-password" name="confirmPassword" type="password" autoComplete="new-password" required minLength={8} maxLength={72} className={fieldClass} />
+              <input id="auth-confirm-password" name="passwordConfirm" type="password" autoComplete="new-password" required minLength={8} maxLength={72} className={fieldClass} />
             </div>
           )}
           {error && <p className="text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>}
@@ -83,4 +82,3 @@ export default function AuthDialog({ open, onClose, onSuccess }: { open: boolean
     </div>
   );
 }
-

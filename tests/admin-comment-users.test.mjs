@@ -11,7 +11,6 @@ test("admin navigation exposes comment and user moderation", async () => {
   assert.match(layout, /\/admin\/comments/);
   assert.match(layout, /\/admin\/users/);
 });
-
 test("admin comment API is authenticated, paginated, searchable, and status-aware", async () => {
   const [collection, item, repository] = await Promise.all([
     read("app/api/admin/comments/route.ts"),
@@ -64,4 +63,3 @@ test("admin pages use bounded API pagination and shared toast behavior", async (
   assert.match(usersPage, /禁言/);
   assert.match(usersPage, /封禁/);
 });
-

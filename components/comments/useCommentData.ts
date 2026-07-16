@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from 'react';
-import type { ArticleComment, CommentPage, CommentSession } from './types';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ArticleComment, CommentPage, CommentReplyPage, CommentSession } from './types';
 
 async function readJson<T>(response: Response): Promise<T> {
   const payload = await response.json().catch(() => ({}));
@@ -10,11 +10,23 @@ async function readJson<T>(response: Response): Promise<T> {
 }
 
 function updateCommentTree(comments: ArticleComment[], id: string, update: (comment: ArticleComment) => ArticleComment): ArticleComment[] {
-  return comments.map((comment) => {
-    if (comment.id === id) return update(comment);
+  let changed = false;
+  const next = comments.map((comment) => {
+    if (comment.id === id) { changed = true; return update(comment); }
     const replies = updateCommentTree(comment.replies, id, update);
-    return replies === comment.replies ? comment : { ...comment, replies };
+    if (replies !== comment.replies) { changed = true; return { ...comment, replies }; }
+    return comment;
   });
+  return changed ? next : comments;
+}
+
+function findComment(comments: ArticleComment[], id: string): ArticleComment | null {
+  for (const comment of comments) {
+    if (comment.id === id) return comment;
+    const nested = findComment(comment.replies, id);
+    if (nested) return nested;
+  }
+  return null;
 }
 
 export function useCommentData(postId: string) {
@@ -25,6 +37,9 @@ export function useCommentData(postId: string) {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pendingLikes = useRef(new Set<string>());
+  const pendingEdits = useRef(new Set<string>());
+  const pendingReplies = useRef(new Set<string>());
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -81,9 +96,34 @@ export function useCommentData(postId: string) {
     }
   }, [loadingMore, nextCursor, postId]);
 
+  const loadReplies = useCallback(async (parentId: string, append = false) => {
+    if (pendingReplies.current.has(parentId)) return;
+    const parent = findComment(comments, parentId);
+    const cursor = append ? parent?.replyNextCursor : null;
+    if (append && !cursor) return;
+    pendingReplies.current.add(parentId);
+    try {
+      const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+      const page = await fetch(`/api/comments/${encodeURIComponent(parentId)}/replies${query}`, { cache: 'no-store' })
+        .then((response) => readJson<CommentReplyPage>(response));
+      setComments((current) => updateCommentTree(current, parentId, (comment) => ({
+        ...comment,
+        replies: append ? [...comment.replies, ...page.comments] : page.comments,
+        repliesLoaded: true,
+        replyNextCursor: page.nextCursor,
+      })));
+    } finally {
+      pendingReplies.current.delete(parentId);
+    }
+  }, [comments]);
+
   const toggleLike = useCallback(async (id: string) => {
     if (!session || session.isAuthor) throw new Error('请使用普通用户账号点赞');
-    const previousComments = comments;
+    if (pendingLikes.current.has(id)) return;
+    const previous = findComment(comments, id);
+    if (!previous) return;
+    const snapshot = { likedByViewer: previous.likedByViewer, likeCount: previous.likeCount };
+    pendingLikes.current.add(id);
     setComments((current) => updateCommentTree(current, id, (comment) => ({
       ...comment,
       likedByViewer: !comment.likedByViewer,
@@ -92,15 +132,25 @@ export function useCommentData(postId: string) {
     try {
       const result = await fetch(`/api/comments/${encodeURIComponent(id)}/like`, { method: 'POST' })
         .then((response) => readJson<{ liked: boolean }>(response));
-      setComments((current) => updateCommentTree(current, id, (comment) => ({ ...comment, likedByViewer: result.liked })));
+      setComments((current) => updateCommentTree(current, id, (comment) => ({
+        ...comment,
+        likedByViewer: result.liked,
+        likeCount: result.liked === comment.likedByViewer ? comment.likeCount : Math.max(0, comment.likeCount + (result.liked ? 1 : -1)),
+      })));
     } catch (requestError) {
-      setComments(previousComments);
+      setComments((current) => updateCommentTree(current, id, (comment) => ({ ...comment, ...snapshot })));
       throw requestError;
+    } finally {
+      pendingLikes.current.delete(id);
     }
   }, [comments, session]);
 
   const editComment = useCallback(async (id: string, content: string) => {
-    const previousComments = comments;
+    if (pendingEdits.current.has(id)) return;
+    const previous = findComment(comments, id);
+    if (!previous) return;
+    const snapshot = { content: previous.content, editedAt: previous.editedAt };
+    pendingEdits.current.add(id);
     const editedAt = new Date().toISOString();
     setComments((current) => updateCommentTree(current, id, (comment) => ({ ...comment, content, editedAt })));
     try {
@@ -110,14 +160,16 @@ export function useCommentData(postId: string) {
         body: JSON.stringify({ content }),
       }).then((response) => readJson<null>(response));
     } catch (requestError) {
-      setComments(previousComments);
+      setComments((current) => updateCommentTree(current, id, (comment) => ({ ...comment, ...snapshot })));
       throw requestError;
+    } finally {
+      pendingEdits.current.delete(id);
     }
   }, [comments]);
 
   return {
     session, comments, total, nextCursor, loading, loadingMore, error,
-    refresh, refreshSession, submitComment, loadMore, toggleLike, editComment,
+    refresh, refreshSession, submitComment, loadMore, loadReplies, toggleLike, editComment,
     setSession,
   };
 }

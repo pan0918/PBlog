@@ -8,7 +8,7 @@ export function sanitizeCommentContent(value: unknown) {
     .replace(/\s+/g, ' ')
     .trim();
   if (!content) return { ok: false as const, error: '评论内容不能为空' };
-  if (content.length > MAX_COMMENT_LENGTH) {
+  if (Array.from(content).length > MAX_COMMENT_LENGTH) {
     return { ok: false as const, error: `评论不能超过 ${MAX_COMMENT_LENGTH} 个字符` };
   }
   return { ok: true as const, content };

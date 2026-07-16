@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { unlink } from "node:fs/promises";
 import test from "node:test";
+import { createClient } from "@libsql/client";
 
 process.env.JWT_SECRET ||= "test-public-jwt-secret-with-at-least-32-characters";
 
@@ -20,11 +22,33 @@ test("public JWTs are isolated and retain session version", async () => {
   assert.equal(getPublicCookieOptions().sameSite, "lax");
 });
 
+test("public JWTs cannot be replayed as administrator sessions", async () => {
+  const { signAdminToken, verifyAdminToken } = await import("../lib/admin/auth.ts");
+  const adminToken = await signAdminToken({ sub: "a1", username: "admin" });
+  assert.deepEqual(await verifyAdminToken(adminToken), { sub: "a1", username: "admin" });
+  const publicToken = await signPublicUserToken({ sub: "u1", username: "alice", sessionVersion: 1 });
+  assert.equal(await verifyAdminToken(publicToken), null);
+});
+
 test("durable public rate keys do not expose identifiers or IPs", async () => {
   const key = await createPublicRateKey("login", "Alice", "203.0.113.8");
   assert.doesNotMatch(key, /alice/i);
   assert.doesNotMatch(key, /203\.0\.113\.8/);
   assert.match(key, /^[a-f0-9]{64}$/);
+});
+
+test("durable rate consumption is atomic under concurrent requests", async () => {
+  const { consumePublicRateLimit } = await import("../lib/public-auth/rate-limit.ts");
+  const databasePath = `/tmp/pblog-rate-${crypto.randomUUID()}.db`;
+  const client = createClient({ url: `file:${databasePath}` });
+  await client.execute("CREATE TABLE public_auth_events (id TEXT PRIMARY KEY, purpose TEXT NOT NULL, rate_key TEXT NOT NULL, attempted_at TEXT NOT NULL)");
+  await client.execute("CREATE INDEX idx_public_auth_events_key_time ON public_auth_events(purpose, rate_key, attempted_at)");
+  const clients = Array.from({ length: 10 }, () => createClient({ url: `file:${databasePath}` }));
+  const results = await Promise.all(clients.map((rateClient) => consumePublicRateLimit("comment", "user-key", [{ limit: 3, windowMs: 60_000 }], Date.now(), rateClient)));
+  assert.equal(results.filter((result) => result.allowed).length, 3);
+  clients.forEach((rateClient) => rateClient.close());
+  client.close();
+  await unlink(databasePath).catch(() => {});
 });
 
 test("public auth routes hash passwords and use generic login failures", async () => {

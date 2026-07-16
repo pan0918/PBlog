@@ -7,6 +7,8 @@ import { sanitizeCommentContent } from "../lib/comments/validation.ts";
 test("sanitizes comments as bounded plain text", () => {
   assert.deepEqual(sanitizeCommentContent(" <b>hi</b>\nthere "), { ok: true, content: "hi there" });
   assert.equal(sanitizeCommentContent("a".repeat(501)).ok, false);
+  assert.equal(sanitizeCommentContent("🙂".repeat(500)).ok, true);
+  assert.equal(sanitizeCommentContent("🙂".repeat(501)).ok, false);
   assert.deepEqual(sanitizeCommentContent(" 你好，世界 "), { ok: true, content: "你好，世界" });
 });
 
@@ -21,4 +23,5 @@ test("schema and migration define comments and unique likes", async () => {
   }
   assert.match(schema, /PRIMARY KEY \(comment_id, public_user_id\)/);
   assert.match(schema, /idx_post_comments_post_created/);
+  assert.match(schema, /idx_post_comments_parent_created/);
 });

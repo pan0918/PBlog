@@ -17,4 +17,3 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return error(updateError instanceof Error ? updateError.message : '设置失败', 404);
   }
 }
-

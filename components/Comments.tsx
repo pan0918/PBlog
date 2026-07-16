@@ -47,7 +47,7 @@ export default function Comments({ postId, postTitle }: { postId: string; postTi
         ref={triggerRef}
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 inline-flex min-h-12 items-center gap-2 rounded-2xl bg-indigo-600 px-4 text-sm font-black text-white shadow-xl transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 lg:hidden dark:bg-indigo-500"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 inline-flex min-h-12 items-center gap-2 rounded-2xl bg-indigo-600 px-4 text-sm font-black text-white shadow-xl transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 md:max-lg:right-[20rem] md:max-lg:z-[60] lg:hidden dark:bg-indigo-500"
         aria-label={`打开评论，共 ${data.total} 条`}
       >
         <MessageSquare size={18} />

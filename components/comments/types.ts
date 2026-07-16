@@ -7,7 +7,6 @@ export type CommentSession = {
   mustChangePassword: boolean;
   isAuthor: boolean;
 };
-
 export type CommentAuthor = {
   id: string;
   username: string;
@@ -24,6 +23,8 @@ export type ArticleComment = {
   likeCount: number;
   likedByViewer: boolean;
   replyCount: number;
+  repliesLoaded?: boolean;
+  replyNextCursor?: string | null;
   author: CommentAuthor;
   replies: ArticleComment[];
 };
@@ -34,3 +35,7 @@ export type CommentPage = {
   nextCursor: string | null;
 };
 
+export type CommentReplyPage = {
+  comments: ArticleComment[];
+  nextCursor: string | null;
+};

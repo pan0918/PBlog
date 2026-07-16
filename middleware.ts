@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
-import { getJwtSecret } from './lib/admin/jwt-secret';
+import { verifyAdminToken } from './lib/admin/auth';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -22,7 +21,7 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    await jwtVerify(token, getJwtSecret());
+    if (!(await verifyAdminToken(token))) throw new Error('invalid admin token');
     return NextResponse.next();
   } catch {
     const response = NextResponse.redirect(new URL('/admin/login', request.url));

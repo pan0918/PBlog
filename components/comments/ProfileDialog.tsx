@@ -10,7 +10,6 @@ async function request<T>(path: string, init: RequestInit) {
   if (!response.ok || !payload.ok) throw new Error(payload.message || '操作失败');
   return payload.data as T;
 }
-
 export default function ProfileDialog({ open, session, onClose, onSessionChange }: { open: boolean; session: CommentSession; onClose: () => void; onSessionChange: (session: CommentSession | null) => void }) {
   const avatarRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -101,4 +100,3 @@ export default function ProfileDialog({ open, session, onClose, onSessionChange 
     </div>
   );
 }
-

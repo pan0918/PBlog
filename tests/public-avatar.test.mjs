@@ -38,6 +38,6 @@ test("profile and avatar routes are authenticated and rate limited", async () =>
   assert.match(profile, /requirePublicUser/);
   assert.match(profile, /normalizeUsername/);
   assert.match(avatar, /requirePublicUser/);
-  assert.match(avatar, /checkPublicRateLimit/);
+  assert.match(avatar, /consumePublicRateLimit/);
   assert.match(avatar, /updateAvatarForUser/);
 });

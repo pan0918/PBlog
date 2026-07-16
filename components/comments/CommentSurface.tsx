@@ -63,8 +63,7 @@ export default function CommentSurface({ variant, postTitle, data, onClose }: { 
       )}
 
       <AuthDialog open={authOpen} onClose={() => setAuthOpen(false)} onSuccess={(session) => { data.setSession(session); setAuthOpen(false); void data.refresh(); }} />
-      {data.session && !data.session.isAuthor && <ProfileDialog open={profileOpen} session={data.session} onClose={() => setProfileOpen(false)} onSessionChange={(session) => { data.setSession(session); if (!session) void data.refresh(); }} />}
+      {data.session && !data.session.isAuthor && <ProfileDialog open={profileOpen} session={data.session} onClose={() => setProfileOpen(false)} onSessionChange={(session) => { data.setSession(session); void data.refresh(); }} />}
     </section>
   );
 }
-

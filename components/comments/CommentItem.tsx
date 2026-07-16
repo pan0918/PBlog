@@ -35,6 +35,7 @@ export default function CommentItem({
   isReply = false,
   onNeedAuth,
   onReply,
+  onLoadReplies,
   onLike,
   onEdit,
 }: {
@@ -43,12 +44,14 @@ export default function CommentItem({
   isReply?: boolean;
   onNeedAuth: () => void;
   onReply: (content: string, parentId: string) => Promise<void>;
+  onLoadReplies: (parentId: string, append?: boolean) => Promise<void>;
   onLike: (id: string) => Promise<void>;
   onEdit: (id: string, content: string) => Promise<void>;
 }) {
   const [showReplies, setShowReplies] = useState(false);
   const [replying, setReplying] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [loadingReplies, setLoadingReplies] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const ownsComment = Boolean(session && (session.isAuthor || (!comment.author.isAuthor && session.id === comment.author.id)));
 
@@ -120,23 +123,35 @@ export default function CommentItem({
         </div>
       </div>
 
-      {!isReply && comment.replies.length > 0 && (
+      {!isReply && comment.replyCount > 0 && (
         <div className="ml-12 mt-2">
           <button
             type="button"
-            onClick={() => setShowReplies((value) => !value)}
+            onClick={() => {
+              if (showReplies) return setShowReplies(false);
+              setShowReplies(true);
+              if (!comment.repliesLoaded) {
+                setLoadingReplies(true);
+                void onLoadReplies(comment.id).catch((error) => setActionError(error.message)).finally(() => setLoadingReplies(false));
+              }
+            }}
             className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-bold text-indigo-600 hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-indigo-500 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
             aria-expanded={showReplies}
           >
             <ChevronDown size={14} className={`transition-transform ${showReplies ? 'rotate-180' : ''}`} />
-            {showReplies ? '收起回复' : `展开 ${comment.replyCount} 条回复`}
+            {loadingReplies ? '加载回复中' : showReplies ? '收起回复' : `展开 ${comment.replyCount} 条回复`}
           </button>
           <span className="sr-only">回复按时间正序</span>
           {showReplies && (
             <div className="mt-2 space-y-2 border-l border-slate-200 pl-3 dark:border-white/10">
               {comment.replies.map((reply) => (
-                <CommentItem key={reply.id} comment={reply} session={session} isReply onNeedAuth={onNeedAuth} onReply={onReply} onLike={onLike} onEdit={onEdit} />
+                <CommentItem key={reply.id} comment={reply} session={session} isReply onNeedAuth={onNeedAuth} onReply={onReply} onLoadReplies={onLoadReplies} onLike={onLike} onEdit={onEdit} />
               ))}
+              {comment.replyNextCursor && (
+                <button type="button" disabled={loadingReplies} onClick={() => { setLoadingReplies(true); void onLoadReplies(comment.id, true).catch((error) => setActionError(error.message)).finally(() => setLoadingReplies(false)); }} className="rounded-lg px-2 py-1.5 text-xs font-bold text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 dark:text-indigo-300 dark:hover:bg-indigo-500/10">
+                  {loadingReplies ? '加载中' : '加载更多回复'}
+                </button>
+              )}
             </div>
           )}
         </div>

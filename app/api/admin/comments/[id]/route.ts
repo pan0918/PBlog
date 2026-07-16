@@ -16,4 +16,3 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return error(updateError instanceof Error ? updateError.message : '更新失败', 404);
   }
 }
-

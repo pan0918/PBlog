@@ -12,12 +12,14 @@ test("article moves native comments into a wider desktop sidebar", async () => {
   assert.match(source, /<Comments postId=\{postData\.data\.id\} postTitle=\{postData\.data\.title\}/);
 });
 
-test("comment UI has a shared hook with abort cleanup and optimistic rollbacks", async () => {
+test("comment UI has a shared hook with abort cleanup and targeted optimistic rollbacks", async () => {
   const source = await read("components/comments/useCommentData.ts");
   assert.match(source, /new AbortController\(\)/);
   assert.match(source, /controller\.abort\(\)/);
-  assert.match(source, /previousComments/);
-  assert.match(source, /setComments\(previousComments\)/);
+  assert.match(source, /pendingLikes/);
+  assert.match(source, /pendingEdits/);
+  assert.match(source, /\.\.\.snapshot/);
+  assert.doesNotMatch(source, /setComments\(previousComments\)/);
   assert.doesNotMatch(source, /setInterval/);
 });
 
@@ -36,12 +38,15 @@ test("comment surface supports accessible desktop and mobile states", async () =
   assert.match(comments, /event\.key === 'Escape'/);
   assert.match(comments, /const trigger = triggerRef\.current/);
   assert.match(comments, /trigger\?\.focus\(\)/);
+  assert.match(comments, /md:max-lg:right-\[20rem\]/);
   assert.match(surface, /dark:/);
   assert.match(surface, /评论/);
   assert.match(list, /loading/);
   assert.match(list, /error/);
   assert.match(item, /作者/);
   assert.match(item, /showReplies/);
+  assert.match(item, /onLoadReplies/);
+  assert.match(item, /加载更多回复/);
   assert.match(item, /回复按时间正序/);
 });
 
@@ -51,6 +56,7 @@ test("account dialogs expose labels, recovery guidance, profile and destructive 
     read("components/comments/ProfileDialog.tsx"),
   ]);
   assert.match(auth, /<label/);
+  assert.match(auth, /name="passwordConfirm"/);
   assert.match(auth, /联系管理员/);
   assert.match(auth, /注册邮箱/);
   assert.match(profile, /上传头像/);

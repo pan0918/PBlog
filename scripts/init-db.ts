@@ -46,7 +46,9 @@ async function main() {
     `CREATE INDEX IF NOT EXISTS idx_photos_album_sort ON photos(album_id, sort_order)`,
     `CREATE INDEX IF NOT EXISTS idx_admin_login_failures_key_time ON admin_login_failures(rate_key, attempted_at)`,
     `CREATE INDEX IF NOT EXISTS idx_public_auth_events_key_time ON public_auth_events(purpose, rate_key, attempted_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_public_auth_events_attempted_at ON public_auth_events(attempted_at)`,
     `CREATE INDEX IF NOT EXISTS idx_post_comments_post_created ON post_comments(post_id, parent_id, status, created_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_post_comments_parent_created ON post_comments(parent_id, status, created_at, id)`,
     `CREATE INDEX IF NOT EXISTS idx_post_comments_user ON post_comments(public_user_id, status)`,
     `CREATE INDEX IF NOT EXISTS idx_songs_sort ON songs(sort_order)`,
   ];

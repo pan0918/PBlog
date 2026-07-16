@@ -2,15 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { hashPassword } from '../../../../lib/admin/password';
 import { createPublicUser } from '../../../../lib/db/public-users';
 import { getPublicCookieName, getPublicCookieOptions, signPublicUserToken, toPublicProfile } from '../../../../lib/public-auth/auth';
-import { createPublicRateKey, checkPublicRateLimit, recordPublicRateEvent } from '../../../../lib/public-auth/rate-limit';
+import { consumePublicRateLimit, createPublicRateKey } from '../../../../lib/public-auth/rate-limit';
 import { getClientIp } from '../../../../lib/public-auth/request';
 import { validateRegistration } from '../../../../lib/public-auth/validation';
 
 export async function POST(request: NextRequest) {
   const key = await createPublicRateKey('register', 'public', getClientIp(request));
-  const rate = await checkPublicRateLimit('register', key, 3, 60 * 60 * 1000);
+  const rate = await consumePublicRateLimit('register', key, [{ limit: 3, windowMs: 60 * 60 * 1000 }]);
   if (!rate.allowed) return NextResponse.json({ ok: false, message: '注册尝试过多，请稍后再试' }, { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds) } });
-  await recordPublicRateEvent('register', key);
 
   let body: unknown;
   try { body = await request.json(); } catch { return NextResponse.json({ ok: false, message: '请求格式无效' }, { status: 400 }); }

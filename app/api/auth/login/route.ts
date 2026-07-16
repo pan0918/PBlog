@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyPassword } from '../../../../lib/admin/password';
 import { getPublicUserByUsername, markPublicUserLogin } from '../../../../lib/db/public-users';
 import { getPublicCookieName, getPublicCookieOptions, signPublicUserToken, toPublicProfile } from '../../../../lib/public-auth/auth';
-import { checkPublicRateLimit, clearPublicRateEvents, createPublicRateKey, recordPublicRateEvent } from '../../../../lib/public-auth/rate-limit';
+import { clearPublicRateEvents, consumePublicRateLimit, createPublicRateKey } from '../../../../lib/public-auth/rate-limit';
 import { getClientIp } from '../../../../lib/public-auth/request';
 import { normalizeUsername } from '../../../../lib/public-auth/validation';
 
@@ -14,13 +14,12 @@ export async function POST(request: NextRequest) {
   const username = normalizeUsername(body.username);
   const password = typeof body.password === 'string' ? body.password : '';
   const key = await createPublicRateKey('login', username, getClientIp(request));
-  const rate = await checkPublicRateLimit('login', key, 5, 15 * 60 * 1000);
+  const rate = await consumePublicRateLimit('login', key, [{ limit: 5, windowMs: 15 * 60 * 1000 }]);
   if (!rate.allowed) return NextResponse.json({ ok: false, message: '登录尝试过多，请稍后再试' }, { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds) } });
 
   const user = username ? await getPublicUserByUsername(username) : null;
   const valid = await verifyPassword(password, user?.password_hash || DUMMY_PASSWORD_HASH);
   if (!user || !valid || user.status === 'banned') {
-    await recordPublicRateEvent('login', key);
     return NextResponse.json({ ok: false, message: '用户名或密码错误' }, { status: 401 });
   }
   await clearPublicRateEvents('login', key);
