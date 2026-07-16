@@ -20,6 +20,7 @@ test("comment UI has a shared hook with abort cleanup and targeted optimistic ro
   assert.match(source, /pendingEdits/);
   assert.match(source, /\.\.\.snapshot/);
   assert.match(source, /created\.parentId/);
+  assert.match(source, /new Map\(\[\.\.\.current, \.\.\.page\.comments\]/);
   assert.doesNotMatch(source, /submitComment[\s\S]*?await refresh\(\)/);
   assert.doesNotMatch(source, /setComments\(previousComments\)/);
   assert.doesNotMatch(source, /setInterval/);

@@ -112,7 +112,8 @@ export function useCommentData(postId: string) {
     try {
       const page = await fetch(`/api/posts/${encodeURIComponent(postId)}/comments?cursor=${encodeURIComponent(nextCursor)}`, { cache: 'no-store' })
         .then((response) => readJson<CommentPage>(response));
-      setComments((current) => [...current, ...page.comments]);
+      setComments((current) => Array.from(new Map([...current, ...page.comments].map((comment) => [comment.id, comment])).values())
+        .sort((left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id)));
       setTotal(page.total);
       setNextCursor(page.nextCursor);
     } finally {
