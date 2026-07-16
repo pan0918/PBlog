@@ -50,6 +50,17 @@ export async function markPublicUserLogin(id: string) {
   await db.execute({ sql: `UPDATE public_users SET last_login_at = ?, updated_at = ? WHERE id = ?`, args: [now, now, id] });
 }
 
+export async function updatePublicUserProfile(id: string, username: string) {
+  const now = new Date().toISOString();
+  await db.execute({ sql: `UPDATE public_users SET username = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL`, args: [username, now, id] });
+  return getPublicUserById(id);
+}
+
+export async function updatePublicUserAvatar(id: string, avatarUrl: string) {
+  const now = new Date().toISOString();
+  await db.execute({ sql: `UPDATE public_users SET avatar_url = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL`, args: [avatarUrl, now, id] });
+}
+
 export async function updatePublicUserPassword(id: string, passwordHash: string) {
   const now = new Date().toISOString();
   await db.execute({
