@@ -3,16 +3,15 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("music playback derives progress and skips unchanged store updates", async () => {
-  const [provider, engine, store] = await Promise.all([
+  const [provider, store] = await Promise.all([
     readFile("components/MusicProvider.tsx", "utf8"),
-    readFile("hooks/useAudioEngine.ts", "utf8"),
     readFile("lib/music-playback-store.ts", "utf8"),
   ]);
 
   assert.match(store, /musicPlaybackStore/);
   assert.match(provider, /useMusicPlayback/);
   assert.match(provider, /useSyncExternalStore/);
-  assert.match(engine, /musicPlaybackStore\.update/);
+  assert.match(provider, /musicPlaybackStore\.update/);
   assert.doesNotMatch(provider, /progress,\s*\n\s*currentTime/);
   assert.doesNotMatch(provider, /setProgress\(/);
   assert.doesNotMatch(store, /^\s*progress:\s*number/m);

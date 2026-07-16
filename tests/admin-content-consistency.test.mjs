@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("post and tag writes use one explicit write transaction", async () => {
-  const posts = await readFile("lib/posts.ts", "utf8");
+  const posts = await readFile("lib/db/posts.ts", "utf8");
 
   assert.match(posts, /createPostWithTags/);
   assert.match(posts, /updatePostWithTags/);
@@ -16,7 +16,7 @@ test("post and tag writes use one explicit write transaction", async () => {
 
 test("post updates return the previous slug and revalidate old and new paths", async () => {
   const [posts, route, revalidate] = await Promise.all([
-    readFile("lib/posts.ts", "utf8"),
+    readFile("lib/db/posts.ts", "utf8"),
     readFile("app/api/admin/posts/[id]/route.ts", "utf8"),
     readFile("lib/admin/revalidate.ts", "utf8"),
   ]);
@@ -32,7 +32,7 @@ test("category and tag mutations refresh every affected article", async () => {
   const [categoryRoute, tagRoute, posts] = await Promise.all([
     readFile("app/api/admin/categories/[id]/route.ts", "utf8"),
     readFile("app/api/admin/tags/[id]/route.ts", "utf8"),
-    readFile("lib/posts.ts", "utf8"),
+    readFile("lib/db/posts.ts", "utf8"),
   ]);
 
   assert.match(posts, /getPostSlugsByCategoryId/);

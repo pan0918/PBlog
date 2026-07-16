@@ -2,8 +2,7 @@
 import { useEffect, useRef, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMusic, useMusicPlayback } from '../../components/MusicProvider';
-import { parseLrc, type LyricLine } from '../../lib/music-parse';
+import { useMusic, useMusicPlayback, type Song, type LyricLine } from '../../components/MusicProvider';
 import { formatTime } from '../../lib/utils';
 import { getActiveLyricIndex } from '../../lib/music-lyrics';
 
@@ -22,23 +21,29 @@ export default function MusicClient() {
   const [searchQuery, setSearchQuery] = useState('');
   const [parsedLyrics, setParsedLyrics] = useState<LyricLine[]>([]);
 
-  // Use shared LRC parser, with fallback for pre-parsed lyrics or plain text
   useEffect(() => {
     if (!currentSong) { setParsedLyrics([]); return; }
+    const raw = currentSong.lrc || currentSong.lyric;
     if (Array.isArray(currentSong.lyrics) && currentSong.lyrics.length > 0) {
       setParsedLyrics(currentSong.lyrics);
       return;
     }
-    const raw = currentSong.lrc || currentSong.lyric;
     if (typeof raw !== 'string' || !raw) { setParsedLyrics([]); return; }
-    const parsed = parseLrc(raw);
-    if (parsed.length > 0) {
-      setParsedLyrics(parsed);
-    } else {
-      // No timestamps found — treat each line as a non-timed lyric
-      const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
-      setParsedLyrics(lines.map(l => ({ time: -1, text: l })));
+    const lines = raw.split('\n');
+    const parsed: LyricLine[] = [];
+    const timeExp = /\[(\d{2,}):(\d{2})(?:[.:](\d{2,3}))?\]/g;
+    for (const line of lines) {
+      const text = line.replace(/\[\d{2,}:\d{2}(?:[.:]\d{2,3})?\]/g, '').trim();
+      if (!text) continue;
+      let match;
+      while ((match = timeExp.exec(line)) !== null) {
+        const min = parseInt(match[1], 10);
+        const sec = parseInt(match[2], 10);
+        const ms = match[3] ? parseFloat(`0.${match[3]}`) : 0;
+        parsed.push({ time: min * 60 + sec + ms, text });
+      }
     }
+    setParsedLyrics(parsed.length > 0 ? parsed.sort((a, b) => a.time - b.time) : lines.map(l => ({ time: -1, text: l.trim() })).filter(l => l.text));
   }, [currentSong]);
 
   const activeLyricIndex = useMemo(() => {

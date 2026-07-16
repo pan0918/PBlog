@@ -2,7 +2,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { siteConfig } from '../siteConfig';
-import { loadConfig, saveConfig, loadHistory, saveHistory, type ChatMessage, type PetConfig } from '../lib/pet-storage';
+
+interface ChatMessage { role: 'user' | 'cat'; text: string; }
+
+interface PetConfig {
+  apiBaseUrl: string;
+  apiKey: string;
+  model: string;
+  systemPrompt: string;
+}
 
 const DEFAULT_CONFIG: PetConfig = {
   apiBaseUrl: '',
@@ -10,6 +18,25 @@ const DEFAULT_CONFIG: PetConfig = {
   model: 'gemini-2.5-flash-lite',
   systemPrompt: siteConfig.petConfig.systemPrompt,
 };
+
+function loadConfig(): PetConfig {
+  if (typeof window === 'undefined') return DEFAULT_CONFIG;
+  try { const s = sessionStorage.getItem('pet-config'); if (s) return { ...DEFAULT_CONFIG, ...JSON.parse(s) }; } catch {}
+  return DEFAULT_CONFIG;
+}
+function saveConfig(c: PetConfig) { try { sessionStorage.setItem('pet-config', JSON.stringify(c)); } catch {} }
+function loadHistory(): ChatMessage[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const s = sessionStorage.getItem('pet-history');
+    if (s) {
+      const parsed = JSON.parse(s);
+      return Array.isArray(parsed) ? parsed.slice(-50) : [];
+    }
+  } catch {}
+  return [];
+}
+function saveHistory(m: ChatMessage[]) { try { sessionStorage.setItem('pet-history', JSON.stringify(m.slice(-50))); } catch {} }
 
 const IDLE_PHRASES = [
   "喵~", "肚子饿了喵~", "要小鱼干！", "在写代码吗？",
@@ -99,7 +126,7 @@ export default function CyberCat() {
   }, []);
 
   useEffect(() => {
-    setConfig(loadConfig(DEFAULT_CONFIG));
+    setConfig(loadConfig());
     setMessages(loadHistory());
     setIdlePhrase(IDLE_PHRASES[Math.floor(Math.random() * IDLE_PHRASES.length)]);
 

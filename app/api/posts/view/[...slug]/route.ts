@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPublishedPostBySlug, incrementViewCount } from '@/lib/posts';
+import { getPublishedPostBySlug, incrementViewCount } from '@/lib/db/posts';
 
 export async function POST(
   _request: NextRequest,

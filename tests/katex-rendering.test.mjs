@@ -36,8 +36,8 @@ test("post and about markdown pipelines use the shared KaTeX warning policy", as
     readFile("app/about/page.tsx", "utf8"),
   ]);
 
-  assert.match(posts, /import \{ renderMarkdownContent, extractToc \} from ['"]\.\/markdown['"]/);
-  assert.match(posts, /renderMarkdownContent\(content,\s*\{ withSlugIds: true, preprocess: true \}\)/);
+  assert.match(posts, /import \{ katexOptions \} from ['"]\.\/markdown['"]/);
+  assert.match(posts, /use\(rehypeKatex,\s*katexOptions\)/);
   assert.match(about, /import \{ katexOptions \} from ['"]\.\.\/\.\.\/lib\/markdown['"]/);
   assert.match(about, /use\(rehypeKatex,\s*katexOptions\)/);
 });

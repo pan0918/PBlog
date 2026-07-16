@@ -45,9 +45,13 @@ test("view counting accepts nested slugs and encodes every path segment", async 
 });
 
 test("legacy nested article URLs resolve before the migration is rerun", async () => {
-  const repository = await readFile("lib/posts.ts", "utf8");
-  const legacyFallbacks = repository.match(/const legacySlug = slug\.replace\(\/\\\/\/g, '-'\);/g) ?? [];
+  const [pageRepository, viewRepository] = await Promise.all([
+    readFile("lib/posts.ts", "utf8"),
+    readFile("lib/db/posts.ts", "utf8"),
+  ]);
 
-  assert.equal(legacyFallbacks.length, 2);
-  assert.match(repository, /args:\s*\[legacySlug\]/);
+  assert.ok(pageRepository.includes("const legacySlug = slug.replace(/\\//g, '-');"));
+  assert.match(pageRepository, /args:\s*\[legacySlug\]/);
+  assert.ok(viewRepository.includes("const legacySlug = slug.replace(/\\//g, '-');"));
+  assert.match(viewRepository, /args:\s*\[legacySlug\]/);
 });

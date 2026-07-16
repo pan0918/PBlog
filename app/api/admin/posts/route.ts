@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireAdmin, success, error, readBody } from '../../../../lib/admin/api-helpers';
 import { createPostSchema } from '../../../../lib/admin/validators';
-import { getAdminPosts, createPostWithTags } from '../../../../lib/posts';
+import { getAdminPosts, createPostWithTags } from '../../../../lib/db/posts';
 import { revalidateAfterPost } from '../../../../lib/admin/revalidate';
 
 export async function GET() {

@@ -12,10 +12,13 @@ import {
   CloudSnow,
   CloudSun,
   ChevronDown,
+  ChevronRight,
   Droplets,
   LocateFixed,
   MapPin,
   Moon,
+  RotateCcw,
+  Search,
   Sun,
   ThermometerSun,
   Wind,
@@ -35,8 +38,6 @@ import {
   type WeatherLocation,
   type WeatherViewModel,
 } from "../lib/weather";
-import CityPicker from "./CityPicker";
-import HourlyForecast from "./HourlyForecast";
 
 const SAVED_LOCATION_KEY = "pblog:weather-location";
 
@@ -271,17 +272,44 @@ export default function WeatherCard() {
       <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-amber-300/16 blur-[42px] dark:bg-amber-400/10" />
 
       {pickerOpen && (
-        <CityPicker
-          cityQuery={cityQuery}
-          onCityQueryChange={setCityQuery}
-          cityResults={cityResults}
-          searching={searching}
-          searchMessage={searchMessage}
-          onSearch={handleCitySearch}
-          onSelectLocation={selectManualLocation}
-          onRestoreAutomatic={restoreAutomaticLocation}
-          onClose={() => setPickerOpen(false)}
-        />
+        <div className="absolute inset-x-3 top-3 z-30 rounded-[22px] border border-white/60 bg-[#fffaf2]/95 p-4 shadow-2xl shadow-stone-900/10 backdrop-blur-xl dark:border-white/10 dark:bg-stone-900/95">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold text-stone-800 dark:text-stone-100">选择天气城市</p>
+              <p className="mt-0.5 text-[9px] text-stone-400 dark:text-stone-500">搜索后将保存到当前浏览器</p>
+            </div>
+            <button type="button" onClick={() => setPickerOpen(false)} aria-label="关闭城市选择" className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-900/5 text-stone-500 transition-colors hover:bg-stone-900/10 dark:bg-white/5 dark:text-stone-300">
+              <span aria-hidden="true" className="text-lg leading-none">×</span>
+            </button>
+          </div>
+
+          <form onSubmit={handleCitySearch} className="mt-3 flex gap-2">
+            <label className="sr-only" htmlFor="weather-city-search">搜索城市</label>
+            <div className="relative min-w-0 flex-1">
+              <Search aria-hidden="true" className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-400" />
+              <input id="weather-city-search" value={cityQuery} onChange={(event) => setCityQuery(event.target.value)} placeholder="例如：杭州、深圳" className="h-9 w-full rounded-xl border border-stone-900/10 bg-white/70 pl-8 pr-3 text-xs text-stone-800 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-400/15 dark:border-white/10 dark:bg-stone-800/70 dark:text-stone-100" />
+            </div>
+            <button type="submit" disabled={searching} className="h-9 rounded-xl bg-amber-500 px-3 text-[10px] font-bold text-white transition hover:bg-amber-600 disabled:opacity-50">{searching ? "搜索中" : "搜索"}</button>
+          </form>
+
+          <div className="mt-2 max-h-44 space-y-1 overflow-y-auto">
+            {cityResults.map((result) => (
+              <button key={result.id} type="button" onClick={() => selectManualLocation(result.location)} className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-amber-500/10">
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-bold text-stone-700 dark:text-stone-200">{result.location.name}</span>
+                  <span className="mt-0.5 block truncate text-[9px] text-stone-400 dark:text-stone-500">{result.detail || "城市位置"}</span>
+                </span>
+                <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 flex-shrink-0 text-stone-400" />
+              </button>
+            ))}
+            {searchMessage && <p className="py-3 text-center text-[10px] text-stone-400 dark:text-stone-500">{searchMessage}</p>}
+          </div>
+
+          <button type="button" onClick={restoreAutomaticLocation} className="mt-2 flex w-full items-center justify-center gap-1.5 border-t border-stone-900/[0.06] pt-3 text-[10px] font-bold text-stone-500 transition-colors hover:text-amber-600 dark:border-white/[0.06] dark:text-stone-400 dark:hover:text-amber-400">
+            <RotateCcw aria-hidden="true" className="h-3 w-3" />
+            恢复自动定位
+          </button>
+        </div>
       )}
 
       <header className="relative z-10 flex items-center justify-between">
@@ -312,7 +340,21 @@ export default function WeatherCard() {
         </div>
       </div>
 
-      <HourlyForecast hourly={weather.hourly} />
+      <div className="relative z-10 mt-5 border-t border-stone-500/10 pt-4">
+        <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.16em] text-stone-400 dark:text-stone-500">逐小时预报</p>
+        <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          {weather.hourly.map((hour) => (
+            <div key={hour.time} className="flex min-w-[54px] flex-1 flex-col items-center rounded-2xl border border-white/25 bg-white/30 px-1 py-2.5 dark:border-white/[0.04] dark:bg-stone-800/25">
+              <span className={`text-[9px] font-bold ${hour.time === "现在" ? "text-amber-600 dark:text-amber-400" : "text-stone-500 dark:text-stone-400"}`}>{hour.time}</span>
+              <WeatherSymbol kind={hour.icon} isDay={hour.isDay} className="my-2 h-4 w-4 text-stone-700 dark:text-stone-200" />
+              <span className="text-[11px] font-bold text-stone-800 dark:text-stone-100">{hour.temperature}°</span>
+              <span className={`mt-1 min-h-[12px] text-[8px] font-bold text-sky-600 dark:text-sky-400 ${hour.precipitationProbability < 20 ? "opacity-0" : "opacity-100"}`}>
+                {hour.precipitationProbability}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="relative z-10 mt-4 grid grid-cols-3 gap-2">
         <WeatherMetric icon={ThermometerSun} label="体感" value={`${weather.apparentTemperature}°`} />

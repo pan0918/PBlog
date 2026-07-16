@@ -80,15 +80,13 @@ test("non-range audio keeps a pending seek until the target becomes buffered", a
   assert.equal(seeking.isTimeInRanges(ranges, 90), true);
   assert.equal(seeking.isTimeInRanges(ranges, 60), false);
 
-  const [provider, engine] = await Promise.all([
-    readFile("components/MusicProvider.tsx", "utf8"),
-    readFile("hooks/useAudioEngine.ts", "utf8"),
-  ]);
-  assert.match(provider, /onProgress=\{engine\.retryPendingSeek\}/);
+  const provider = await readFile("components/MusicProvider.tsx", "utf8");
+  assert.match(provider, /retryPendingSeek/);
+  assert.match(provider, /onProgress=\{retryPendingSeek\}/);
   assert.match(provider, /onSeeked=\{handleSeeked\}/);
-  assert.match(engine, /pendingSeekRef\.current\s*=\s*target/);
-  assert.match(engine, /isTimeInRanges\(audio\.buffered,\s*target/);
-  assert.doesNotMatch(engine, /const target = pendingSeekRef\.current;\s*pendingSeekRef\.current = null;/);
+  assert.match(provider, /pendingSeekRef\.current\s*=\s*target/);
+  assert.match(provider, /isTimeInRanges\(audio\.buffered,\s*target/);
+  assert.doesNotMatch(provider, /const target = pendingSeekRef\.current;\s*pendingSeekRef\.current = null;/);
 });
 
 test("lyrics prepare the next line 300ms early without waiting for throttled progress", async () => {
@@ -110,33 +108,12 @@ test("lyrics prepare the next line 300ms early without waiting for throttled pro
   assert.equal(lyricTiming.getNextLyricDelayMs(lyrics, 9.5), 200);
   assert.equal(lyricTiming.getNextLyricDelayMs(lyrics, 15), null);
 
-  const [provider, lyricSync, musicPage] = await Promise.all([
+  const [provider, musicPage] = await Promise.all([
     readFile("components/MusicProvider.tsx", "utf8"),
-    readFile("hooks/useLyricSync.ts", "utf8"),
     readFile("app/music/MusicClient.tsx", "utf8"),
   ]);
-  assert.match(lyricSync, /lyricSyncTimerRef/);
-  assert.match(lyricSync, /setTimeout\(/);
-  assert.match(lyricSync, /if\s*\(!isPlaying\)/);
-  assert.match(provider, /engine\.handlePlaying\(\);\s*lyricSync\.syncLyricTimeline\(\);/);
-  assert.match(provider, /engine\.handleTimeUpdate\(\);\s*lyricSync\.syncLyricTimeline\(\);/);
+  assert.match(provider, /lyricSyncTimerRef/);
+  assert.match(provider, /setTimeout\(/);
+  assert.match(provider, /onPause=\{clearLyricSyncTimer\}/);
   assert.match(musicPage, /getActiveLyricIndex\(parsedLyrics, currentTime\)/);
-});
-
-test("shared LRC parser preserves untimed, repeated, and long-minute timestamps", async () => {
-  const { parseLrc } = await import("../lib/music-parse.ts");
-  const parsed = parseLrc([
-    "[00:05]无小数时间戳",
-    "[01:02.50]两位小数",
-    "[02:03.45][02:04.450]重复时间戳",
-    "[100:00.000]长音频",
-  ].join("\n"));
-
-  assert.deepEqual(parsed, [
-    { time: 5, text: "无小数时间戳" },
-    { time: 62.5, text: "两位小数" },
-    { time: 123.45, text: "重复时间戳" },
-    { time: 124.45, text: "重复时间戳" },
-    { time: 6000, text: "长音频" },
-  ]);
 });
