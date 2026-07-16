@@ -7,6 +7,7 @@ export interface PhotoRecord {
   description: string | null;
   image_url: string;
   thumbnail_url: string | null;
+  preview_url: string | null;
   width: number | null;
   height: number | null;
   sort_order: number;
@@ -28,17 +29,19 @@ export async function getPhotoById(id: string): Promise<PhotoRecord | null> {
   return result.rows.length > 0 ? (result.rows[0] as unknown as PhotoRecord) : null;
 }
 
-export async function createPhoto(input: { album_id: string; title?: string | null; description?: string | null; image_url: string; thumbnail_url?: string | null; width?: number | null; height?: number | null; sort_order?: number }): Promise<PhotoRecord> {
+export type CreatePhotoInput = { album_id: string; title?: string | null; description?: string | null; image_url: string; thumbnail_url?: string | null; preview_url?: string | null; width?: number | null; height?: number | null; sort_order?: number };
+
+export async function createPhoto(input: CreatePhotoInput): Promise<PhotoRecord> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   await db.execute({
-    sql: `INSERT INTO photos (id, album_id, title, description, image_url, thumbnail_url, width, height, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [id, input.album_id, input.title || null, input.description || null, input.image_url, input.thumbnail_url || null, input.width || null, input.height || null, input.sort_order || 0, now, now],
+    sql: `INSERT INTO photos (id, album_id, title, description, image_url, thumbnail_url, preview_url, width, height, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [id, input.album_id, input.title || null, input.description || null, input.image_url, input.thumbnail_url || null, input.preview_url || null, input.width || null, input.height || null, input.sort_order || 0, now, now],
   });
   return getPhotoById(id) as Promise<PhotoRecord>;
 }
 
-export async function updatePhoto(id: string, input: Partial<{ title: string | null; description: string | null; image_url: string; thumbnail_url: string | null; width: number | null; height: number | null; sort_order: number }>): Promise<PhotoRecord | null> {
+export async function updatePhoto(id: string, input: Partial<{ title: string | null; description: string | null; image_url: string; thumbnail_url: string | null; preview_url: string | null; width: number | null; height: number | null; sort_order: number }>): Promise<PhotoRecord | null> {
   const now = new Date().toISOString();
   const fields: string[] = [];
   const args: (string | number | null)[] = [];
@@ -46,6 +49,7 @@ export async function updatePhoto(id: string, input: Partial<{ title: string | n
   if (input.description !== undefined) { fields.push('description = ?'); args.push(input.description); }
   if (input.image_url !== undefined) { fields.push('image_url = ?'); args.push(input.image_url); }
   if (input.thumbnail_url !== undefined) { fields.push('thumbnail_url = ?'); args.push(input.thumbnail_url); }
+  if (input.preview_url !== undefined) { fields.push('preview_url = ?'); args.push(input.preview_url); }
   if (input.width !== undefined) { fields.push('width = ?'); args.push(input.width); }
   if (input.height !== undefined) { fields.push('height = ?'); args.push(input.height); }
   if (input.sort_order !== undefined) { fields.push('sort_order = ?'); args.push(input.sort_order); }

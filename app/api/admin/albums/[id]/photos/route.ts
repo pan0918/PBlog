@@ -1,8 +1,12 @@
 import { NextRequest } from 'next/server';
 import { requireAdmin, success, error, readBody } from '../../../../../../lib/admin/api-helpers';
 import { createPhotoSchema } from '../../../../../../lib/admin/validators';
-import { getPhotosByAlbumId, createPhoto } from '../../../../../../lib/db/photos';
+import { getPhotosByAlbumId } from '../../../../../../lib/db/photos';
 import { revalidateAfterPhoto } from '../../../../../../lib/admin/revalidate';
+import { createOptimizedPhoto } from '../../../../../../lib/photos/create-optimized-photo';
+
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error: authErr } = await requireAdmin();
@@ -20,7 +24,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const parsed = createPhotoSchema.safeParse(body);
   if (!parsed.success) return error(parsed.error.issues.map(e => e.message).join('; '));
   try {
-    const photo = await createPhoto({ ...parsed.data, album_id: id });
+    const photo = await createOptimizedPhoto({ ...parsed.data, album_id: id });
     revalidateAfterPhoto();
     return success(photo);
   } catch (err: unknown) {

@@ -149,6 +149,7 @@ CREATE TABLE IF NOT EXISTS photos (
   description TEXT,
   image_url TEXT NOT NULL,
   thumbnail_url TEXT,
+  preview_url TEXT,
   width INTEGER,
   height INTEGER,
   sort_order INTEGER NOT NULL DEFAULT 0,

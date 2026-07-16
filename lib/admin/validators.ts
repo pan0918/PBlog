@@ -107,6 +107,7 @@ export const createPhotoSchema = z.object({
   description: z.string().max(200).optional().nullable(),
   image_url: z.string().url('图片 URL 格式不正确'),
   thumbnail_url: z.string().url().optional().nullable().or(z.literal('')),
+  preview_url: z.string().url().optional().nullable().or(z.literal('')),
   width: z.number().int().positive().optional().nullable(),
   height: z.number().int().positive().optional().nullable(),
   sort_order: z.number().int().default(0),
