@@ -53,6 +53,7 @@ export function toPublicProfile(user: PublicUserRecord, includeEmail = false) {
     avatarUrl: user.avatar_url,
     status: user.status,
     mustChangePassword: Boolean(user.must_change_password),
+    isAuthor: false,
     ...(includeEmail ? { email: user.email } : {}),
   };
 }

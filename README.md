@@ -109,15 +109,6 @@ export const siteConfig = {
   // === 弹幕文字 ===
   danmakuList: ["在干嘛呢？", ...],
 
-  // === Gitalk 评论 (需配置 OAuth) ===
-  gitalkConfig: {
-    clientID: "",
-    clientSecret: "",
-    repo: "",           // 存储评论的 GitHub 仓库
-    owner: "",          // GitHub 用户名
-    admin: [""],
-  },
-
   // === AI 猫猫 (Gemini API) ===
   geminiConfig: {
     modelId: "gemini-2.5-flash-lite",

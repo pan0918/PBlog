@@ -9,14 +9,6 @@ interface SocialConfig {
   xiaohongshu?: string;
 }
 
-interface GitalkConfig {
-  clientID: string;
-  clientSecret: string;
-  repo: string;
-  owner: string;
-  admin: string[];
-}
-
 interface GeminiConfig {
   modelId: string;
   systemPrompt: string;
@@ -65,7 +57,6 @@ interface SiteConfig {
   chatterTitle: string;
   chatterDescription: string;
   danmakuList: string[];
-  gitalkConfig: GitalkConfig;
   buildDate: string;
   footerBadges: FooterBadge[];
   icpConfig: { name: string; link: string };
@@ -112,13 +103,6 @@ export const siteConfig: SiteConfig = {
   chatterTitle: "留言墙",
   chatterDescription: "留下你的足迹，每一张便签都是一份温暖",
   danmakuList: ["在干嘛呢？", "今天也要加油鸭！", "前端开发中...", "Tailwind CSS 真好用", "BUG 修复进度 99%", "写代码中", "摸鱼中~", "下一顿吃什么？"],
-  gitalkConfig: {
-    clientID: "",
-    clientSecret: "",
-    repo: "",
-    owner: "",
-    admin: [""],
-  },
   buildDate: "2026-05-21T00:00:00",
   footerBadges: [
     { name: "Next.js", color: "text-sky-500", svg: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>' },
