@@ -29,6 +29,11 @@ function findComment(comments: ArticleComment[], id: string): ArticleComment | n
   return null;
 }
 
+function mergeCommentsByOrder(current: ArticleComment[], incoming: ArticleComment[]) {
+  return Array.from(new Map([...current, ...incoming].map((comment) => [comment.id, comment])).values())
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id));
+}
+
 export function useCommentData(postId: string) {
   const [session, setSession] = useState<CommentSession | null>(null);
   const [comments, setComments] = useState<ArticleComment[]>([]);
@@ -102,7 +107,7 @@ export function useCommentData(postId: string) {
     setComments((current) => updateCommentTree(current, created.parentId!, (comment) => ({
       ...comment,
       replyCount: comment.replyCount + 1,
-      replies: comment.repliesLoaded ? [...comment.replies, nextComment] : comment.replies,
+      replies: mergeCommentsByOrder(comment.replies, [nextComment]),
     })));
   }, [postId, session]);
 
@@ -112,8 +117,7 @@ export function useCommentData(postId: string) {
     try {
       const page = await fetch(`/api/posts/${encodeURIComponent(postId)}/comments?cursor=${encodeURIComponent(nextCursor)}`, { cache: 'no-store' })
         .then((response) => readJson<CommentPage>(response));
-      setComments((current) => Array.from(new Map([...current, ...page.comments].map((comment) => [comment.id, comment])).values())
-        .sort((left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id)));
+      setComments((current) => mergeCommentsByOrder(current, page.comments));
       setTotal(page.total);
       setNextCursor(page.nextCursor);
     } finally {
@@ -133,9 +137,7 @@ export function useCommentData(postId: string) {
         .then((response) => readJson<CommentReplyPage>(response));
       setComments((current) => updateCommentTree(current, parentId, (comment) => ({
         ...comment,
-        replies: append
-          ? Array.from(new Map([...comment.replies, ...page.comments].map((reply) => [reply.id, reply])).values()).sort((left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id))
-          : page.comments,
+        replies: mergeCommentsByOrder(comment.replies, page.comments),
         repliesLoaded: true,
         replyNextCursor: page.nextCursor,
       })));
