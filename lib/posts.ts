@@ -13,6 +13,7 @@ import { katexOptions } from './markdown';
 import { unstable_cache } from 'next/cache';
 
 export interface PostMeta {
+  id: string;
   slug: string;
   title: string;
   date: string;
@@ -29,7 +30,7 @@ export interface PostMeta {
 async function queryAllPosts(): Promise<PostMeta[]> {
   try {
     const result = await db.execute(`
-      SELECT p.slug, p.title, p.published_at, p.summary, p.cover_url, p.content, p.view_count,
+      SELECT p.id, p.slug, p.title, p.published_at, p.summary, p.cover_url, p.content, p.view_count,
              c.name as category_name,
              COALESCE((
                SELECT json_group_array(t.name)
@@ -53,6 +54,7 @@ async function queryAllPosts(): Promise<PostMeta[]> {
       } catch {}
 
       return {
+        id: r.id as string,
         slug: r.slug as string,
         title: (r.title as string) || '',
         date: rawDate,
@@ -145,6 +147,7 @@ export async function getPostBySlug(slug: string): Promise<{
 
     return {
       data: {
+        id: r.id as string,
         slug: r.slug as string,
         title: (r.title as string) || '',
         date: rawDate,
