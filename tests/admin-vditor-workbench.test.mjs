@@ -81,7 +81,11 @@ test("new and edit post pages use the shared editor workspace", async () => {
 
 test("admin upload route implements Vditor image upload contract", async () => {
   await access("app/api/admin/uploads/route.ts");
-  const source = await readFile("app/api/admin/uploads/route.ts", "utf8");
+  const [route, imageBed] = await Promise.all([
+    readFile("app/api/admin/uploads/route.ts", "utf8"),
+    readFile("lib/images/image-bed.ts", "utf8"),
+  ]);
+  const source = `${route}\n${imageBed}`;
 
   assert.match(source, /requireAdmin/);
   assert.match(source, /request\.formData\(\)/);
@@ -97,8 +101,8 @@ test("admin upload route implements Vditor image upload contract", async () => {
   assert.match(source, /searchParams\.set\(['"]uploadChannel['"]/);
   assert.match(source, /searchParams\.set\(['"]returnFormat['"],\s*['"]full['"]\)/);
   assert.match(source, /Authorization:\s*`Bearer \$\{token\}`/);
-  assert.match(source, /fetch\(uploadUrl/);
-  assert.match(source, /append\(['"]file['"],\s*file,\s*file\.name\)/);
+  assert.match(source, /fetch\(buildUploadUrl\(\)/);
+  assert.match(source, /append\(['"]file['"],\s*file,\s*filename\)/);
   assert.doesNotMatch(source, /public\/uploads\/admin/);
   assert.doesNotMatch(source, /writeFile/);
   assert.match(source, /succMap/);

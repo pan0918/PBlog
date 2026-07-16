@@ -1,34 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '../../../../lib/admin/api-helpers';
+import { uploadImageToBed } from '../../../../lib/images/image-bed';
 
 export const runtime = 'nodejs';
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
-const DEFAULT_IMAGE_BED_BASE_URL = 'https://a68b43cc.cloudflare-imgbed-9pz.pages.dev';
-const DEFAULT_IMAGE_BED_UPLOAD_CHANNEL = 'huggingface';
-
-type ImageBedUploadItem = {
-  src?: string;
-  url?: string;
-  publicUrl?: string;
-  pathname?: string;
-};
-
-function getImageBedBaseUrl() {
-  return (process.env.IMAGE_BED_BASE_URL || DEFAULT_IMAGE_BED_BASE_URL).replace(/\/+$/, '');
-}
-
-function getImageBedUploadChannel() {
-  return process.env.IMAGE_BED_UPLOAD_CHANNEL || DEFAULT_IMAGE_BED_UPLOAD_CHANNEL;
-}
-
-function buildUploadUrl() {
-  const uploadUrl = new URL('/upload', getImageBedBaseUrl());
-  uploadUrl.searchParams.set('uploadChannel', getImageBedUploadChannel());
-  uploadUrl.searchParams.set('returnFormat', 'full');
-  return uploadUrl;
-}
-
 function vditorResponse(
   succMap: Record<string, string>,
   errFiles: string[] = [],
@@ -43,68 +19,6 @@ function vditorResponse(
       succMap,
     },
   }, { status });
-}
-
-function asAbsoluteImageUrl(value: string) {
-  if (/^https?:\/\//i.test(value)) return value;
-  return new URL(value, getImageBedBaseUrl()).href;
-}
-
-function findUploadedUrl(payload: unknown): string | null {
-  const candidates: unknown[] = [];
-
-  if (Array.isArray(payload)) {
-    candidates.push(...payload);
-  } else if (payload && typeof payload === 'object') {
-    const record = payload as Record<string, unknown>;
-    if (Array.isArray(record.data)) candidates.push(...record.data);
-    else if (record.data) candidates.push(record.data);
-    candidates.push(record);
-  }
-
-  for (const candidate of candidates) {
-    if (!candidate || typeof candidate !== 'object') continue;
-    const item = candidate as ImageBedUploadItem;
-    const url = item.publicUrl || item.url || item.src || item.pathname;
-    if (typeof url === 'string' && url) return asAbsoluteImageUrl(url);
-  }
-
-  return null;
-}
-
-async function uploadToImageBed(file: File, token: string) {
-  const formData = new FormData();
-  formData.append('file', file, file.name);
-
-  const uploadUrl = buildUploadUrl();
-  const response = await fetch(uploadUrl, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  });
-
-  const responseText = await response.text();
-  let payload: unknown = null;
-  try {
-    payload = responseText ? JSON.parse(responseText) : null;
-  } catch {
-    payload = null;
-  }
-
-  if (!response.ok) {
-    throw new Error(typeof payload === 'object' && payload && 'message' in payload
-      ? String((payload as { message?: unknown }).message)
-      : responseText || '图床上传失败');
-  }
-
-  const uploadedUrl = findUploadedUrl(payload);
-  if (!uploadedUrl) {
-    throw new Error('图床响应中没有可用图片地址');
-  }
-
-  return uploadedUrl;
 }
 
 export async function POST(request: NextRequest) {
@@ -147,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      succMap[file.name] = await uploadToImageBed(file, token);
+      succMap[file.name] = await uploadImageToBed(file, file.name);
     } catch {
       errFiles.push(file.name);
     }
