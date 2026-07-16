@@ -31,8 +31,9 @@ test("background effects mount only the active theme animation tree", async () =
 });
 
 test("weather and view count requests abort when components unmount", async () => {
-  const [weather, viewCount] = await Promise.all([
+  const [weather, cityPicker, viewCount] = await Promise.all([
     readFile("components/WeatherCard.tsx", "utf8"),
+    readFile("components/CityPicker.tsx", "utf8"),
     readFile("components/ClientViewCount.tsx", "utf8"),
   ]);
 
@@ -48,7 +49,7 @@ test("weather and view count requests abort when components unmount", async () =
   assert.match(weather, /maximumAge:\s*0/);
   assert.match(weather, /window\.setTimeout/);
   assert.match(weather, /localStorage/);
-  assert.match(weather, /恢复自动定位/);
+  assert.match(cityPicker, /恢复自动定位/);
   assert.doesNotMatch(weather, /name:\s*["']当前位置["']/);
   assert.doesNotMatch(weather, /wttr\.in/);
 

@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import Image from "next/image";
 import { AnimatePresence } from "framer-motion";
 import BookViewer from "./BookViewer";
+import { shouldBypassImageOptimizer } from "./imageDelivery";
 
 interface Photo { url: string; caption?: string; }
 interface Album { id: string; title: string; description: string; cover: string; date: string; photos: Photo[]; }
@@ -58,6 +59,7 @@ export default function PhotoWallClient({ albums }: { albums: Album[] }) {
                     sizes="(max-width: 640px) 85vw, (max-width: 1024px) 42vw, 28vw"
                     quality={75}
                     loading="lazy"
+                    unoptimized={shouldBypassImageOptimizer(album.photos[2].url)}
                     className="absolute inset-0 w-full h-full object-cover grayscale blur-[2px]"
                   />
                 )}
@@ -71,6 +73,7 @@ export default function PhotoWallClient({ albums }: { albums: Album[] }) {
                     sizes="(max-width: 640px) 85vw, (max-width: 1024px) 42vw, 28vw"
                     quality={75}
                     loading="lazy"
+                    unoptimized={shouldBypassImageOptimizer(album.photos[1].url)}
                     className="absolute inset-0 w-full h-full object-cover grayscale-[50%]"
                   />
                 )}
@@ -83,6 +86,7 @@ export default function PhotoWallClient({ albums }: { albums: Album[] }) {
                   sizes="(max-width: 640px) 85vw, (max-width: 1024px) 42vw, 28vw"
                   quality={75}
                   loading={albumIndex === 0 ? "eager" : "lazy"}
+                  unoptimized={shouldBypassImageOptimizer(album.cover)}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-5">

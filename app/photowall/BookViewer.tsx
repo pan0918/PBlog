@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { shouldBypassImageOptimizer } from "./imageDelivery";
 import { fitImageWithinViewport, type FittedImageSize } from "./imageSizing";
 
 interface Photo { url: string; caption?: string; }
@@ -152,6 +153,7 @@ function Slide({ photo, direction }: { photo: Photo; direction: number }) {
         quality={90}
         loading="eager"
         decoding="async"
+        unoptimized={shouldBypassImageOptimizer(photo.url)}
         onLoad={(event) => {
           const image = event.currentTarget;
           setSize(

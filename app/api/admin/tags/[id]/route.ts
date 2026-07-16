@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { requireAdmin, success, error, readBody } from '../../../../../lib/admin/api-helpers';
 import { updateTagSchema } from '../../../../../lib/admin/validators';
 import { getTagById, updateTag, deleteTag } from '../../../../../lib/db/tags';
-import { getPostSlugsByTagId } from '../../../../../lib/db/posts';
+import { getPostSlugsByTagId } from '../../../../../lib/posts';
 import { revalidateAfterPost } from '../../../../../lib/admin/revalidate';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

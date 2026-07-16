@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireAdmin, success, error, readBody } from '../../../../../lib/admin/api-helpers';
 import { updatePostSchema } from '../../../../../lib/admin/validators';
-import { getPostById, updatePostWithTags, softDeletePost } from '../../../../../lib/db/posts';
+import { getPostById, updatePostWithTags, softDeletePost } from '../../../../../lib/posts';
 import { revalidateAfterPost } from '../../../../../lib/admin/revalidate';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
