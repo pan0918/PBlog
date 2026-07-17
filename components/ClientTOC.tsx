@@ -33,9 +33,9 @@ export default function ClientTOC({ toc }: { toc: TocItem[] }) {
   }, []);
 
   return (
-    <div className="bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl p-6 border border-white/40 dark:border-white/10 shadow-xl">
-      <h3 className="font-black text-slate-900 dark:text-white mb-4 border-l-4 border-indigo-500 pl-2 text-sm">TABLE OF CONTENTS</h3>
-      <nav className="space-y-2">
+    <div className="flex max-h-[40dvh] flex-col overflow-hidden bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl p-6 border border-white/40 dark:border-white/10 shadow-xl">
+      <h3 className="mb-4 shrink-0 border-l-4 border-indigo-500 pl-2 text-sm font-black text-slate-900 dark:text-white">TABLE OF CONTENTS</h3>
+      <nav className="min-h-0 space-y-2 overflow-y-auto overscroll-contain pr-2">
         {toc.map((item, i) => (
           <a
             key={i}

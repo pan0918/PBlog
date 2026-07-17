@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DEFAULT_PUBLIC_AVATAR_URL } from '../../lib/public-auth/presentation';
 import { publishPublicSession, subscribePublicSession } from '../../lib/public-auth/session-events';
+import AuthorAccountDialog from './AuthorAccountDialog';
 import AuthDialog from '../comments/AuthDialog';
 import ProfileDialog from '../comments/ProfileDialog';
 import type { CommentSession } from '../comments/types';
@@ -19,6 +20,7 @@ export default function DesktopAccountControl() {
   const [sessionLoaded, setSessionLoaded] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [authorAccountOpen, setAuthorAccountOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -59,8 +61,8 @@ export default function DesktopAccountControl() {
     <>
       <button
         type="button"
-        disabled={!sessionLoaded || Boolean(session?.isAuthor)}
-        onClick={() => session ? setProfileOpen(true) : setAuthOpen(true)}
+        disabled={!sessionLoaded}
+        onClick={() => session?.isAuthor ? setAuthorAccountOpen(true) : session ? setProfileOpen(true) : setAuthOpen(true)}
         className="group grid size-9 shrink-0 place-items-center rounded-full outline-none transition-transform duration-200 hover:scale-105 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fffaf4] disabled:cursor-default disabled:opacity-75 dark:focus-visible:ring-offset-stone-950"
         aria-label={accountLabel}
         title={accountLabel}
@@ -85,6 +87,14 @@ export default function DesktopAccountControl() {
               session={session}
               onClose={() => setProfileOpen(false)}
               onSessionChange={updateSession}
+            />
+          )}
+          {session?.isAuthor && (
+            <AuthorAccountDialog
+              open={authorAccountOpen}
+              username={session.username}
+              onClose={() => setAuthorAccountOpen(false)}
+              onLogout={() => updateSession(null)}
             />
           )}
         </>,

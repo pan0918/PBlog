@@ -10,8 +10,15 @@ test("article moves native comments into a wider desktop sidebar", async () => {
   assert.match(source, /max-w-\[1440px\]/);
   assert.match(source, /lg:w-\[360px\]/);
   assert.match(source, /lg:sticky lg:top-24 lg:flex lg:h-\[calc\(100dvh-7rem\)\][\s\S]*?<ClientTOC[\s\S]*?<Comments/);
-  assert.match(source, /lg:max-h-\[40dvh\] lg:shrink-0 lg:overflow-y-auto/);
+  assert.match(source, /lg:max-h-\[40dvh\] lg:shrink-0 lg:rounded-3xl/);
   assert.match(source, /<Comments postId=\{postData\.data\.id\} postTitle=\{postData\.data\.title\}/);
+});
+
+test("table of contents keeps its title fixed while only entries scroll", async () => {
+  const toc = await read("components/ClientTOC.tsx");
+  assert.match(toc, /flex max-h-\[40dvh\] flex-col overflow-hidden/);
+  assert.match(toc, /<h3[^>]*shrink-0/);
+  assert.match(toc, /<nav className="min-h-0 space-y-2 overflow-y-auto/);
 });
 
 test("comment UI has a shared hook with abort cleanup and targeted optimistic rollbacks", async () => {

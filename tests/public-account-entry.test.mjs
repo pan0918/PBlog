@@ -21,8 +21,9 @@ test("public account surfaces share the supplied default avatar", async () => {
 });
 
 test("desktop navbar account control opens authentication or profile dialogs from session state", async () => {
-  const [control, navbar] = await Promise.all([
+  const [control, authorDialog, navbar] = await Promise.all([
     readFile("components/account/DesktopAccountControl.tsx", "utf8"),
+    readFile("components/account/AuthorAccountDialog.tsx", "utf8"),
     readFile("components/Navbar.tsx", "utf8"),
   ]);
   assert.match(control, /fetch\('\/api\/auth\/session'/);
@@ -30,6 +31,7 @@ test("desktop navbar account control opens authentication or profile dialogs fro
   assert.match(control, /controller\.abort\(\)/);
   assert.match(control, /<AuthDialog/);
   assert.match(control, /<ProfileDialog/);
+  assert.match(control, /<AuthorAccountDialog/);
   assert.match(control, /登录或注册/);
   assert.match(control, /打开个人资料/);
   assert.match(control, /作者账号已登录/);
@@ -37,6 +39,9 @@ test("desktop navbar account control opens authentication or profile dialogs fro
   assert.match(control, /DEFAULT_PUBLIC_AVATAR_URL/);
   assert.match(control, /subscribePublicSession/);
   assert.match(control, /publishPublicSession/);
+  assert.doesNotMatch(control, /disabled=\{!sessionLoaded \|\| Boolean\(session\?\.isAuthor\)\}/);
+  assert.match(authorDialog, /fetch\('\/api\/admin\/logout'/);
+  assert.match(authorDialog, /退出登录/);
   assert.match(control, /!receivedExternalSession && !\(error instanceof DOMException/);
   assert.match(navbar, /import DesktopAccountControl/);
   assert.match(navbar, /<DesktopAccountControl \/>[\s\S]*onClick=\{toggleTheme\}/);

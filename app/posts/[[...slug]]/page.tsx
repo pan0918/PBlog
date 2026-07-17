@@ -100,7 +100,7 @@ export default async function Post({ params }: { params: Promise<{ slug?: string
             </div>
             <div className="lg:sticky lg:top-24 lg:flex lg:h-[calc(100dvh-7rem)] lg:min-h-0 lg:flex-col lg:gap-6">
               {postData.toc.length > 0 && (
-                <div className="lg:max-h-[40dvh] lg:shrink-0 lg:overflow-y-auto lg:rounded-3xl">
+                <div className="lg:max-h-[40dvh] lg:shrink-0 lg:rounded-3xl">
                   <ClientTOC toc={postData.toc} />
                 </div>
               )}
