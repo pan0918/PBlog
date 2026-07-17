@@ -19,3 +19,24 @@ test("public account surfaces share the supplied default avatar", async () => {
     assert.match(source, /DEFAULT_PUBLIC_AVATAR_URL/, `${path} should use the shared avatar fallback`);
   }
 });
+
+test("desktop navbar account control opens authentication or profile dialogs from session state", async () => {
+  const [control, navbar] = await Promise.all([
+    readFile("components/account/DesktopAccountControl.tsx", "utf8"),
+    readFile("components/Navbar.tsx", "utf8"),
+  ]);
+  assert.match(control, /fetch\('\/api\/auth\/session'/);
+  assert.match(control, /new AbortController\(\)/);
+  assert.match(control, /controller\.abort\(\)/);
+  assert.match(control, /<AuthDialog/);
+  assert.match(control, /<ProfileDialog/);
+  assert.match(control, /登录或注册/);
+  assert.match(control, /打开个人资料/);
+  assert.match(control, /作者账号已登录/);
+  assert.match(control, /createPortal/);
+  assert.match(control, /DEFAULT_PUBLIC_AVATAR_URL/);
+  assert.match(navbar, /import DesktopAccountControl/);
+  assert.match(navbar, /<DesktopAccountControl \/>[\s\S]*onClick=\{toggleTheme\}/);
+  const mobileBlock = navbar.split('{/* Mobile Menu */}')[1];
+  assert.doesNotMatch(mobileBlock, /DesktopAccountControl/);
+});

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, PanInfo } from 'framer-motion';
 import { siteConfig } from '../siteConfig';
 import { useTheme } from './ThemeProvider';
+import DesktopAccountControl from './account/DesktopAccountControl';
 
 export default function Navbar() {
   const [showNav, setShowNav] = useState(true);
@@ -105,6 +106,7 @@ export default function Navbar() {
               );
             })}
           </nav>
+          <DesktopAccountControl />
           <button
             onClick={toggleTheme}
             className="w-9 h-9 flex items-center justify-center text-stone-600 dark:text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-300"
