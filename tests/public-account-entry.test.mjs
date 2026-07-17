@@ -64,6 +64,19 @@ test("registration optionally uploads and previews a reader avatar", async () =>
   assert.match(auth, /DEFAULT_PUBLIC_AVATAR_URL/);
 });
 
+test("administrator sessions expose the configured public author profile", async () => {
+  const [config, route] = await Promise.all([
+    readFile("siteConfig.ts", "utf8"),
+    readFile("app/api/auth/session/route.ts", "utf8"),
+  ]);
+  assert.match(config, /authorName:\s*"Frud_"/);
+  assert.match(config, /avatarUrl:\s*new URL\("https:\/\/a68b43cc\.cloudflare-imgbed-9pz\.pages\.dev\/file\/1782456681130_圣诞猫猫\.jpg"\)\.href/);
+  assert.match(route, /import \{ siteConfig \}/);
+  assert.match(route, /username:\s*siteConfig\.authorName/);
+  assert.match(route, /avatarUrl:\s*siteConfig\.avatarUrl/);
+  assert.doesNotMatch(route, /username:\s*admin\.username/);
+});
+
 test("account dialogs trap focus, close on Escape, and restore the trigger", async () => {
   const [hook, auth, profile] = await Promise.all([
     readFile("components/comments/useDialogFocusTrap.ts", "utf8"),
