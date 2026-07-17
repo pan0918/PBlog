@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { DEFAULT_PUBLIC_AVATAR_URL } from '../../lib/public-auth/presentation';
-import { publishPublicSession, subscribePublicSession } from '../../lib/public-auth/session-events';
+import { DEFAULT_PUBLIC_AVATAR_URL, LOGIN_PUBLIC_AVATAR_URL } from '../../lib/public-auth/presentation';
+import { publishPublicSession, subscribePublicAccountRequest, subscribePublicSession } from '../../lib/public-auth/session-events';
 import AuthorAccountDialog from './AuthorAccountDialog';
 import AuthDialog from '../comments/AuthDialog';
 import ProfileDialog from '../comments/ProfileDialog';
@@ -49,6 +49,12 @@ export default function DesktopAccountControl() {
     publishPublicSession(nextSession);
   };
 
+  useEffect(() => subscribePublicAccountRequest(() => {
+    if (session?.isAuthor) setAuthorAccountOpen(true);
+    else if (session) setProfileOpen(true);
+    else setAuthOpen(true);
+  }), [session]);
+
   const accountLabel = !sessionLoaded
     ? '正在检查登录状态'
     : !session
@@ -68,7 +74,7 @@ export default function DesktopAccountControl() {
         title={accountLabel}
       >
         <img
-          src={session?.avatarUrl || DEFAULT_PUBLIC_AVATAR_URL}
+          src={session ? session.avatarUrl || DEFAULT_PUBLIC_AVATAR_URL : LOGIN_PUBLIC_AVATAR_URL}
           alt=""
           className="size-8 rounded-full object-cover ring-1 ring-stone-300/80 shadow-[0_3px_10px_rgba(120,83,45,0.16)] transition-shadow group-hover:shadow-[0_4px_14px_rgba(120,83,45,0.24)] dark:ring-white/15"
         />

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { publishPublicSession, subscribePublicSession } from "../lib/public-auth/session-events.ts";
+import { publishPublicSession, requestPublicAccount, subscribePublicAccountRequest, subscribePublicSession } from "../lib/public-auth/session-events.ts";
 
 test("public session changes synchronize independent account surfaces", () => {
   const target = new EventTarget();
@@ -13,4 +13,14 @@ test("public session changes synchronize independent account surfaces", () => {
   unsubscribe();
   publishPublicSession(session, target);
   assert.deepEqual(received, [session, null]);
+});
+
+test("comment surfaces can request the single navbar account entry", () => {
+  const target = new EventTarget();
+  let requests = 0;
+  const unsubscribe = subscribePublicAccountRequest(() => { requests += 1; }, target);
+  requestPublicAccount(target);
+  unsubscribe();
+  requestPublicAccount(target);
+  assert.equal(requests, 1);
 });

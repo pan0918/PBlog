@@ -57,6 +57,11 @@ test("comment surface supports accessible desktop and mobile states", async () =
   assert.match(surface, /max-h-full/);
   assert.match(surface, /dark:/);
   assert.match(surface, /评论/);
+  assert.match(surface, /requestPublicAccount/);
+  assert.doesNotMatch(surface, /<AuthDialog/);
+  assert.doesNotMatch(surface, /<ProfileDialog/);
+  assert.doesNotMatch(surface, /setAuthOpen|setProfileOpen/);
+  assert.match(surface, /点击右上角头像登录/);
   assert.match(list, /loading/);
   assert.match(list, /error/);
   assert.match(item, /作者/);

@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { DEFAULT_PUBLIC_AVATAR_URL } from "../lib/public-auth/presentation.ts";
+import { DEFAULT_PUBLIC_AVATAR_URL, LOGIN_PUBLIC_AVATAR_URL } from "../lib/public-auth/presentation.ts";
 
 const expectedAvatar = "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1784254976002_ChatGPT_Image_2026年7月17日_10_22_03.png";
+const expectedLoginAvatar = "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1784265000059_ChatGPT_Image_2026年7月17日_13_09_32.png";
 
 test("public account surfaces share the supplied default avatar", async () => {
   assert.equal(DEFAULT_PUBLIC_AVATAR_URL, expectedAvatar);
+  assert.equal(LOGIN_PUBLIC_AVATAR_URL, expectedLoginAvatar);
   const fallbackFiles = [
     "components/comments/CommentItem.tsx",
     "components/comments/CommentSurface.tsx",
@@ -37,8 +39,11 @@ test("desktop navbar account control opens authentication or profile dialogs fro
   assert.match(control, /作者账号已登录/);
   assert.match(control, /createPortal/);
   assert.match(control, /DEFAULT_PUBLIC_AVATAR_URL/);
+  assert.match(control, /LOGIN_PUBLIC_AVATAR_URL/);
+  assert.match(control, /session \? session\.avatarUrl \|\| DEFAULT_PUBLIC_AVATAR_URL : LOGIN_PUBLIC_AVATAR_URL/);
   assert.match(control, /subscribePublicSession/);
   assert.match(control, /publishPublicSession/);
+  assert.match(control, /subscribePublicAccountRequest/);
   assert.doesNotMatch(control, /disabled=\{!sessionLoaded \|\| Boolean\(session\?\.isAuthor\)\}/);
   assert.match(authorDialog, /fetch\('\/api\/admin\/logout'/);
   assert.match(authorDialog, /退出登录/);
@@ -47,6 +52,16 @@ test("desktop navbar account control opens authentication or profile dialogs fro
   assert.match(navbar, /<DesktopAccountControl \/>[\s\S]*onClick=\{toggleTheme\}/);
   const mobileBlock = navbar.split('{/* Mobile Menu */}')[1];
   assert.doesNotMatch(mobileBlock, /DesktopAccountControl/);
+});
+
+test("registration optionally uploads and previews a reader avatar", async () => {
+  const auth = await readFile("components/comments/AuthDialog.tsx", "utf8");
+  assert.match(auth, /name="avatar"/);
+  assert.match(auth, /accept="image\/jpeg,image\/png,image\/webp"/);
+  assert.match(auth, /URL\.createObjectURL/);
+  assert.match(auth, /URL\.revokeObjectURL/);
+  assert.match(auth, /fetch\('\/api\/auth\/avatar'/);
+  assert.match(auth, /DEFAULT_PUBLIC_AVATAR_URL/);
 });
 
 test("account dialogs trap focus, close on Escape, and restore the trigger", async () => {
