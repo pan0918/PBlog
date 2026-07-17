@@ -99,7 +99,7 @@ export default async function Post({ params }: { params: Promise<{ slug?: string
               </div>
             </div>
             {postData.toc.length > 0 && (
-              <div>
+              <div className="sticky top-24">
                 <ClientTOC toc={postData.toc} />
               </div>
             )}

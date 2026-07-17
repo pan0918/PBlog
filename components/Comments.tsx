@@ -40,7 +40,7 @@ export default function Comments({ postId, postTitle }: { postId: string; postTi
 
   return (
     <>
-      <div className="sticky top-24 hidden lg:block">
+      <div className="hidden lg:block">
         <CommentSurface variant="sidebar" postTitle={postTitle} data={data} />
       </div>
       <button

@@ -9,6 +9,7 @@ test("article moves native comments into a wider desktop sidebar", async () => {
   assert.doesNotMatch(source, /mt-12 md:mt-16[^>]*><Comments/);
   assert.match(source, /max-w-\[1440px\]/);
   assert.match(source, /lg:w-\[360px\]/);
+  assert.match(source, /className="sticky top-24"[\s\S]*?<ClientTOC/);
   assert.match(source, /<Comments postId=\{postData\.data\.id\} postTitle=\{postData\.data\.title\}/);
 });
 
@@ -43,6 +44,7 @@ test("comment surface supports accessible desktop and mobile states", async () =
   assert.match(comments, /const trigger = triggerRef\.current/);
   assert.match(comments, /trigger\?\.focus\(\)/);
   assert.match(comments, /md:max-lg:right-\[20rem\]/);
+  assert.doesNotMatch(comments, /sticky top-24 hidden lg:block/);
   assert.match(surface, /dark:/);
   assert.match(surface, /评论/);
   assert.match(list, /loading/);
