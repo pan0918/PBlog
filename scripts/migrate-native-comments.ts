@@ -15,14 +15,36 @@ const statements = [
   `CREATE INDEX IF NOT EXISTS idx_post_comments_user ON post_comments(public_user_id, status)`,
 ];
 
+const requiredTables = ['public_users', 'public_auth_events', 'post_comments', 'comment_likes'];
+const requiredIndexes = [
+  'idx_public_auth_events_key_time',
+  'idx_public_auth_events_attempted_at',
+  'idx_post_comments_post_created',
+  'idx_post_comments_parent_created',
+  'idx_post_comments_user',
+];
+
 async function main() {
   const url = process.env.TURSO_DATABASE_URL;
   const authToken = process.env.TURSO_AUTH_TOKEN;
   if (!url || !authToken) throw new Error('缺少 TURSO_DATABASE_URL 或 TURSO_AUTH_TOKEN');
   const client = createClient({ url, authToken });
-  for (const statement of statements) {
-    await client.execute(statement);
-    console.log(`✅ ${statement.match(/(?:TABLE|INDEX) IF NOT EXISTS (\w+)/)?.[1] || 'migration'}`);
+  try {
+    for (const statement of statements) {
+      await client.execute(statement);
+      console.log(`✅ ${statement.match(/(?:TABLE|INDEX) IF NOT EXISTS (\w+)/)?.[1] || 'migration'}`);
+    }
+    const requiredObjects = [...requiredTables, ...requiredIndexes];
+    const schema = await client.execute({
+      sql: `SELECT name FROM sqlite_master WHERE name IN (${requiredObjects.map(() => '?').join(',')})`,
+      args: requiredObjects,
+    });
+    const existing = new Set(schema.rows.map((row) => String(row.name)));
+    const missing = requiredObjects.filter((name) => !existing.has(name));
+    if (missing.length) throw new Error(`迁移校验失败，缺少数据库对象：${missing.join(', ')}`);
+    console.log(`✅ 迁移校验通过：${requiredTables.length} 个表，${requiredIndexes.length} 个索引`);
+  } finally {
+    client.close();
   }
 }
 

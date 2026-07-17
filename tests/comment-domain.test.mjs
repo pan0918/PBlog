@@ -13,9 +13,10 @@ test("sanitizes comments as bounded plain text", () => {
 });
 
 test("schema and migration define comments and unique likes", async () => {
-  const [schema, migration] = await Promise.all([
+  const [schema, migration, packageSource] = await Promise.all([
     readFile("lib/schema.sql", "utf8"),
     readFile("scripts/migrate-native-comments.ts", "utf8"),
+    readFile("package.json", "utf8"),
   ]);
   for (const source of [schema, migration]) {
     assert.match(source, /post_comments/);
@@ -24,4 +25,8 @@ test("schema and migration define comments and unique likes", async () => {
   assert.match(schema, /PRIMARY KEY \(comment_id, public_user_id\)/);
   assert.match(schema, /idx_post_comments_post_created/);
   assert.match(schema, /idx_post_comments_parent_created/);
+  assert.equal(JSON.parse(packageSource).scripts["migrate:comments"], "tsx scripts/migrate-native-comments.ts");
+  assert.match(migration, /SELECT name FROM sqlite_master/);
+  assert.match(migration, /requiredTables/);
+  assert.match(migration, /client\.close\(\)/);
 });

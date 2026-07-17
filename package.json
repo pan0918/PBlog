@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "migrate:comments": "tsx scripts/migrate-native-comments.ts",
     "photos:backfill": "tsx scripts/backfill-photo-derivatives.ts"
   },
   "dependencies": {
