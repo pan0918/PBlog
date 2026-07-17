@@ -16,7 +16,7 @@ export default function CommentSurface({ variant, postTitle, data, onClose }: { 
   const fullscreen = variant === 'fullscreen';
 
   return (
-    <section className={`flex flex-col overflow-hidden border border-white/60 bg-white/72 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/72 ${fullscreen ? 'h-[100dvh] rounded-none' : 'max-h-[calc(100dvh-7rem)] rounded-3xl'}`} aria-label={`${postTitle}的评论`}>
+    <section className={`flex flex-col overflow-hidden border border-white/60 bg-white/72 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/72 ${fullscreen ? 'h-[100dvh] rounded-none' : 'max-h-full rounded-3xl'}`} aria-label={`${postTitle}的评论`}>
       <header className="flex shrink-0 items-center gap-3 border-b border-slate-200/70 px-4 py-3.5 dark:border-white/10">
         <span className="grid size-9 place-items-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300"><MessageSquare size={18} /></span>
         <div className="min-w-0 flex-1">
