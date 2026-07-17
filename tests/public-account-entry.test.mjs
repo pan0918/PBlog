@@ -37,6 +37,7 @@ test("desktop navbar account control opens authentication or profile dialogs fro
   assert.match(control, /DEFAULT_PUBLIC_AVATAR_URL/);
   assert.match(control, /subscribePublicSession/);
   assert.match(control, /publishPublicSession/);
+  assert.match(control, /!receivedExternalSession && !\(error instanceof DOMException/);
   assert.match(navbar, /import DesktopAccountControl/);
   assert.match(navbar, /<DesktopAccountControl \/>[\s\S]*onClick=\{toggleTheme\}/);
   const mobileBlock = navbar.split('{/* Mobile Menu */}')[1];

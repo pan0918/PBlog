@@ -34,7 +34,7 @@ export default function DesktopAccountControl() {
       .then(readSession)
       .then((nextSession) => { if (!receivedExternalSession) setSession(nextSession); })
       .catch((error) => {
-        if (!(error instanceof DOMException && error.name === 'AbortError')) setSession(null);
+        if (!receivedExternalSession && !(error instanceof DOMException && error.name === 'AbortError')) setSession(null);
       })
       .finally(() => {
         if (!controller.signal.aborted) setSessionLoaded(true);
