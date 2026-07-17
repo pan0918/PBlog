@@ -1,5 +1,6 @@
 import { db } from '../db';
 import type { CommentActor } from '../comments/service';
+import { siteConfig } from '../../siteConfig';
 
 type RawComment = Record<string, unknown>;
 
@@ -30,8 +31,8 @@ function mapComment(row: RawComment, likedIds: Set<string>, likeCounts = new Map
     replyCount: replyCounts.get(id) || 0,
     author: {
       id: String(row.public_user_id || row.admin_user_id),
-      username: String(row.user_username || row.admin_username || '已注销用户'),
-      avatarUrl: row.avatar_url ? String(row.avatar_url) : null,
+      username: isAuthor ? siteConfig.authorName : String(row.user_username || '已注销用户'),
+      avatarUrl: isAuthor ? siteConfig.avatarUrl : row.avatar_url ? String(row.avatar_url) : null,
       isAuthor,
     },
     replies: [],

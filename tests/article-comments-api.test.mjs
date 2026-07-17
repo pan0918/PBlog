@@ -26,6 +26,14 @@ test("comment repository uses oldest-first pages, paged replies, and unique like
   assert.doesNotMatch(source, /SELECT \* FROM post_comments[^;]+forEach/s);
 });
 
+test("administrator comments expose the configured public author profile", async () => {
+  const source = await readFile("lib/db/comments.ts", "utf8");
+  assert.match(source, /import \{ siteConfig \} from ['"]\.\.\/\.\.\/siteConfig['"]/);
+  assert.match(source, /username:\s*isAuthor\s*\?\s*siteConfig\.authorName/);
+  assert.match(source, /avatarUrl:\s*isAuthor\s*\?\s*siteConfig\.avatarUrl/);
+  assert.doesNotMatch(source, /username:\s*String\(row\.user_username \|\| row\.admin_username/);
+});
+
 test("public comment routes separate public reads, actor writes, ownership edits, and user likes", async () => {
   const [postRoute, editRoute, likeRoute] = await Promise.all([
     readFile("app/api/posts/[postId]/comments/route.ts", "utf8"),
