@@ -4,6 +4,7 @@ import { FormEvent, useRef, useState } from 'react';
 import { Camera, LogOut, Trash2, X } from 'lucide-react';
 import { DEFAULT_PUBLIC_AVATAR_URL } from '../../lib/public-auth/presentation';
 import type { CommentSession } from './types';
+import useDialogFocusTrap from './useDialogFocusTrap';
 
 async function request<T>(path: string, init: RequestInit) {
   const response = await fetch(path, init);
@@ -16,6 +17,7 @@ export default function ProfileDialog({ open, session, onClose, onSessionChange 
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const dialogRef = useDialogFocusTrap(open, onClose);
   if (!open) return null;
   const fieldClass = 'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/10 dark:bg-slate-950 dark:text-white';
 
@@ -53,7 +55,7 @@ export default function ProfileDialog({ open, session, onClose, onSessionChange 
   }
 
   return (
-    <div className="fixed inset-0 z-[90] overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="profile-title">
+    <div ref={dialogRef} tabIndex={-1} className="fixed inset-0 z-[90] overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="profile-title">
       <div className="mx-auto my-4 w-full max-w-lg rounded-3xl border border-white/60 bg-[#fffaf4] p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900">
         <div className="flex items-center justify-between">
           <h2 id="profile-title" className="text-xl font-black text-slate-900 dark:text-white">个人资料</h2>

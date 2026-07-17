@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { X } from 'lucide-react';
 import type { CommentSession } from './types';
+import useDialogFocusTrap from './useDialogFocusTrap';
 
 async function submitAuth(path: string, data: Record<string, string>) {
   const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
@@ -14,6 +15,7 @@ export default function AuthDialog({ open, onClose, onSuccess }: { open: boolean
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const dialogRef = useDialogFocusTrap(open, onClose);
   if (!open) return null;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -34,7 +36,7 @@ export default function AuthDialog({ open, onClose, onSuccess }: { open: boolean
 
   const fieldClass = 'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/10 dark:bg-slate-900 dark:text-white';
   return (
-    <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="auth-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <div ref={dialogRef} tabIndex={-1} className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="auth-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div className="w-full max-w-sm rounded-3xl border border-white/60 bg-[#fffaf4] p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900">
         <div className="flex items-center justify-between">
           <div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { publishPublicSession, subscribePublicSession } from '../../lib/public-auth/session-events';
 import type { ArticleComment, CommentPage, CommentReplyPage, CommentSession } from './types';
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -35,7 +36,7 @@ function mergeCommentsByOrder(current: ArticleComment[], incoming: ArticleCommen
 }
 
 export function useCommentData(postId: string) {
-  const [session, setSession] = useState<CommentSession | null>(null);
+  const [session, setSessionState] = useState<CommentSession | null>(null);
   const [comments, setComments] = useState<ArticleComment[]>([]);
   const [total, setTotal] = useState(0);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -45,8 +46,21 @@ export function useCommentData(postId: string) {
   const pendingLikes = useRef(new Set<string>());
   const pendingEdits = useRef(new Set<string>());
   const pendingReplies = useRef(new Set<string>());
+  const sessionRevision = useRef(0);
+
+  const setSession = useCallback((nextSession: CommentSession | null) => {
+    sessionRevision.current += 1;
+    setSessionState(nextSession);
+    publishPublicSession(nextSession);
+  }, []);
+
+  useEffect(() => subscribePublicSession((nextSession) => {
+    sessionRevision.current += 1;
+    setSessionState(nextSession);
+  }), []);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
+    const startingSessionRevision = sessionRevision.current;
     setLoading(true);
     setError(null);
     try {
@@ -54,7 +68,7 @@ export function useCommentData(postId: string) {
         fetch('/api/auth/session', { signal, cache: 'no-store' }).then((response) => readJson<CommentSession | null>(response)),
         fetch(`/api/posts/${encodeURIComponent(postId)}/comments`, { signal, cache: 'no-store' }).then((response) => readJson<CommentPage>(response)),
       ]);
-      setSession(sessionData);
+      if (sessionRevision.current === startingSessionRevision) setSessionState(sessionData);
       setComments(page.comments);
       setTotal(page.total);
       setNextCursor(page.nextCursor);
@@ -76,7 +90,7 @@ export function useCommentData(postId: string) {
     const next = await fetch('/api/auth/session', { cache: 'no-store' }).then((response) => readJson<CommentSession | null>(response));
     setSession(next);
     return next;
-  }, []);
+  }, [setSession]);
 
   const submitComment = useCallback(async (content: string, parentId?: string | null) => {
     if (!session) throw new Error('请先登录');

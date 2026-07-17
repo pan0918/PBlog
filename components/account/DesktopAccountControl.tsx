@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DEFAULT_PUBLIC_AVATAR_URL } from '../../lib/public-auth/presentation';
+import { publishPublicSession, subscribePublicSession } from '../../lib/public-auth/session-events';
 import AuthDialog from '../comments/AuthDialog';
 import ProfileDialog from '../comments/ProfileDialog';
 import type { CommentSession } from '../comments/types';
@@ -23,17 +24,28 @@ export default function DesktopAccountControl() {
   useEffect(() => {
     setMounted(true);
     const controller = new AbortController();
+    let receivedExternalSession = false;
+    const unsubscribe = subscribePublicSession((nextSession) => {
+      receivedExternalSession = true;
+      setSession(nextSession);
+      setSessionLoaded(true);
+    });
     void fetch('/api/auth/session', { cache: 'no-store', signal: controller.signal })
       .then(readSession)
-      .then(setSession)
+      .then((nextSession) => { if (!receivedExternalSession) setSession(nextSession); })
       .catch((error) => {
         if (!(error instanceof DOMException && error.name === 'AbortError')) setSession(null);
       })
       .finally(() => {
         if (!controller.signal.aborted) setSessionLoaded(true);
       });
-    return () => controller.abort();
+    return () => { controller.abort(); unsubscribe(); };
   }, []);
+
+  const updateSession = (nextSession: CommentSession | null) => {
+    setSession(nextSession);
+    publishPublicSession(nextSession);
+  };
 
   const accountLabel = !sessionLoaded
     ? '正在检查登录状态'
@@ -65,14 +77,14 @@ export default function DesktopAccountControl() {
           <AuthDialog
             open={authOpen}
             onClose={() => setAuthOpen(false)}
-            onSuccess={(nextSession) => { setSession(nextSession); setAuthOpen(false); }}
+            onSuccess={(nextSession) => { updateSession(nextSession); setAuthOpen(false); }}
           />
           {session && !session.isAuthor && (
             <ProfileDialog
               open={profileOpen}
               session={session}
               onClose={() => setProfileOpen(false)}
-              onSessionChange={(nextSession) => setSession(nextSession)}
+              onSessionChange={updateSession}
             />
           )}
         </>,

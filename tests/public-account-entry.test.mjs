@@ -35,8 +35,26 @@ test("desktop navbar account control opens authentication or profile dialogs fro
   assert.match(control, /作者账号已登录/);
   assert.match(control, /createPortal/);
   assert.match(control, /DEFAULT_PUBLIC_AVATAR_URL/);
+  assert.match(control, /subscribePublicSession/);
+  assert.match(control, /publishPublicSession/);
   assert.match(navbar, /import DesktopAccountControl/);
   assert.match(navbar, /<DesktopAccountControl \/>[\s\S]*onClick=\{toggleTheme\}/);
   const mobileBlock = navbar.split('{/* Mobile Menu */}')[1];
   assert.doesNotMatch(mobileBlock, /DesktopAccountControl/);
+});
+
+test("account dialogs trap focus, close on Escape, and restore the trigger", async () => {
+  const [hook, auth, profile] = await Promise.all([
+    readFile("components/comments/useDialogFocusTrap.ts", "utf8"),
+    readFile("components/comments/AuthDialog.tsx", "utf8"),
+    readFile("components/comments/ProfileDialog.tsx", "utf8"),
+  ]);
+  assert.match(hook, /event\.key === 'Escape'/);
+  assert.match(hook, /event\.key !== 'Tab'/);
+  assert.match(hook, /previousFocus\?\.focus\(\)/);
+  assert.match(hook, /querySelectorAll<HTMLElement>/);
+  assert.match(auth, /useDialogFocusTrap\(open, onClose\)/);
+  assert.match(profile, /useDialogFocusTrap\(open, onClose\)/);
+  assert.match(auth, /tabIndex=\{-1\}/);
+  assert.match(profile, /tabIndex=\{-1\}/);
 });

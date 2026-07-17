@@ -1,12 +1,6 @@
-export type CommentSession = {
-  id: string;
-  username: string;
-  email?: string;
-  avatarUrl: string | null;
-  status: string;
-  mustChangePassword: boolean;
-  isAuthor: boolean;
-};
+import type { PublicSessionSnapshot } from '../../lib/public-auth/session-events';
+
+export type CommentSession = PublicSessionSnapshot;
 export type CommentAuthor = {
   id: string;
   username: string;
