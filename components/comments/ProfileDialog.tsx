@@ -2,6 +2,7 @@
 
 import { FormEvent, useRef, useState } from 'react';
 import { Camera, LogOut, Trash2, X } from 'lucide-react';
+import { DEFAULT_PUBLIC_AVATAR_URL } from '../../lib/public-auth/presentation';
 import type { CommentSession } from './types';
 
 async function request<T>(path: string, init: RequestInit) {
@@ -60,7 +61,7 @@ export default function ProfileDialog({ open, session, onClose, onSessionChange 
         </div>
         {session.mustChangePassword && <p className="mt-4 rounded-xl bg-amber-100 px-3 py-2 text-sm font-bold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">当前使用临时密码，请先修改密码后再参与讨论。</p>}
         <div className="mt-5 flex items-center gap-4">
-          {session.avatarUrl ? <img src={session.avatarUrl} alt="当前头像" className="size-16 rounded-2xl object-cover" /> : <span className="grid size-16 place-items-center rounded-2xl bg-slate-200 text-lg font-black dark:bg-slate-700 dark:text-white">{Array.from(session.username).slice(0, 2).join('').toUpperCase()}</span>}
+          <img src={session.avatarUrl || DEFAULT_PUBLIC_AVATAR_URL} alt="当前头像" className="size-16 rounded-2xl object-cover" />
           <div>
             <input ref={avatarRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => {
               const file = event.target.files?.[0]; if (!file) return;

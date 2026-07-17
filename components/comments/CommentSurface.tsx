@@ -6,6 +6,7 @@ import AuthDialog from './AuthDialog';
 import CommentComposer from './CommentComposer';
 import CommentList from './CommentList';
 import ProfileDialog from './ProfileDialog';
+import { DEFAULT_PUBLIC_AVATAR_URL } from '../../lib/public-auth/presentation';
 import type { CommentData } from './useCommentData';
 
 export default function CommentSurface({ variant, postTitle, data, onClose }: { variant: 'sidebar' | 'fullscreen'; postTitle: string; data: CommentData; onClose?: () => void }) {
@@ -37,7 +38,7 @@ export default function CommentSurface({ variant, postTitle, data, onClose }: { 
               <>
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2">
-                    {data.session.avatarUrl ? <img src={data.session.avatarUrl} alt="" className="size-8 rounded-xl object-cover" /> : <span className="grid size-8 place-items-center rounded-xl bg-slate-200 text-[11px] font-black text-slate-700 dark:bg-slate-700 dark:text-white">{Array.from(data.session.username).slice(0, 2).join('').toUpperCase()}</span>}
+                    <img src={data.session.avatarUrl || DEFAULT_PUBLIC_AVATAR_URL} alt="" className="size-8 rounded-xl object-cover" />
                     <p className="truncate text-xs font-bold text-slate-600 dark:text-slate-300">以 {data.session.username} 的身份</p>
                     {data.session.isAuthor && <span className="rounded-md bg-indigo-100 px-1.5 py-0.5 text-[10px] font-black text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">作者</span>}
                   </div>

@@ -2,12 +2,9 @@
 
 import { useState } from 'react';
 import { ChevronDown, Heart, MessageCircle, Pencil } from 'lucide-react';
+import { DEFAULT_PUBLIC_AVATAR_URL } from '../../lib/public-auth/presentation';
 import CommentComposer from './CommentComposer';
 import type { ArticleComment, CommentSession } from './types';
-
-function initials(name: string) {
-  return Array.from(name.trim()).slice(0, 2).join('').toUpperCase() || '?';
-}
 
 function relativeTime(value: string) {
   const delta = Date.now() - new Date(value).getTime();
@@ -19,14 +16,7 @@ function relativeTime(value: string) {
 }
 
 function Avatar({ comment }: { comment: ArticleComment }) {
-  if (comment.author.avatarUrl) {
-    return <img src={comment.author.avatarUrl} alt="" className="size-9 shrink-0 rounded-xl object-cover ring-1 ring-white/70 dark:ring-white/10" />;
-  }
-  return (
-    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-slate-200 text-xs font-black text-slate-600 ring-1 ring-white/70 dark:bg-slate-700 dark:text-slate-200 dark:ring-white/10" aria-hidden="true">
-      {initials(comment.author.username)}
-    </span>
-  );
+  return <img src={comment.author.avatarUrl || DEFAULT_PUBLIC_AVATAR_URL} alt="" className="size-9 shrink-0 rounded-xl object-cover ring-1 ring-white/70 dark:ring-white/10" />;
 }
 
 export default function CommentItem({

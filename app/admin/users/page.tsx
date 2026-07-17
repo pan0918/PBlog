@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { DEFAULT_PUBLIC_AVATAR_URL } from '../../../lib/public-auth/presentation';
 import Pagination from '../components/Pagination';
 import { useAdminToast } from '../components/useAdminToast';
 
@@ -121,7 +122,7 @@ export default function AdminUsersPage() {
               <tbody>
                 {users.length === 0 ? <tr><td colSpan={5}><div className="admin-empty"><div className="icon">👥</div><p>没有符合条件的用户</p></div></td></tr> : users.map((user) => (
                   <tr key={user.id}>
-                    <td><div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>{user.avatar_url ? <img src={user.avatar_url} alt="" style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover' }} /> : <span style={{ width: 36, height: 36, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'var(--admin-bg-secondary)', fontWeight: 800 }}>{Array.from(user.username).slice(0, 2).join('').toUpperCase()}</span>}<div><strong>{user.username}</strong>{Boolean(user.must_change_password) && <div style={{ color: '#d97706', fontSize: 11 }}>等待修改临时密码</div>}</div></div></td>
+                    <td><div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><img src={user.avatar_url || DEFAULT_PUBLIC_AVATAR_URL} alt="" style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover' }} /><div><strong>{user.username}</strong>{Boolean(user.must_change_password) && <div style={{ color: '#d97706', fontSize: 11 }}>等待修改临时密码</div>}</div></div></td>
                     <td>{user.email}</td>
                     <td><span className={`admin-badge ${STATUS_BADGE[user.status]}`}>{STATUS_TEXT[user.status]}</span>{user.status === 'muted' && <div style={{ marginTop: 4, fontSize: 11, opacity: 0.6 }}>{user.muted_until ? `至 ${new Date(user.muted_until).toLocaleString('zh-CN')}` : '永久禁言'}</div>}</td>
                     <td style={{ fontSize: 12, lineHeight: 1.7, opacity: 0.7 }}><div>注册 {new Date(user.created_at).toLocaleDateString('zh-CN')}</div><div>{user.last_login_at ? `登录 ${new Date(user.last_login_at).toLocaleString('zh-CN')}` : '尚未登录'}</div></td>
