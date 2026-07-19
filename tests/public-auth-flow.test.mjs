@@ -51,6 +51,37 @@ test("durable rate consumption is atomic under concurrent requests", async () =>
   await unlink(databasePath).catch(() => {});
 });
 
+test("password changes durably throttle failed reauthentication per account", async () => {
+  const passwordRoute = await readFile("app/api/auth/password/route.ts", "utf8");
+  assert.match(passwordRoute, /consumePublicRateLimit/);
+  assert.match(passwordRoute, /createPublicRateKey\('password-change', user\.id, ''\)/);
+  assert.match(passwordRoute, /clearPublicRateEvents/);
+  assert.match(passwordRoute, /limit: 5, windowMs: 15 \* 60 \* 1000/);
+
+  const { clearPublicRateEvents, consumePublicRateLimit, createPublicRateKey } = await import("../lib/public-auth/rate-limit.ts");
+  const client = createClient({ url: "file::memory:" });
+  await client.execute("CREATE TABLE public_auth_events (id TEXT PRIMARY KEY, purpose TEXT NOT NULL, rate_key TEXT NOT NULL, attempted_at TEXT NOT NULL)");
+  const key = await createPublicRateKey("password-change", "user-1", "");
+
+  for (let index = 0; index < 5; index += 1) {
+    assert.equal(
+      (await consumePublicRateLimit("password-change", key, [{ limit: 5, windowMs: 15 * 60 * 1000 }], Date.now() + index, client)).allowed,
+      true,
+    );
+  }
+  assert.equal(
+    (await consumePublicRateLimit("password-change", key, [{ limit: 5, windowMs: 15 * 60 * 1000 }], Date.now() + 5, client)).allowed,
+    false,
+  );
+
+  await clearPublicRateEvents("password-change", key, client);
+  assert.equal(
+    (await consumePublicRateLimit("password-change", key, [{ limit: 5, windowMs: 15 * 60 * 1000 }], Date.now() + 6, client)).allowed,
+    true,
+  );
+  client.close();
+});
+
 test("public auth routes hash passwords and use generic login failures", async () => {
   const [register, login, password, account, auth, repository] = await Promise.all([
     readFile("app/api/auth/register/route.ts", "utf8"),

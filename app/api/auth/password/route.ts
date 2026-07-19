@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { hashPassword, verifyPassword } from '../../../../lib/admin/password';
 import { updatePublicUserPassword } from '../../../../lib/db/public-users';
 import { getPublicCookieName, getPublicCookieOptions, requirePublicUser, signPublicUserToken, toPublicProfile } from '../../../../lib/public-auth/auth';
+import { clearPublicRateEvents, consumePublicRateLimit, createPublicRateKey } from '../../../../lib/public-auth/rate-limit';
 
 export async function PATCH(request: NextRequest) {
   const { user, error } = await requirePublicUser();
@@ -10,7 +11,16 @@ export async function PATCH(request: NextRequest) {
   try { body = await request.json(); } catch { return NextResponse.json({ ok: false, message: '请求格式无效' }, { status: 400 }); }
   const currentPassword = typeof body.currentPassword === 'string' ? body.currentPassword : '';
   const newPassword = typeof body.newPassword === 'string' ? body.newPassword : '';
+  const passwordRateKey = await createPublicRateKey('password-change', user.id, '');
+  const passwordRate = await consumePublicRateLimit('password-change', passwordRateKey, [{ limit: 5, windowMs: 15 * 60 * 1000 }]);
+  if (!passwordRate.allowed) {
+    return NextResponse.json(
+      { ok: false, message: '当前密码验证尝试过多，请稍后再试' },
+      { status: 429, headers: { 'Retry-After': String(passwordRate.retryAfterSeconds) } },
+    );
+  }
   if (!(await verifyPassword(currentPassword, user.password_hash))) return NextResponse.json({ ok: false, message: '当前密码错误' }, { status: 400 });
+  await clearPublicRateEvents('password-change', passwordRateKey);
   if (newPassword.length < 8 || newPassword.length > 72) return NextResponse.json({ ok: false, message: '新密码长度需为 8–72 位' }, { status: 400 });
   const updated = await updatePublicUserPassword(user.id, await hashPassword(newPassword));
   if (!updated) return NextResponse.json({ ok: false, message: '账号不存在' }, { status: 404 });
