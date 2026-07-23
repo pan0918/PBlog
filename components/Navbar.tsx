@@ -3,14 +3,13 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, PanInfo } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useMotionValueEvent, useScroll, useSpring, useTransform, PanInfo } from 'framer-motion';
 import { siteConfig } from '../siteConfig';
 import { useTheme } from './ThemeProvider';
 import DesktopAccountControl from './account/DesktopAccountControl';
 
 export default function Navbar() {
   const [showNav, setShowNav] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { isDark, toggleTheme } = useTheme();
@@ -39,6 +38,8 @@ export default function Navbar() {
 
   const dragY = useMotionValue(0);
   const [constraints, setConstraints] = useState({ top: 0, bottom: 0 });
+  const lastScrollYRef = useRef(0);
+  const { scrollY } = useScroll();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -51,26 +52,11 @@ export default function Navbar() {
     if (isMobileMenuOpen) rawRotation.set(0);
   }, [isMobileMenuOpen, rawRotation]);
 
-  useEffect(() => {
-    let ticking = false;
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          if (currentScrollY > lastScrollY && currentScrollY > 80) {
-            setShowNav(false);
-          } else {
-            setShowNav(true);
-          }
-          setLastScrollY(currentScrollY);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  useMotionValueEvent(scrollY, 'change', (currentScrollY) => {
+    const shouldShow = currentScrollY <= 80 || currentScrollY <= lastScrollYRef.current;
+    lastScrollYRef.current = currentScrollY;
+    setShowNav((isShown) => isShown === shouldShow ? isShown : shouldShow);
+  });
 
   const navLinks = [
     { name: '首页', href: '/' },

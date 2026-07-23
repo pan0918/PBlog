@@ -4,12 +4,16 @@ import test from "node:test";
 
 import { DEFAULT_PUBLIC_AVATAR_URL, LOGIN_PUBLIC_AVATAR_URL } from "../lib/public-auth/presentation.ts";
 
-const expectedAvatar = "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1784254976002_ChatGPT_Image_2026年7月17日_10_22_03.png";
-const expectedLoginAvatar = "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1784265000059_ChatGPT_Image_2026年7月17日_13_09_32.png";
+const expectedAvatar = "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1784254976002_ChatGPT_Image_2026%E5%B9%B47%E6%9C%8817%E6%97%A5_10_22_03.png";
+const expectedLoginAvatar = "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1784265000059_ChatGPT_Image_2026%E5%B9%B47%E6%9C%8817%E6%97%A5_13_09_32.png";
 
 test("public account surfaces share the supplied default avatar", async () => {
   assert.equal(DEFAULT_PUBLIC_AVATAR_URL, expectedAvatar);
   assert.equal(LOGIN_PUBLIC_AVATAR_URL, expectedLoginAvatar);
+  for (const avatarUrl of [DEFAULT_PUBLIC_AVATAR_URL, LOGIN_PUBLIC_AVATAR_URL]) {
+    assert.doesNotMatch(avatarUrl, /[^\x00-\x7f]/);
+    assert.doesNotThrow(() => new Headers({ Link: `<${avatarUrl}>; rel=preload; as=image` }));
+  }
   const fallbackFiles = [
     "components/comments/CommentItem.tsx",
     "components/comments/CommentSurface.tsx",
@@ -52,6 +56,23 @@ test("desktop navbar account control opens authentication or profile dialogs fro
   assert.match(navbar, /<DesktopAccountControl \/>[\s\S]*onClick=\{toggleTheme\}/);
   const mobileBlock = navbar.split('{/* Mobile Menu */}')[1];
   assert.doesNotMatch(mobileBlock, /DesktopAccountControl/);
+});
+
+test("public navigation mounts once in the root layout so the avatar keeps its session between pages", async () => {
+  const [layout, siteChrome, home, about, music] = await Promise.all([
+    readFile("app/layout.tsx", "utf8"),
+    readFile("components/SiteChrome.tsx", "utf8"),
+    readFile("app/page.tsx", "utf8"),
+    readFile("app/about/page.tsx", "utf8"),
+    readFile("app/music/page.tsx", "utf8"),
+  ]);
+
+  assert.match(layout, /<SiteChrome \/>/);
+  assert.match(siteChrome, /usePathname/);
+  assert.match(siteChrome, /pathname\.startsWith\('\/admin'\)/);
+  for (const page of [home, about, music]) {
+    assert.doesNotMatch(page, /<Navbar \/>/);
+  }
 });
 
 test("registration optionally uploads and previews a reader avatar", async () => {

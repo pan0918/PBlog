@@ -234,6 +234,63 @@ input[type=range]::-webkit-slider-thumb {
   background: rgba(99, 102, 241, 0.38);
 }
 
+/* Music playlist: a deliberately visible, browser-like vertical scrollbar. */
+.music-playlist-scroll {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.64) rgba(255, 255, 255, 0.42);
+}
+
+.music-playlist-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.music-playlist-scroll::-webkit-scrollbar-track {
+  margin-block: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: inset 0 1px 2px rgba(71, 85, 105, 0.12);
+}
+
+.music-playlist-scroll::-webkit-scrollbar-thumb {
+  min-height: 44px;
+  border: 2px solid rgba(255, 255, 255, 0.38);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(129, 140, 248, 0.82), rgba(79, 70, 229, 0.78));
+  background-clip: padding-box;
+}
+
+.music-playlist-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.94), rgba(67, 56, 202, 0.9));
+  background-clip: padding-box;
+}
+
+.music-playlist-scroll:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.72);
+  outline-offset: 3px;
+}
+
+.dark .music-playlist-scroll {
+  scrollbar-color: rgba(129, 140, 248, 0.78) rgba(15, 23, 42, 0.52);
+}
+
+.dark .music-playlist-scroll::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.52);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.32);
+}
+
+.dark .music-playlist-scroll::-webkit-scrollbar-thumb {
+  border-color: rgba(30, 41, 59, 0.72);
+  background: linear-gradient(180deg, rgba(165, 180, 252, 0.84), rgba(99, 102, 241, 0.82));
+  background-clip: padding-box;
+}
+
+.dark .music-playlist-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(199, 210, 254, 0.94), rgba(129, 140, 248, 0.92));
+  background-clip: padding-box;
+}
+
 @media (prefers-reduced-transparency: reduce) {
   .comment-scroll {
     background: rgb(255 255 255 / 0.96);

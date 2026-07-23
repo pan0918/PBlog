@@ -64,6 +64,20 @@ test("playlist search keeps decorative layers out of the input hit target", asyn
   assert.match(musicPage, /aria-label="清空歌单搜索"[^>]*className="[^"]*z-20[^"]*"/);
 });
 
+test("playlist exposes a visible, keyboard-accessible scrollbar in both themes", async () => {
+  const [musicPage, styles] = await Promise.all([
+    readFile("app/music/MusicClient.tsx", "utf8"),
+    readFile("app/globals.css", "utf8"),
+  ]);
+
+  assert.match(musicPage, /music-playlist-scroll[\s\S]*overflow-y-scroll/);
+  assert.match(musicPage, /aria-label="歌单，可上下滚动"/);
+  assert.match(musicPage, /tabIndex=\{0\}/);
+  assert.match(styles, /\.music-playlist-scroll\s*\{[\s\S]*scrollbar-gutter:\s*stable/);
+  assert.match(styles, /\.music-playlist-scroll::\-webkit-scrollbar\s*\{[\s\S]*width:\s*10px/);
+  assert.match(styles, /\.dark \.music-playlist-scroll\s*\{/);
+});
+
 test("non-range audio keeps a pending seek until the target becomes buffered", async () => {
   let seeking;
   try {

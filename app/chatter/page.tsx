@@ -1,4 +1,3 @@
-import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import MessageWall from './MessageWall';
 import { siteConfig } from '../../siteConfig';
@@ -17,7 +16,6 @@ export default async function ChatterPage() {
 
   return (
     <div className="min-h-screen relative pb-20">
-      <Navbar />
       <PageTransition>
         <main className="w-[95%] md:w-[90%] max-w-6xl mx-auto mt-24 md:mt-28 relative z-10">
           <div className="mb-8">

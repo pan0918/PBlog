@@ -1,4 +1,3 @@
-import Navbar from '../components/Navbar';
 import PageTransition from '../components/PageTransition';
 import SearchBar from '../components/SearchBar';
 import { siteConfig } from '../siteConfig';
@@ -31,7 +30,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
 
   return (
     <div className="min-h-screen relative pb-12">
-      <Navbar />
       <HeroBanner />
       <PageTransition duration={0.28}>
         <div className="w-full max-w-7xl mx-auto -mt-12 md:-mt-14 px-4 sm:px-6 lg:px-10 relative z-10">

@@ -1,11 +1,9 @@
-import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import MusicClient from './MusicClient';
 
 export default function MusicPage() {
   return (
     <div className="min-h-screen relative pb-10">
-      <Navbar />
       <PageTransition>
         <main className="w-[95%] md:w-[90%] max-w-7xl mx-auto mt-24 md:mt-28 px-4 sm:px-6 md:px-10 relative z-10">
           <div className="mb-6 md:mb-10 text-center md:text-left">

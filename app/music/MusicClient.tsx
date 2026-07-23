@@ -261,7 +261,12 @@ export default function MusicClient() {
                   <input type="search" placeholder="搜索音轨..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} aria-label="搜索歌单" autoComplete="off" className="relative z-10 w-full h-10 md:h-12 pl-10 md:pl-12 pr-10 bg-white/50 dark:bg-slate-900/70 border border-white/50 dark:border-white/10 rounded-full text-xs md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/40 shadow-inner transition-all" />
                   {searchQuery && <button type="button" onClick={() => setSearchQuery('')} aria-label="清空歌单搜索" className="absolute right-4 top-1/2 z-20 -translate-y-1/2 p-1.5 hover:bg-black/10 rounded-full transition-colors"><svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>}
                 </div>
-                <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-2 md:gap-2.5" style={{ scrollbarWidth: 'none' }}>
+                <div
+                  className="music-playlist-scroll flex-1 overflow-y-scroll pr-3 md:pr-4 flex flex-col gap-2 md:gap-2.5"
+                  role="region"
+                  aria-label="歌单，可上下滚动"
+                  tabIndex={0}
+                >
                   {filteredPlaylist.map((song, idx) => {
                     const origIdx = playlist.indexOf(song);
                     const isCurrent = origIdx === currentIndex;

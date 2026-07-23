@@ -11,7 +11,6 @@ import rehypeStringify from 'rehype-stringify';
 import matter from 'gray-matter';
 import 'highlight.js/styles/atom-one-dark.css';
 import 'katex/dist/katex.min.css';
-import Navbar from '../../components/Navbar';
 import PageTransition from '../../components/PageTransition';
 import AboutClient from '../../components/AboutClient';
 import { Suspense } from 'react';
@@ -81,7 +80,6 @@ export default async function AboutPage() {
 
   return (
     <div className="min-h-screen relative pb-20">
-      <Navbar />
       <PageTransition>
         <main className="w-[95%] md:w-[90%] max-w-4xl mx-auto mt-24 md:mt-28 relative z-10">
           <Suspense fallback={<div className="h-96 flex items-center justify-center text-slate-500 font-bold animate-pulse">正在载入档案...</div>}>
