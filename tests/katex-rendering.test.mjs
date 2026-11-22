@@ -30,14 +30,30 @@ $$
   );
 });
 
-test("post and about markdown pipelines use the shared KaTeX warning policy", async () => {
-  const [posts, about] = await Promise.all([
+test("post and about pages render through the shared markdown pipeline", async () => {
+  const [posts, about, markdown] = await Promise.all([
     readFile("lib/posts.ts", "utf8"),
     readFile("app/about/page.tsx", "utf8"),
+    readFile("lib/markdown.ts", "utf8"),
   ]);
 
-  assert.match(posts, /import \{ katexOptions \} from ['"]\.\/markdown['"]/);
-  assert.match(posts, /use\(rehypeKatex,\s*katexOptions\)/);
-  assert.match(about, /import \{ katexOptions \} from ['"]\.\.\/\.\.\/lib\/markdown['"]/);
-  assert.match(about, /use\(rehypeKatex,\s*katexOptions\)/);
+  assert.match(posts, /import \{ renderMarkdownContent \} from ['"]\.\/markdown['"]/);
+  assert.match(about, /import \{ renderMarkdownContent \} from ['"]\.\.\/\.\.\/lib\/markdown['"]/);
+  for (const page of [posts, about]) assert.doesNotMatch(page, /unified\(\)/);
+  assert.match(markdown, /use\(rehypeKatex,\s*katexOptions\)/);
+});
+
+test("article images are lazy-loaded and keep their source without a CDN configured", async () => {
+  const { renderMarkdownContent } = await import("../lib/markdown.ts");
+  const html = await renderMarkdownContent("![cat](https://example.com/cat.png)\n\n## Q&A");
+
+  assert.match(html, /<img src="https:\/\/example\.com\/cat\.png" alt="cat" loading="lazy" decoding="async">/);
+  assert.match(html, /<h2 id="qa">/);
+});
+
+test("post pages highlight code and return a real 404 for missing posts", async () => {
+  const page = await readFile("app/posts/[[...slug]]/page.tsx", "utf8");
+
+  assert.match(page, /import ['"]highlight\.js\/styles\/atom-one-dark\.css['"]/);
+  assert.match(page, /if \(!postData\) notFound\(\);/);
 });

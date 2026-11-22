@@ -3,6 +3,7 @@ import { memo, useState } from 'react';
 import { useCurrentLyric, useMusic } from './MusicProvider';
 import { useRouter } from 'next/navigation';
 import MusicProgressBar from './MusicProgressBar';
+import { fixedImage } from '../lib/images/cdn';
 
 const CloudPlayerLyric = memo(function CloudPlayerLyric() {
   const currentLyric = useCurrentLyric();
@@ -91,7 +92,7 @@ export default function CloudPlayer() {
 
       <div className="flex items-center gap-5 relative z-10 mb-6 mt-2">
         <div className="w-20 h-20 rounded-full border-2 border-white/50 shadow-lg flex-shrink-0 overflow-hidden relative animate-[spin_12s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
-          {currentSong.pic && <img src={currentSong.pic} alt="cover" className="w-full h-full object-cover" referrerPolicy="no-referrer" />}
+          {currentSong.pic && <img {...fixedImage(currentSong.pic, 80)} alt="cover" decoding="async" className="w-full h-full object-cover" referrerPolicy="no-referrer" />}
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-white/80 backdrop-blur-sm rounded-full border border-gray-300 shadow-inner"></div>
         </div>

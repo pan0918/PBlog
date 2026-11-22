@@ -72,7 +72,11 @@ test("message API stores pending submissions and protects against basic abuse", 
   ]);
 
   assert.doesNotMatch(route, /writeFile/);
-  assert.match(route, /checkMessageRateLimit/);
+  assert.match(route, /consumePublicRateLimit\('message'/);
+  assert.match(route, /limit: 3, windowMs: 10 \* 60 \* 1000/);
+  assert.match(route, /limit: 10, windowMs: 60 \* 60 \* 1000/);
+  assert.match(route, /getClientIp\(request\)/);
+  assert.doesNotMatch(route, /revalidateAfterMessage/);
   assert.match(route, /validateMessageSubmission/);
   assert.match(route, /honeypot/);
   assert.match(route, /createPendingMessage/);
@@ -80,10 +84,8 @@ test("message API stores pending submissions and protects against basic abuse", 
   assert.match(route, /审核后展示/);
 });
 
-test("message helpers sanitize submissions and enforce rate limits", async () => {
+test("message helpers sanitize and validate submissions", async () => {
   const {
-    buildModerationEmail,
-    checkMessageRateLimit,
     sanitizeText,
     validateMessageSubmission,
   } = await import("../lib/messageWall.ts");
@@ -108,25 +110,4 @@ test("message helpers sanitize submissions and enforce rate limits", async () =>
     error: "请求无效",
     status: 400,
   });
-
-  const now = 1_700_000_000_000;
-  assert.equal(checkMessageRateLimit("203.0.113.8", now).allowed, true);
-  assert.equal(checkMessageRateLimit("203.0.113.8", now + 1).allowed, true);
-  assert.equal(checkMessageRateLimit("203.0.113.8", now + 2).allowed, true);
-  assert.deepEqual(checkMessageRateLimit("203.0.113.8", now + 3), {
-    allowed: false,
-    retryAfterSeconds: 600,
-  });
-
-  const email = buildModerationEmail({
-    content: "你好",
-    author: "匿名",
-    ip: "203.0.113.8",
-    userAgent: "UnitTest",
-    createdAt: "2026-06-30T00:00:00.000Z",
-  });
-
-  assert.match(email.subject, /新的留言墙审核/);
-  assert.match(email.text, /你好/);
-  assert.match(email.text, /203\.0\.113\.8/);
 });

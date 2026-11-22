@@ -3,7 +3,10 @@ import TimelineClient from '../../components/TimelineClient';
 import { getAllPosts } from '../../lib/posts';
 
 export default async function TimelinePage() {
-  const posts = await getAllPosts();
+  // Only what the archive list renders, to keep the client payload small.
+  const posts = (await getAllPosts()).map(({ slug, title, date, formattedDate, tags, category, viewCount }) => ({
+    slug, title, date, formattedDate, tags, category, viewCount,
+  }));
 
   return (
     <div className="min-h-screen relative pb-20">

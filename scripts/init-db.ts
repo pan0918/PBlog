@@ -1,6 +1,4 @@
 import { createClient } from '@libsql/client';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 
 async function main() {
   const url = process.env.TURSO_DATABASE_URL;
@@ -12,10 +10,8 @@ async function main() {
   }
 
   const db = createClient({ url, authToken: token });
-  const schemaPath = join(__dirname, '..', 'lib', 'schema.sql');
-  const schema = readFileSync(schemaPath, 'utf8');
 
-  // Execute each CREATE TABLE and CREATE INDEX statement individually
+  // Execute each CREATE TABLE and CREATE INDEX statement individually (keep in sync with lib/schema.sql)
   const statements = [
     `PRAGMA foreign_keys = ON`,
     `CREATE TABLE IF NOT EXISTS admin_users (id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, is_active INTEGER NOT NULL DEFAULT 1, last_login_at TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,

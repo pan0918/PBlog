@@ -14,7 +14,7 @@ export interface MomentRecord {
 }
 
 export async function getPublishedMoments(): Promise<MomentRecord[]> {
-  const result = await db.execute(`SELECT * FROM moments WHERE status = 'published' AND deleted_at IS NULL ORDER BY published_at DESC, created_at DESC`);
+  const result = await db.execute(`SELECT * FROM moments WHERE status = 'published' AND deleted_at IS NULL ORDER BY COALESCE(published_at, created_at) DESC, created_at DESC`);
   return result.rows as unknown as MomentRecord[];
 }
 
@@ -47,7 +47,11 @@ export async function updateMoment(id: string, input: Partial<{ content: string;
   if (input.mood !== undefined) { fields.push('mood = ?'); args.push(input.mood); }
   if (input.weather !== undefined) { fields.push('weather = ?'); args.push(input.weather); }
   if (input.location !== undefined) { fields.push('location = ?'); args.push(input.location); }
-  if (input.status !== undefined) { fields.push('status = ?'); args.push(input.status); }
+  if (input.status !== undefined) {
+    fields.push('status = ?'); args.push(input.status);
+    // Draft -> published: stamp the first publish time, keep an existing one.
+    if (input.status === 'published' && !input.published_at) { fields.push('published_at = COALESCE(published_at, ?)'); args.push(now); }
+  }
   if (input.published_at !== undefined) { fields.push('published_at = ?'); args.push(input.published_at); }
   if (fields.length === 0) return;
   fields.push('updated_at = ?'); args.push(now);

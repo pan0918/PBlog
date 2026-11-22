@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { WallMessage } from "../../lib/messageWall";
+import { formatSiteDate, formatSiteTime } from "../../lib/datetime";
 
 const MAX_MESSAGE_LENGTH = 200;
 
@@ -40,16 +41,6 @@ const DECORATIONS = [
   <Sprout key="sprout" />,
   <Star key="star" />,
 ];
-
-function fmtDate(iso: string) {
-  const d = new Date(iso);
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function fmtTime(iso: string) {
-  const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
 
 function getMessageTextClass(length: number) {
   if (length > 160) return "text-[11px] leading-[1.45] tracking-[0.015em]";
@@ -129,10 +120,10 @@ function StickyNoteContent({ msg, index }: { msg: WallMessage; index: number }) 
           </div>
           <div className="flex items-center gap-1.5">
             <CalendarIcon />
-            <span>{fmtDate(msg.createdAt)}</span>
+            <span>{formatSiteDate(msg.createdAt)}</span>
             <span aria-hidden="true">·</span>
             <ClockIcon />
-            <span>{fmtTime(msg.createdAt)}</span>
+            <span>{formatSiteTime(msg.createdAt)}</span>
           </div>
         </div>
         <div className="pointer-events-none absolute bottom-4 right-4 z-10 opacity-55">{decoration}</div>

@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getPublishedSongs } from '../../../lib/db/songs';
+import { toCdnAssetUrl } from '../../../lib/images/cdn';
 
-export const dynamic = 'force-dynamic';
+// Every page load asks for the playlist, so serve it from the cache; admin
+// song changes refresh it through revalidateAfterSong(). Database errors are
+// thrown so a failed refresh keeps serving the previous playlist.
+export const revalidate = 3600;
 
 export async function GET() {
-  try {
-    const songs = await getPublishedSongs();
-    return NextResponse.json(songs);
-  } catch {
-    return NextResponse.json([]);
-  }
+  const songs = await getPublishedSongs();
+  return NextResponse.json(songs.map((song) => ({
+    ...song,
+    url: toCdnAssetUrl(song.url),
+    pic: song.pic ? toCdnAssetUrl(song.pic) : song.pic,
+  })));
 }

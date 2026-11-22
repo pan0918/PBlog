@@ -18,11 +18,6 @@ export async function getTagById(id: string): Promise<TagRecord | null> {
   return result.rows.length > 0 ? (result.rows[0] as unknown as TagRecord) : null;
 }
 
-export async function getTagBySlug(slug: string): Promise<TagRecord | null> {
-  const result = await db.execute({ sql: `SELECT * FROM tags WHERE slug = ?`, args: [slug] });
-  return result.rows.length > 0 ? (result.rows[0] as unknown as TagRecord) : null;
-}
-
 export async function createTag(input: { name: string; slug: string }): Promise<TagRecord> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();

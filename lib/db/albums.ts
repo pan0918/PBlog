@@ -29,11 +29,6 @@ export async function getAlbumById(id: string): Promise<AlbumRecord | null> {
   return result.rows.length > 0 ? (result.rows[0] as unknown as AlbumRecord) : null;
 }
 
-export async function getAlbumBySlug(slug: string): Promise<AlbumRecord | null> {
-  const result = await db.execute({ sql: `SELECT * FROM albums WHERE slug = ? AND deleted_at IS NULL`, args: [slug] });
-  return result.rows.length > 0 ? (result.rows[0] as unknown as AlbumRecord) : null;
-}
-
 export async function createAlbum(input: { title: string; slug: string; description?: string | null; cover_url?: string | null; location?: string | null; status?: string; sort_order?: number }): Promise<AlbumRecord> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();

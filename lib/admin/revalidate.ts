@@ -15,6 +15,7 @@ export function revalidateAfterMoment() {
   revalidateTag('homepage-stats', 'max');
   revalidatePath('/');
   revalidatePath('/moments');
+  revalidatePath('/about');
 }
 
 export function revalidateAfterProject() {
@@ -47,4 +48,5 @@ export function revalidateAfterPhoto() {
 export function revalidateAfterSong() {
   revalidatePath('/');
   revalidatePath('/music');
+  revalidatePath('/api/songs');
 }

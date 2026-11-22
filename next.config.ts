@@ -1,4 +1,10 @@
 import type { NextConfig } from "next";
+import { siteConfig } from "./siteConfig";
+
+// Custom image-bed domain (see siteConfig.assetCdn) must be allowed for next/image too.
+const imageBedHosts = [siteConfig.assetCdn.imageHost]
+  .filter(Boolean)
+  .map((host) => ({ protocol: "https" as const, hostname: new URL(host).hostname, pathname: "/file/**" }));
 
 const nextConfig: NextConfig = {
   images: {
@@ -25,6 +31,7 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      ...imageBedHosts,
     ],
     qualities: [75, 80, 90],
     deviceSizes: [640, 750, 828, 1080, 1200, 1600, 1920, 2048],

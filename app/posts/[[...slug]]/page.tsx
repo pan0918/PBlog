@@ -1,4 +1,6 @@
+import 'highlight.js/styles/atom-one-dark.css';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import PageTransition from '../../../components/PageTransition';
 import { siteConfig } from '../../../siteConfig';
 import ClientTOC from '../../../components/ClientTOC';
@@ -7,6 +9,7 @@ import SidebarLyric from '../../../components/SidebarLyric';
 import ProfileCard from '../../../components/ProfileCard';
 import ClientViewCount from '../../../components/ClientViewCount';
 import { getAllPosts, getPostBySlug } from '../../../lib/posts';
+import { responsiveImage } from '../../../lib/images/cdn';
 
 export async function generateStaticParams() {
   const posts = await getAllPosts();
@@ -24,23 +27,17 @@ export default async function Post({ params }: { params: Promise<{ slug?: string
 
   const postData = await getPostBySlug(slug);
 
-  if (!postData) {
-    return (
-      <div className="min-h-screen relative pb-20">
-        <PageTransition>
-          <main className="w-[95%] md:w-[90%] max-w-6xl mx-auto mt-24 md:mt-28 relative z-10">
-            <div className="bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 dark:border-white/10 p-12 text-center">
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">文章不存在</h1>
-              <Link href="/" className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">返回首页</Link>
-            </div>
-          </main>
-        </PageTransition>
-      </div>
-    );
-  }
+  if (!postData) notFound();
 
   const allPosts = await getAllPosts();
   const recentPosts = getRecentPosts(postData.data.slug, allPosts);
+  // The cover is the largest above-the-fold element, so it loads eagerly at high priority.
+  const cover = responsiveImage(postData.data.cover || siteConfig.defaultPostCover, {
+    sizes: '(min-width: 1440px) 1040px, (min-width: 1024px) 70vw, 100vw',
+    minWidth: 640,
+    maxWidth: 2560,
+    quality: 80,
+  });
 
   return (
     <div className="min-h-screen relative pb-20">
@@ -49,8 +46,10 @@ export default async function Post({ params }: { params: Promise<{ slug?: string
           <article className="flex-1 bg-white/60 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 dark:border-white/10 overflow-hidden transition-colors duration-700">
             <figure className="w-full bg-slate-100/80 dark:bg-slate-900/55">
               <img
-                src={postData.data.cover || siteConfig.defaultPostCover}
+                {...cover}
                 alt={`${postData.data.title} 封面`}
+                fetchPriority="high"
+                decoding="async"
                 className="block w-full h-auto object-contain opacity-95"
               />
             </figure>

@@ -20,11 +20,6 @@ export async function getCategoryById(id: string): Promise<CategoryRecord | null
   return result.rows.length > 0 ? (result.rows[0] as unknown as CategoryRecord) : null;
 }
 
-export async function getCategoryBySlug(slug: string): Promise<CategoryRecord | null> {
-  const result = await db.execute({ sql: `SELECT * FROM categories WHERE slug = ?`, args: [slug] });
-  return result.rows.length > 0 ? (result.rows[0] as unknown as CategoryRecord) : null;
-}
-
 export async function createCategory(input: { name: string; slug: string; description?: string | null; sort_order?: number }): Promise<CategoryRecord> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();

@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { getSiteDateParts } from '../lib/datetime';
 
 interface Post { slug: string; title: string; date: string; formattedDate: string; tags: string[]; category: string | null; viewCount?: number; }
 
@@ -32,7 +33,7 @@ export default function TimelineClient({ posts }: { posts: Post[] }) {
   const groupedByYear = useMemo(() => {
     const groups: Record<string, Post[]> = {};
     filteredPosts.forEach(p => {
-      const year = p.date ? p.date.substring(0, 4) : '未知';
+      const year = getSiteDateParts(p.date)?.year ?? '未知';
       if (!groups[year]) groups[year] = [];
       groups[year].push(p);
     });

@@ -1,5 +1,10 @@
 "use client";
 import Link from 'next/link';
+import { siteConfig } from '../siteConfig';
+import { responsiveImage } from '../lib/images/cdn';
+
+// Cover column: full card width on phones, 160px from sm, 192px from md.
+const COVER_SIZES = '(min-width: 768px) 192px, (min-width: 640px) 160px, 100vw';
 
 interface Post {
   slug: string;
@@ -54,8 +59,10 @@ export default function ArticleCard({ post, index = 0 }: { post: Post; index?: n
         {/* Cover */}
         <div className="w-full sm:w-40 md:w-48 h-36 sm:h-auto flex-shrink-0 overflow-hidden">
           <img
-            src={post.cover || "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=400&auto=format&fit=crop"}
+            {...responsiveImage(post.cover || siteConfig.defaultPostCover, { sizes: COVER_SIZES, maxWidth: 960 })}
             alt={post.title}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
         </div>

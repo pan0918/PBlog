@@ -10,17 +10,25 @@ import ClientDecorations from '../components/ClientDecorations';
 import { EffectQualityProvider } from "../components/EffectQualityProvider";
 import { ToastProvider } from "../components/ToastProvider";
 import SiteChrome from "../components/SiteChrome";
+import { getPreconnectOrigins, toCdnAssetUrl } from "../lib/images/cdn";
+
+const faviconUrl = toCdnAssetUrl(siteConfig.faviconUrl);
+// Warm up DNS + TLS for the media domain so the first image / song starts sooner.
+const preconnectOrigins = getPreconnectOrigins();
 
 export const metadata: Metadata = {
   title: siteConfig.title,
   description: siteConfig.bio,
-  icons: { icon: siteConfig.faviconUrl, apple: siteConfig.faviconUrl },
+  icons: { icon: faviconUrl, apple: faviconUrl },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
       <head>
+        {preconnectOrigins.map((origin) => <link key={origin} rel="preconnect" href={origin} />)}
+        {/* The audio element uses crossOrigin="anonymous", which needs its own connection. */}
+        {preconnectOrigins.map((origin) => <link key={`${origin}-cors`} rel="preconnect" href={origin} crossOrigin="anonymous" />)}
         {/* Set the theme class before first paint to avoid flash — WITHOUT hiding the whole app */}
         <script
           suppressHydrationWarning

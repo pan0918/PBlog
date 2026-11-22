@@ -123,8 +123,10 @@ test("canvas effects bound pixel and animation work by effect quality", async ()
   assert.match(hero, /useEffectQuality\(\)/);
   assert.match(hero, /quality === ["']high["'] \? 30 : 20/);
   assert.match(hero, /Math\.min\([^)]*1\.5/);
-  assert.match(hero, /quality === ["']static["']/);
+  assert.match(hero, /quality !== ["']static["']/);
   assert.match(hero, /isVisible/);
+  assert.match(hero, /new IntersectionObserver/);
+  assert.match(hero, /isVisible && isOnScreen && quality !== ["']static["']/);
   assert.match(hero, /1000 \/ fps/);
   assert.match(hero, /cancelAnimationFrame/);
 });

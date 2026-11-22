@@ -1,5 +1,6 @@
 "use client";
 import { motion } from 'framer-motion';
+import { fixedImage } from '../../lib/images/cdn';
 
 interface Friend { id: string; name: string; url: string; description: string; avatar: string; themeColor: string; }
 
@@ -19,7 +20,7 @@ export default function FriendsBoard({ friends }: { friends: Friend[] }) {
           style={{ borderColor: friend.themeColor }}
         >
           <div className="w-16 h-16 mx-auto rounded-full overflow-hidden mb-4 shadow-lg border-2 transition-transform duration-500 group-hover:scale-110" style={{ borderColor: friend.themeColor }}>
-            <img src={friend.avatar} alt={friend.name} className="w-full h-full object-cover" />
+            <img {...fixedImage(friend.avatar, 64)} alt={friend.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
           </div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{friend.name}</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{friend.description}</p>

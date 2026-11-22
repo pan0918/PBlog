@@ -1,16 +1,14 @@
 "use client";
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { formatSiteDate, getSiteDateParts } from '../../lib/datetime';
 
 export interface Moment { id: string; title: string; date: string; mood: string; weather: string; content: string; }
 
 function getMonthKey(dateStr: string): string {
   if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return '';
-  const y = d.getFullYear();
-  const m = d.getMonth() + 1;
-  return `${y}-${String(m).padStart(2, '0')}`;
+  const parts = getSiteDateParts(dateStr);
+  return parts ? `${parts.year}-${parts.month}` : '';
 }
 
 function formatMonthLabel(key: string): string {
@@ -120,7 +118,7 @@ export default function MomentList({ moments }: { moments: Moment[] }) {
               <div className="absolute -left-[41px] top-6 w-3 h-3 bg-indigo-500 rounded-full border-2 border-white dark:border-slate-900 hidden md:block"></div>
               <div className="rounded-3xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl p-6 transition-all duration-500 hover:scale-[1.01]">
                 <div className="flex items-center gap-3 mb-3 flex-wrap">
-                  <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{moment.date.split('T')[0]}</span>
+                  <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{formatSiteDate(moment.date, '-')}</span>
                   {moment.mood && <span className="text-xs px-2 py-0.5 rounded-full bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 font-bold">{moment.mood}</span>}
                   {moment.weather && <span className="text-xs px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 font-bold">{moment.weather}</span>}
                 </div>

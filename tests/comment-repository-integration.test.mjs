@@ -60,6 +60,31 @@ test("comment writes recheck user state and replies paginate without orphan coun
   assert.equal((await comments.listComments("post-1")).total, 0);
   await assert.rejects(comments.listCommentReplies(parentId), /评论不存在/);
 
+  await setup.batch([
+    { sql: "INSERT INTO public_users VALUES (?, ?, NULL, 'active', NULL, 1, 0, NULL)", args: ["user-2", "Bob"] },
+    { sql: "INSERT INTO posts VALUES (?, 'published', NULL)", args: ["post-2"] },
+  ], "write");
+  const bob = { kind: "user", id: "user-2", username: "Bob", sessionVersion: 1 };
+  const thread = await comments.createComment({ postId: "post-2", content: "thread", actor: bob });
+  const reply = await comments.createComment({ postId: "post-2", parentId: thread.id, content: "reply", actor: bob });
+
+  await setup.execute({ sql: "UPDATE post_comments SET status = 'hidden' WHERE id = ?", args: [thread.id] });
+  await assert.rejects(
+    comments.createComment({ postId: "post-2", parentId: reply.id, content: "into hidden thread", actor: bob }),
+    /回复目标不存在/,
+  );
+  await setup.execute({ sql: "UPDATE post_comments SET status = 'visible' WHERE id = ?", args: [thread.id] });
+
+  await setup.execute({ sql: "UPDATE posts SET status = 'draft' WHERE id = ?", args: ["post-2"] });
+  assert.deepEqual(await comments.listComments("post-2"), { comments: [], total: 0, nextCursor: null });
+  await assert.rejects(comments.listCommentReplies(thread.id), /评论不存在/);
+  await assert.rejects(comments.editComment(thread.id, "edited", bob), /评论不存在/);
+  await assert.rejects(comments.toggleCommentLike(thread.id, { id: "user-2", sessionVersion: 1 }), /评论不存在/);
+
+  await setup.execute({ sql: "UPDATE posts SET status = 'published', deleted_at = ? WHERE id = ?", args: [new Date().toISOString(), "post-2"] });
+  assert.equal((await comments.listComments("post-2")).total, 0);
+  await assert.rejects(comments.toggleCommentLike(reply.id, { id: "user-2", sessionVersion: 1 }), /评论不存在/);
+
   setup.close();
   const { getDb } = await import("../lib/db.ts");
   getDb().close();

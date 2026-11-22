@@ -8,6 +8,7 @@ import AuthorAccountDialog from './AuthorAccountDialog';
 import AuthDialog from '../comments/AuthDialog';
 import ProfileDialog from '../comments/ProfileDialog';
 import type { CommentSession } from '../comments/types';
+import { fixedImage } from '../../lib/images/cdn';
 
 async function readSession(response: Response) {
   const payload = await response.json().catch(() => ({}));
@@ -74,8 +75,9 @@ export default function DesktopAccountControl() {
         title={accountLabel}
       >
         <img
-          src={session ? session.avatarUrl || DEFAULT_PUBLIC_AVATAR_URL : LOGIN_PUBLIC_AVATAR_URL}
+          {...fixedImage(session ? session.avatarUrl || DEFAULT_PUBLIC_AVATAR_URL : LOGIN_PUBLIC_AVATAR_URL, 32)}
           alt=""
+          decoding="async"
           className="size-8 rounded-full object-cover ring-1 ring-stone-300/80 shadow-[0_3px_10px_rgba(120,83,45,0.16)] transition-shadow group-hover:shadow-[0_4px_14px_rgba(120,83,45,0.24)] dark:ring-white/15"
         />
       </button>

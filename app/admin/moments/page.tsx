@@ -14,7 +14,8 @@ interface Moment {
   weather: string;
   location: string;
   status: string;
-  published_at: string;
+  published_at: string | null;
+  created_at: string;
 }
 
 export default function AdminMomentsPage() {
@@ -135,7 +136,7 @@ export default function AdminMomentsPage() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid var(--admin-border)' }}>
                   <span style={{ fontSize: '12px', color: 'var(--admin-text-secondary)' }}>
-                    {moment.published_at ? new Date(moment.published_at).toLocaleString('zh-CN') : '未发布'}
+                    {moment.status === 'published' ? new Date(moment.published_at || moment.created_at).toLocaleString('zh-CN') : '未发布'}
                   </span>
                   <div style={{ display: 'flex', gap: '4px' }}>
                     <button

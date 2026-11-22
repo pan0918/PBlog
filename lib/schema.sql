@@ -212,6 +212,21 @@ CREATE TABLE IF NOT EXISTS photos (
   FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE
 );
 
+-- 歌曲表
+CREATE TABLE IF NOT EXISTS songs (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  artist TEXT NOT NULL,
+  album TEXT NOT NULL DEFAULT '',
+  pic TEXT NOT NULL DEFAULT '',
+  url TEXT NOT NULL,
+  lrc TEXT NOT NULL DEFAULT '',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  deleted_at TEXT
+);
+
 -- 索引
 CREATE INDEX IF NOT EXISTS idx_posts_status_published_at ON posts(status, published_at);
 CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category_id);
@@ -228,3 +243,4 @@ CREATE INDEX IF NOT EXISTS idx_public_auth_events_attempted_at ON public_auth_ev
 CREATE INDEX IF NOT EXISTS idx_post_comments_post_created ON post_comments(post_id, parent_id, status, created_at);
 CREATE INDEX IF NOT EXISTS idx_post_comments_parent_created ON post_comments(parent_id, status, created_at, id);
 CREATE INDEX IF NOT EXISTS idx_post_comments_user ON post_comments(public_user_id, status);
+CREATE INDEX IF NOT EXISTS idx_songs_sort ON songs(sort_order);

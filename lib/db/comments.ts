@@ -83,8 +83,16 @@ async function getReplyCounts(commentIds: string[]) {
 }
 
 const SELECT_FIELDS = `c.*, u.username AS user_username, u.avatar_url, a.username AS admin_username`;
+// Comments on drafts or deleted posts must not be readable or writable through the public API.
+const PUBLISHED_POST = `p.status = 'published' AND p.deleted_at IS NULL`;
+
+async function isPublishedPost(postId: string) {
+  const result = await db.execute({ sql: `SELECT id FROM posts p WHERE p.id = ? AND ${PUBLISHED_POST}`, args: [postId] });
+  return result.rows.length > 0;
+}
 
 export async function listComments(postId: string, cursor?: string | null, viewerId?: string | null) {
+  if (!(await isPublishedPost(postId))) return { comments: [], total: 0, nextCursor: null };
   const decoded = decodeCursor(cursor);
   const args: Array<string | number> = [postId];
   let cursorSql = '';
@@ -125,7 +133,8 @@ export async function listComments(postId: string, cursor?: string | null, viewe
 
 export async function listCommentReplies(parentId: string, cursor?: string | null, viewerId?: string | null) {
   const parent = await db.execute({
-    sql: `SELECT id FROM post_comments WHERE id = ? AND parent_id IS NULL AND status = 'visible' AND deleted_at IS NULL`,
+    sql: `SELECT c.id FROM post_comments c JOIN posts p ON p.id = c.post_id
+          WHERE c.id = ? AND c.parent_id IS NULL AND c.status = 'visible' AND c.deleted_at IS NULL AND ${PUBLISHED_POST}`,
     args: [parentId],
   });
   if (!parent.rows.length) throw new Error('评论不存在');
@@ -165,12 +174,15 @@ export async function createComment(input: { postId: string; parentId?: string |
       });
       if (!user.rows.length) throw new Error('账号状态已变更，请重新登录');
     }
-    const post = await transaction.execute({ sql: `SELECT id FROM posts WHERE id = ? AND status = 'published' AND deleted_at IS NULL`, args: [input.postId] });
+    const post = await transaction.execute({ sql: `SELECT id FROM posts p WHERE p.id = ? AND ${PUBLISHED_POST}`, args: [input.postId] });
     if (!post.rows.length) throw new Error('文章不存在');
     let parentId: string | null = null;
     if (input.parentId) {
       const parent = await transaction.execute({
-        sql: `SELECT id, parent_id FROM post_comments WHERE id = ? AND post_id = ? AND status = 'visible' AND deleted_at IS NULL`,
+        // Replies are filed under the top-level comment, so that thread must still be visible too.
+        sql: `SELECT c.id, c.parent_id FROM post_comments c LEFT JOIN post_comments root ON root.id = c.parent_id
+              WHERE c.id = ? AND c.post_id = ? AND c.status = 'visible' AND c.deleted_at IS NULL
+              AND (c.parent_id IS NULL OR (root.status = 'visible' AND root.deleted_at IS NULL))`,
         args: [input.parentId, input.postId],
       });
       if (!parent.rows.length) throw new Error('回复目标不存在');
@@ -201,7 +213,11 @@ export async function editComment(id: string, content: string, actor: CommentAct
       });
       if (!user.rows.length) throw new Error('账号状态已变更，请重新登录');
     }
-    const result = await transaction.execute({ sql: `SELECT public_user_id, admin_user_id FROM post_comments WHERE id = ? AND status = 'visible' AND deleted_at IS NULL`, args: [id] });
+    const result = await transaction.execute({
+      sql: `SELECT c.public_user_id, c.admin_user_id FROM post_comments c JOIN posts p ON p.id = c.post_id
+            WHERE c.id = ? AND c.status = 'visible' AND c.deleted_at IS NULL AND ${PUBLISHED_POST}`,
+      args: [id],
+    });
     if (!result.rows.length) throw new Error('评论不存在');
     const row = result.rows[0];
     const owns = actor.kind === 'admin' || (actor.kind === 'user' && String(row.public_user_id) === actor.id);
@@ -224,8 +240,9 @@ export async function toggleCommentLike(commentId: string, user: { id: string; s
     });
     if (!currentUser.rows.length) throw new Error('账号状态已变更，请重新登录');
     const comment = await transaction.execute({
-      sql: `SELECT c.id FROM post_comments c LEFT JOIN post_comments parent ON parent.id = c.parent_id
-            WHERE c.id = ? AND c.status = 'visible' AND c.deleted_at IS NULL
+      sql: `SELECT c.id FROM post_comments c JOIN posts p ON p.id = c.post_id
+            LEFT JOIN post_comments parent ON parent.id = c.parent_id
+            WHERE c.id = ? AND c.status = 'visible' AND c.deleted_at IS NULL AND ${PUBLISHED_POST}
             AND (c.parent_id IS NULL OR (parent.status = 'visible' AND parent.deleted_at IS NULL))`,
       args: [commentId],
     });

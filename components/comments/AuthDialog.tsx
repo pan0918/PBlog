@@ -5,6 +5,7 @@ import { Camera, X } from 'lucide-react';
 import { DEFAULT_PUBLIC_AVATAR_URL } from '../../lib/public-auth/presentation';
 import type { CommentSession } from './types';
 import useDialogFocusTrap from './useDialogFocusTrap';
+import { fixedImage } from '../../lib/images/cdn';
 
 async function submitAuth(path: string, data: Record<string, string>) {
   const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
@@ -80,7 +81,7 @@ export default function AuthDialog({ open, onClose, onSuccess }: { open: boolean
             <div>
               <span className="text-sm font-bold text-slate-700 dark:text-slate-200">头像（可选）</span>
               <label className="mt-2 flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-slate-300 p-3 hover:border-indigo-400 dark:border-white/15">
-                <img src={avatarPreview || DEFAULT_PUBLIC_AVATAR_URL} alt="头像预览" className="size-14 rounded-2xl object-cover" />
+                <img {...fixedImage(avatarPreview || DEFAULT_PUBLIC_AVATAR_URL, 56)} alt="头像预览" decoding="async" className="size-14 rounded-2xl object-cover" />
                 <span className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"><Camera size={17} />选择头像</span>
                 <input name="avatar" type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => setAvatarFile(event.target.files?.[0] || null)} />
               </label>

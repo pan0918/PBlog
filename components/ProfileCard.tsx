@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { siteConfig } from '../siteConfig';
 import { useToast } from './ToastProvider';
+import { fixedImage } from '../lib/images/cdn';
 
 type ProfileSurfaceTone = 'warm' | 'slate';
 
@@ -31,7 +32,7 @@ export default function ProfileCard({ postCount, momentCount, photoCount, showSt
     >
       {/* Avatar */}
       <div className="mb-4 w-24 h-24 rounded-2xl bg-gradient-to-tr from-amber-300 to-orange-300 p-1 shadow-[0_14px_34px_rgba(184,111,43,0.24)] transition-transform duration-500 group-hover:rotate-3 group-hover:scale-105">
-        <img src={siteConfig.avatarUrl} alt="avatar" className="w-full h-full rounded-xl object-cover bg-white" />
+        <img {...fixedImage(siteConfig.avatarUrl, 96)} alt="avatar" decoding="async" className="w-full h-full rounded-xl object-cover bg-white" />
       </div>
 
       {/* Name */}

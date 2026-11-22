@@ -9,15 +9,9 @@ import {
   createLoginRateKey,
   recordLoginFailure,
 } from '../../../../lib/admin/login-rate-limit';
+import { getClientIp } from '../../../../lib/public-auth/request';
 
 const DUMMY_PASSWORD_HASH = '$2b$12$lbN0q.xkuMsXLTLPPFnXBu2oremCrce1Kd.3ndfemYfKke.Izy3KO';
-
-function getClientIp(request: NextRequest): string {
-  return request.headers.get('cf-connecting-ip')
-    || request.headers.get('x-real-ip')
-    || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || 'unknown';
-}
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,9 +1,16 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from './ThemeProvider';
 import { useEffectQuality } from './EffectQualityProvider';
+import { responsiveImage } from '../lib/images/cdn';
+
+// Largest element on the homepage: loaded eagerly at the viewport's width.
+const HERO_IMAGE = responsiveImage(
+  new URL('https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782476376234_博客首页.png').href,
+  { sizes: '100vw', minWidth: 640, maxWidth: 2560, quality: 80 },
+);
 
 const WAVE_HEIGHT = 126;
 const WAVE_COLORS = {
@@ -27,6 +34,16 @@ function WaveCanvas() {
   const { quality, isVisible } = useEffectQuality();
   const animRef = useRef<number>(0);
   const timeRef = useRef(0);
+  const [isOnScreen, setIsOnScreen] = useState(true);
+
+  // Stop redrawing once the banner is scrolled out of view.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(([entry]) => setIsOnScreen(entry.isIntersecting));
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -92,8 +109,10 @@ function WaveCanvas() {
       draw();
     };
 
+    const shouldAnimate = isVisible && isOnScreen && quality !== 'static';
+
     const animate = (timestamp: number) => {
-      if (!isVisible || quality === 'static') return;
+      if (!shouldAnimate) return;
 
       const elapsed = lastFrameTime === null ? frameInterval : timestamp - lastFrameTime;
       if (lastFrameTime === null || elapsed >= frameInterval) {
@@ -108,7 +127,7 @@ function WaveCanvas() {
     resize();
     window.addEventListener('resize', resize);
 
-    if (quality !== 'static' && isVisible) {
+    if (shouldAnimate) {
       animRef.current = requestAnimationFrame(animate);
     }
 
@@ -117,7 +136,7 @@ function WaveCanvas() {
       cancelAnimationFrame(animRef.current);
       animRef.current = 0;
     };
-  }, [isDark, isVisible, quality]);
+  }, [isDark, isOnScreen, isVisible, quality]);
 
   return (
     <canvas
@@ -132,13 +151,19 @@ export default function HeroBanner() {
   return (
     <div className="relative w-full">
       <div
-        className="relative w-full bg-cover bg-center bg-no-repeat"
+        className="relative w-full overflow-hidden"
         style={{
-          backgroundImage: 'url(https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782476376234_博客首页.png)',
           height: '68vh',
           minHeight: '430px',
         }}
       >
+        <img
+          {...HERO_IMAGE}
+          alt=""
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(21,17,15,0.48)_0%,rgba(42,32,26,0.2)_42%,rgba(255,244,232,0.12)_100%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_62%_36%,rgba(255,238,219,0.24),transparent_34%)]" />
 

@@ -1,176 +1,185 @@
 # PBlogs - 个人博客系统
 
-基于 Next.js 16 + React 19 + Tailwind CSS v4 的毛玻璃风格个人博客。
+基于 Next.js 16 + React 19 + Tailwind CSS v4 的毛玻璃风格个人博客。内容存放在 Turso（libSQL）数据库，后台在 `/admin` 维护，部署在 Vercel。
 
 ---
 
 ## 快速开始
 
 ```bash
-cd PBlogs
+cd PBlog
 npm install
-npm run dev
-# 访问 http://localhost:3000
+npm run dev      # 访问 http://localhost:3000
+npm test         # 运行 tests/ 下的全部测试
+npm run lint
 ```
+
+本地开发需要先配置 `.env.local`（见下文「环境变量」）。
 
 ---
 
 ## 项目结构
 
 ```
-PBlogs/
+PBlog/
 ├── app/                        # 页面路由 (Next.js App Router)
-│   ├── layout.tsx              # 根布局 - 所有 Provider 和背景层在这里组装
-│   ├── page.tsx                # 首页 - 网格布局，组装所有首页组件
-│   ├── globals.css             # 全局样式 - Tailwind v4 + 毛玻璃基础
-│   ├── posts/[slug]/page.tsx   # 文章详情页 (Server Component)
-│   ├── moments/page.tsx        # 说说/碎碎念
-│   ├── chatter/                # 杂谈 (列表 + 详情)
-│   ├── timeline/page.tsx       # 归档时间线
-│   ├── photowall/page.tsx      # 照片墙
-│   ├── music/page.tsx          # 音乐播放器
-│   ├── projects/page.tsx       # 项目展示
-│   ├── friends/page.tsx        # 友链
-│   ├── about/page.tsx          # 关于页
-│   └── api/                    # API 路由 (后台、内容、AI 猫猫、Gitalk OAuth)
+│   ├── layout.tsx              # 根布局 - Provider、背景层、导航栏、装饰组件
+│   ├── page.tsx                # 首页
+│   ├── posts/[[...slug]]/      # 文章详情页（含 not-found.tsx）
+│   ├── moments/                # 说说
+│   ├── chatter/                # 留言墙（访客留言，后台审核后展示）
+│   ├── timeline/               # 归档时间线
+│   ├── photowall/              # 照片墙
+│   ├── music/                  # 音乐播放器
+│   ├── projects/ friends/      # 项目展示 / 友链
+│   ├── about/                  # 关于页（内容在 about.md）
+│   ├── admin/                  # 后台管理系统
+│   └── api/                    # API：后台 CRUD、访客账号、评论、留言、歌曲、AI 猫猫
 │
-├── components/                 # 所有 UI 组件
-│   ├── ThemeProvider.tsx        # 暗黑模式上下文 (核心，几乎所有组件依赖)
-│   ├── MusicProvider.tsx        # 音乐播放上下文
-│   ├── ToastProvider.tsx        # 提示消息上下文
-│   ├── Navbar.tsx               # 导航栏 (PC 顶栏 + 手机端圆盘菜单)
-│   ├── ProfileCard.tsx          # 首页个人信息卡片
-│   ├── CloudPlayer.tsx          # 首页音乐卡片
-│   ├── SearchBar.tsx            # 搜索栏
-│   ├── ThemeToggleBlock.tsx     # 主题切换卡片
-│   ├── SplashScreen.tsx         # 开屏动画
-│   ├── BackgroundEffects.tsx    # 背景特效容器
-│   ├── Fireflies.tsx            # 萤火虫 (暗色模式)
-│   ├── Sakura.tsx               # 樱花 (亮色模式)
-│   ├── WindyGrass.tsx           # 摇曳草地
-│   ├── BackgroundSlider.tsx     # 背景图轮播
-│   ├── DanmakuBackground.tsx    # 弹幕背景
-│   ├── CyberCat.tsx             # AI 猫猫助手
-│   ├── Comments.tsx             # Gitalk 评论
-│   ├── ClickEffect.tsx          # 点击粒子特效
-│   ├── GlobalToolbox.tsx        # 浮动工具箱 (计算器)
-│   ├── FloatingPlayer.tsx       # 浮动迷你播放器
-│   ├── MusicPlayer.tsx          # 完整音乐播放器
-│   ├── SiteDashboard.tsx        # 底部状态栏 (时钟/运行时间/徽章)
-│   ├── ClientTOC.tsx            # 文章目录
-│   ├── BackButton.tsx           # 返回按钮
-│   ├── PageTransition.tsx       # 页面过渡动画
+├── components/                 # UI 组件
+│   ├── ThemeProvider.tsx       # 暗黑模式上下文
+│   ├── MusicProvider.tsx       # 全局音乐播放状态
+│   ├── SiteChrome.tsx          # 前台导航栏（跨页面保持挂载）
+│   ├── Navbar.tsx              # 导航栏 (PC 顶栏 + 手机端圆盘菜单)
+│   ├── ClientDecorations.tsx   # 背景特效、弹幕、浮动播放器、工具箱、点击特效、AI 猫猫
+│   ├── Comments.tsx            # 文章评论入口（原生评论系统）
+│   ├── comments/ account/      # 评论区、登录注册、个人资料
 │   └── ...
-├── chatters/                   # 杂谈 (Markdown)
-├── lib/                        # 数据库访问、内容服务、鉴权和缓存刷新
-├── scripts/                    # 数据库迁移和初始化脚本
+├── lib/
+│   ├── db/                     # 各张表的数据库访问
+│   ├── posts.ts markdown.ts    # 文章查询与 Markdown 渲染
+│   ├── images/cdn.ts           # 图床（图片 / 音乐）地址改写与按尺寸压缩
+│   ├── datetime.ts             # 统一按 Asia/Shanghai 格式化日期
+│   ├── admin/ public-auth/     # 后台鉴权、访客账号、限流
+│   └── schema.sql              # 数据库结构
+├── scripts/                    # 数据库初始化、迁移、回填脚本
 ├── tests/                      # Node 测试
-├── app/about/about.md          # 关于页内容
-└── siteConfig.ts               # 全站配置中心 ← 重点修改这个文件
+└── siteConfig.ts               # 全站配置中心
 ```
 
 ---
 
 ## 核心配置文件: siteConfig.ts
 
-这是整个博客的"控制中心"，几乎所有组件都从这里读取配置。
+几乎所有组件都从这里读取配置：
 
 ```typescript
-// siteConfig.ts
 export const siteConfig = {
-  // === 基本信息 ===
-  title: "PB の 宝藏之地",        // 网站标题 (浏览器标签)
-  authorName: "PB",              // 博主名字
-  bio: "一个热爱技术的普通人",      // 个人简介
-  avatarUrl: "...",              // 头像 URL
-  faviconUrl: "...",             // 浏览器图标 URL
+  title: "Frud's Blog",          // 网站标题
+  authorName: "Frud_",           // 博主名字（也是评论区「作者」的名字）
+  bio: "...",                    // 个人简介
+  avatarUrl: "...",              // 头像
+  faviconUrl: "...",             // 浏览器图标
 
-  // === 导航栏 ===
-  navTitle: "PB",                // 导航栏左侧文字
-  navSuffix: "の",               // 分隔符
-  navAfter: "宝藏之地",           // 导航栏右侧文字
+  navTitle / navSuffix / navAfter, // 导航栏文字
 
-  // === 背景 ===
-  useGradient: false,            // true=渐变色背景, false=图片轮播
-  themeColors: ["#a18cd1", ...], // 渐变色组合
-  bgImages: ["url1", "url2", ...], // 背景图片数组 (useGradient=false 时生效)
+  useGradient: true,             // true=渐变色背景, false=bgImages 图片轮播
+  themeColors: [...],            // 渐变色
+  bgImages: [...],               // 背景图（useGradient=false 时生效）
+  defaultPostCover: "...",       // 文章没有封面时的默认图
 
-  // === 社交链接 ===
-  social: {
-    github: "",
-    email: "your@email.com",
-    qq: "",
-    wechat: "",
-  },
+  assetCdn: { ... },             // 图片 / 音乐加速，见下文
 
-  // === 音乐 (网易云音乐 ID) ===
-  cloudMusicIds: ["1809646618", ...],
+  social: { github, email, qq, wechat, twitter, xiaohongshu },
+  chatterTitle / chatterDescription, // 留言墙标题
+  danmakuList: [...],            // 弹幕文字
+  buildDate: "2026-05-21T00:00:00",  // 建站日期（运行时间）
 
-  // === 弹幕文字 ===
-  danmakuList: ["在干嘛呢？", ...],
-
-  // === AI 猫猫 (Gemini API) ===
-  geminiConfig: {
-    modelId: "gemini-2.5-flash-lite",
-    systemPrompt: "你是一只傲娇的猫...",
-  },
-
-  // === 底部 ===
-  buildDate: "2026-05-21T00:00:00",  // 建站日期 (影响运行时间计算)
-  icpConfig: { name: "", link: "" },  // 备案号
+  geminiConfig: { ... },         // AI 猫猫模型参数
+  petConfig: { ... },            // AI 猫猫人设、主动消息、允许调用的 API 域名
 };
 ```
 
 ---
 
-## 写文章
+## 内容管理
 
-文章已经改为数据库存储。进入后台管理系统的「文章管理」创建或编辑文章，内容会通过 API 写入数据库，并自动刷新前台文章列表、详情页、时间线和相关缓存。
+文章、说说、相册、项目、友链、歌曲都存放在数据库，请在后台管理系统 `/admin` 中维护。保存后会自动刷新前台对应页面的缓存。
 
-后台编辑器基于 Vditor，支持 Markdown、图片上传、快捷保存、全屏写作和本地草稿缓存。更新已有文章时会停留在当前编辑页，便于连续写作。
+- **文章**：Vditor 编辑器，支持 Markdown、数学公式、代码高亮、图片上传（直传图床）、快捷保存、全屏写作和本地草稿。
+- **说说**：保存为草稿后再发布时，会记录第一次发布的时间。
+- **留言墙**：访客提交后进入待审核，在后台通过后才展示；同一 IP 10 分钟最多 3 条、1 小时最多 10 条。
+- **评论 / 用户**：文章下方的原生评论系统，访客注册登录后评论、回复、点赞；后台可隐藏评论、禁言或封禁用户。
+
+所有前台日期统一按北京时间（`Asia/Shanghai`）显示，见 `lib/datetime.ts`。
 
 ---
 
-## 说说 / 杂谈 / 相册 / 项目 / 友链
+## 图片与音乐加速
 
-说说、相册、项目、友链等内容也已经迁移到数据库。请通过后台管理系统维护，不要再新增旧的静态数据文件。
+图片和音乐都存放在图床（CloudFlare-ImgBed，部署在 Cloudflare Pages，文件存在 HuggingFace）里。加载慢主要有两个原因：
 
-杂谈仍保留现有 Markdown 页面模式：
+1. `pages.dev` 域名在国内经常被 DNS 污染或限速；
+2. 图床每次请求都会现场去 HuggingFace 取文件，Cloudflare 边缘并不缓存，而且原图往往有好几 MB。
 
-```markdown
----
-title: "杂谈标题"
-date: "2026-05-21"
-description: "简短描述"
-tags: ["标签"]
-cover: "封面图URL"
----
-正文内容...
+解决办法是给图床绑定自己的域名，并开启 **Cloudflare Image Transformations**：浏览器按显示尺寸请求图片，Cloudflare 第一次回源后转成 AVIF/WebP 并缓存在边缘，之后直接从边缘返回。小卡片只下载、解码几十 KB 的小图，页面更流畅，手机也不容易发热。音乐会一并走自己的域名，并支持分段加载（拖动进度条只下载需要的部分）。
+
+所有改写逻辑都在 `lib/images/cdn.ts`。`siteConfig.assetCdn` 留空时完全不生效，可以分步开启。
+
+### 0. 把域名的 DNS 交给 Cloudflare
+
+博客域名 `aibrium.cn` 在阿里云注册，博客本身部署在 Vercel。要在 Cloudflare 上给图床绑定子域名、开启图片转换，域名的 **DNS 解析** 需要放在 Cloudflare（域名仍在阿里云注册，博客仍在 Vercel）：
+
+1. Cloudflare 控制台 → 添加域 → `aibrium.cn` → Free 计划；
+2. 核对导入的 DNS 记录：`aibrium.cn`（A 记录指向 Vercel）和 `www`（CNAME 指向 Vercel）必须设为 **仅 DNS（灰色云朵）**；
+3. 阿里云 → 域名 → 管理 → DNS 修改，把 DNS 服务器换成 Cloudflare 给的两个；
+4. 等 Cloudflare 显示域名「活动」，并确认 Vercel → Settings → Domains 仍为 Valid Configuration。
+
+### 1. 给图床绑定自己的域名
+
+Cloudflare 控制台 → Workers & Pages → `cloudflare-imgbed` → **自定义域（Custom domains）** → 添加 `img.aibrium.cn`。不要提前手动添加 CNAME，让 Pages 自动创建，否则会出现 522 错误。旧的 `pages.dev` 地址继续可用，数据库里的链接不需要改。
+
+### 2. 开启图片转换（可选，但效果最明显）
+
+Cloudflare 控制台 → **Images → Transformations** → 选择 `aibrium.cn` → **Enable for zone**。在 **Sources** 中保持「仅允许的来源」，并把 `img.aibrium.cn` 加入允许列表。
+
+免费套餐每月包含 **5,000 个不同的转换**（同一张图的同一尺寸只算一次，个人博客远远用不完）。超出后，已缓存的图片照常返回；新的转换会失败，此时代码里的 `onerror=redirect` 会自动回退到原图，不会出现裂图。用量可以在 Images → Transformations 页面查看。
+
+如果图床开启了防盗链（Referer 白名单），记得把博客域名加进去。
+
+### 3. 修改 siteConfig.ts 并重新部署
+
+```typescript
+assetCdn: {
+  imageOrigins: ["https://a68b43cc.cloudflare-imgbed-9pz.pages.dev", "https://cloudflare-imgbed-9pz.pages.dev"],
+  imageHost: "https://img.aibrium.cn",           // 第 1 步绑定的图床域名
+  imageTransformHost: "https://img.aibrium.cn",  // 第 2 步开启了转换的域名；没开启就留空
+},
 ```
+
+部署后在浏览器开发者工具的 Network 面板检查：
+
+- 图片地址变成 `https://img.aibrium.cn/cdn-cgi/image/width=...`；
+- 响应的 `content-type` 为 `image/avif` 或 `image/webp`；
+- 刷新后 `cf-cache-status` 为 `HIT`；
+- 音乐地址变成 `https://img.aibrium.cn/file/...mp3`。
+
+### 其他已做的加载优化
+
+- 首页大图、文章封面优先加载（`fetchpriority="high"`），其余图片懒加载、异步解码；
+- 文章正文图片自动生成 `srcset`，按正文宽度加载；
+- 网易云封面使用其 CDN 自带的缩放参数（`?param=`）；
+- `/api/songs` 播放列表走缓存，后台修改歌曲后自动刷新；
+- 页面头部对图床域名做 `preconnect`，提前完成 DNS 与 TLS 握手。
+
+长期来看，如果首次加载仍然偏慢，可以把图床的存储渠道从 HuggingFace 换成 Cloudflare R2（CloudFlare-ImgBed 原生支持），回源会快很多。
 
 ---
 
 ## 组件层级关系 (layout.tsx 组装顺序)
 
-理解这个很重要，改组件时要知道谁依赖谁：
-
 ```
 layout.tsx
-  └── ThemeProvider          ← 最底层，所有组件的暗黑模式都靠它
-       ├── SplashScreen      ← 开屏动画，2秒后消失
-       ├── MusicProvider     ← 音乐全局状态
-       │    ├── 背景层
-       │    │    ├── BackgroundSlider     ← 背景图轮播
-       │    │    ├── 渐变色叠加层
-       │    │    ├── 模糊光晕层
-       │    │    └── BackgroundEffects   ← 暗色=萤火虫, 亮色=樱花
-       │    ├── DanmakuBackground        ← 弹幕 (仅桌面端)
-       │    ├── {children}               ← 页面内容
-       │    ├── FloatingPlayer           ← 浮动音乐播放器 (仅桌面端)
-       │    ├── GlobalToolbox            ← 工具箱 (仅桌面端)
-       │    ├── MobileBackButton         ← 手机端返回键
-       │    └── ClickEffect              ← 点击特效 (仅桌面端)
-       └── CyberCat                     ← AI 猫猫 (仅桌面端)
+  └── ThemeProvider              ← 暗黑模式
+       └── EffectQualityProvider ← 按设备性能 / 减少动画偏好调节特效
+            ├── SplashScreen     ← 开屏动画
+            └── MusicProvider    ← 音乐全局状态
+                 ├── 背景层：BackgroundSlider（useGradient=false 时）、渐变色、光晕
+                 ├── ClientDecorations   ← 背景特效、弹幕、浮动播放器、工具箱、
+                 │                          手机返回键、点击特效、AI 猫猫（后台页面不显示）
+                 └── ToastProvider
+                      ├── SiteChrome     ← 导航栏（后台页面不显示）
+                      └── {children}     ← 页面内容
 ```
 
 ---
@@ -179,79 +188,73 @@ layout.tsx
 
 ### 换主题色
 
-修改 `siteConfig.ts` 中的 `themeColors`，以及 `globals.css` 中的 `--tw-*` 相关样式。
+修改 `siteConfig.ts` 中的 `themeColors`，以及 `app/globals.css` 中的颜色变量。
 
-### 去掉某个背景特效
+### 去掉某个装饰组件
 
-在 `app/layout.tsx` 中注释掉对应组件：
+在 `components/ClientDecorations.tsx` 中删除对应的行：
+
 ```tsx
-// <BackgroundSlider />        ← 去掉背景轮播
-// <BackgroundEffects />       ← 去掉萤火虫/樱花/草地
-// <DanmakuBackground />       ← 去掉弹幕
+<BackgroundEffects />   // 萤火虫 / 樱花
+<DanmakuBackground />   // 弹幕
+<FloatingPlayer />      // 浮动音乐播放器
+<GlobalToolbox />       // 工具箱
+<ClickEffect />         // 点击特效
+<CyberCat />            // AI 猫猫
 ```
 
-### 去掉 AI 猫猫
-
-在 `app/layout.tsx` 中注释：
-```tsx
-// <CyberCat />
-```
-
-### 去掉音乐播放器
-
-1. 在 `app/layout.tsx` 注释：
-```tsx
-// <MusicProvider>
-//   ...
-//   <FloatingPlayer />
-// </MusicProvider>
-```
-
-2. 在 `components/CloudPlayer.tsx` 中可以替换为空占位组件。
-
-### 去掉开屏动画
-
-在 `app/layout.tsx` 注释：
-```tsx
-// <SplashScreen />
-```
-
-### 去掉手机端圆盘菜单
-
-在 `components/Navbar.tsx` 中，找到手机端部分（`md:hidden`），整块删除即可。
+开屏动画在 `app/layout.tsx` 中的 `<SplashScreen />`。
 
 ### 修改导航栏链接
 
-在 `components/Navbar.tsx` 中修改 `navLinks` 数组。
+在 `components/Navbar.tsx` 中修改 `navLinks` 数组；手机端圆盘菜单在同一文件的 `md:hidden` 部分。
 
 ### 添加新页面
 
-1. 在 `app/` 下创建目录和 `page.tsx`
-2. 在 `Navbar.tsx` 的 `navLinks` 中添加链接
-3. 参照已有页面的模式（用 `Navbar` + `PageTransition` 包裹）
+1. 在 `app/` 下创建目录和 `page.tsx`，内容用 `PageTransition` 包裹（导航栏已在根布局中统一挂载，页面里不要再放 `<Navbar />`）；
+2. 在 `Navbar.tsx` 的 `navLinks` 中添加链接。
 
 ---
 
-## 环境变量 (可选)
+## 环境变量
 
-在项目根目录创建 `.env.local`。Vercel 部署时需要在 Project Settings → Environment Variables 配置同名变量：
+本地放在 `.env.local`；Vercel 部署时在 Project Settings → Environment Variables 配置同名变量。
 
 ```bash
-# Turso / libSQL 数据库
+# 数据库（必填）
 TURSO_DATABASE_URL=libsql://...
 TURSO_AUTH_TOKEN=...
 
-# 后台登录 JWT
-JWT_SECRET=至少32位的随机字符串
+# 后台与访客登录 JWT（必填，至少 32 位随机字符串）
+JWT_SECRET=...
+JWT_EXPIRES_IN=7d                  # 可选，后台登录有效期
 
-# 后台 Vditor 图片上传到 Cloudflare ImgBed
-IMAGE_BED_TOKEN=your-image-bed-token
+# 图床上传（后台上传图片、访客头像、照片墙缩略图）
+IMAGE_BED_TOKEN=...
+IMAGE_BED_BASE_URL=...             # 可选，默认 https://a68b43cc.cloudflare-imgbed-9pz.pages.dev
+IMAGE_BED_UPLOAD_CHANNEL=...       # 可选，默认 huggingface
 
-# Gemini API Key (AI 猫猫助手)
-GEMINI_API_KEY=your-api-key-here
+# AI 猫猫（可选）
+GEMINI_API_KEY=...
+PET_API_BASE_URL=...               # 可选，OpenAI 兼容接口地址，需在 petConfig.allowedApiHosts 白名单中
+PET_API_KEY=...
+PET_MODEL=...
+
+# 仅 scripts/seed-admin.ts 使用
+ADMIN_INIT_USERNAME=admin
+ADMIN_INIT_PASSWORD=...
 ```
 
-Gitalk 的 OAuth 配置直接写在 `siteConfig.ts` 中即可。
+---
+
+## 数据库脚本
+
+```bash
+npx tsx scripts/init-db.ts          # 建表（幂等，可重复执行）
+npx tsx scripts/seed-admin.ts       # 创建后台管理员
+npm run migrate:comments            # 评论系统相关表迁移
+npm run photos:backfill             # 为旧照片补生成缩略图 / 预览图
+```
 
 ---
 
@@ -264,6 +267,7 @@ Gitalk 的 OAuth 配置直接写在 `siteConfig.ts` 中即可。
 | Tailwind CSS | v4 |
 | TypeScript | 5.x |
 | Framer Motion | 12.x |
+| Turso / libSQL | @libsql/client 0.17 |
 | highlight.js | 11.x |
 | KaTeX | 0.16.x |
 
@@ -271,20 +275,9 @@ Gitalk 的 OAuth 配置直接写在 `siteConfig.ts` 中即可。
 
 ## 部署
 
-推荐部署到 Vercel：
+推荐部署到 Vercel：推送到 GitHub 后在 Vercel 导入仓库，框架选 Next.js，配置好环境变量即可。构建时会读取数据库预渲染页面，所以 `TURSO_DATABASE_URL` 和 `TURSO_AUTH_TOKEN` 必须在构建环境中可用。
 
-```bash
-# 1. 初始化 Git
-git init && git add . && git commit -m "first commit"
-
-# 2. 推送到 GitHub
-git remote add origin https://github.com/your-username/blog.git
-git push -u origin main
-
-# 3. 在 Vercel 导入仓库，框架选 Next.js，点击 Deploy
-```
-
-自定义域名：在 Vercel Settings → Domains 中添加你的域名，然后在域名服务商添加 DNS 解析。
+自定义域名：在 Vercel Settings → Domains 中添加域名，然后在 Cloudflare 添加对应的 DNS 记录。
 
 ---
 
@@ -292,18 +285,21 @@ git push -u origin main
 
 ### 毛玻璃卡片样式
 
-所有卡片统一使用这个样式模式：
 ```
 bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-xl rounded-3xl
 ```
 
 ### Server/Client 组件分工
 
-- **Server Component** (默认)：读取数据库、处理 Markdown 渲染、传递数据给客户端
-- **Client Component** (`"use client"`)：处理交互、动画、状态
+- **Server Component**（默认）：读取数据库、渲染 Markdown、传递数据给客户端；
+- **Client Component**（`"use client"`）：交互、动画、状态。
 
-例如 `app/posts/[[...slug]]/page.tsx` 是 Server Component，它从数据库读取文章内容、渲染成 HTML，然后把 HTML 传给客户端组件渲染。
+例如 `app/posts/[[...slug]]/page.tsx` 在服务端读取文章、用 `lib/markdown.ts` 渲染成 HTML 再交给页面展示；文章不存在时返回 404。
+
+### 缓存
+
+文章列表、首页统计用 `unstable_cache` 缓存，页面用 ISR；后台保存内容时通过 `lib/admin/revalidate.ts` 刷新相关页面。数据库查询出错时会直接抛错而不是返回空数据，这样一次临时故障不会把「文章不存在」或空列表写进缓存，线上会继续提供上一次成功生成的页面。
 
 ### ThemeProvider 模式
 
-自定义 `ThemeProvider` 而非 `next-themes`，通过 `localStorage` 持久化，避免 hydration 闪烁。所有需要暗黑模式的组件用 `useTheme()` 获取 `isDark`。
+自定义 `ThemeProvider` 而非 `next-themes`，通过 `localStorage` 持久化，并在 `<head>` 中提前设置主题 class，避免闪烁。需要暗黑模式的组件用 `useTheme()` 获取 `isDark`。

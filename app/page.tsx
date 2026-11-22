@@ -18,6 +18,7 @@ export default async function Home() {
     getAllPosts(),
     getHomepageCounts(),
   ]);
+  const renderedAt = new Date().toISOString();
   const homePosts = allPosts.map((post) => ({
     slug: post.slug,
     title: post.title,
@@ -55,7 +56,7 @@ export default async function Home() {
             <aside className="w-full lg:w-[280px] flex-shrink-0 flex flex-col gap-6">
               <CloudPlayer />
               <WeatherCard />
-              <CalendarCard />
+              <CalendarCard renderedAt={renderedAt} />
             </aside>
 
           </div>

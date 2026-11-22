@@ -5,6 +5,7 @@ import { Camera, LogOut, Trash2, X } from 'lucide-react';
 import { DEFAULT_PUBLIC_AVATAR_URL } from '../../lib/public-auth/presentation';
 import type { CommentSession } from './types';
 import useDialogFocusTrap from './useDialogFocusTrap';
+import { fixedImage } from '../../lib/images/cdn';
 
 async function request<T>(path: string, init: RequestInit) {
   const response = await fetch(path, init);
@@ -37,10 +38,12 @@ export default function ProfileDialog({ open, session, onClose, onSessionChange 
 
   async function updatePassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+    // React clears currentTarget once the handler yields, so keep the form for the post-await reset.
+    const form = event.currentTarget;
+    const values = Object.fromEntries(new FormData(form).entries());
     await run(async () => {
       const next = await request<CommentSession>('/api/auth/password', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });
-      onSessionChange({ ...next, isAuthor: false }); setMessage('密码已更新'); event.currentTarget.reset();
+      onSessionChange({ ...next, isAuthor: false }); setMessage('密码已更新'); form.reset();
     });
   }
 
@@ -63,7 +66,7 @@ export default function ProfileDialog({ open, session, onClose, onSessionChange 
         </div>
         {session.mustChangePassword && <p className="mt-4 rounded-xl bg-amber-100 px-3 py-2 text-sm font-bold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">当前使用临时密码，请先修改密码后再参与讨论。</p>}
         <div className="mt-5 flex items-center gap-4">
-          <img src={session.avatarUrl || DEFAULT_PUBLIC_AVATAR_URL} alt="当前头像" className="size-16 rounded-2xl object-cover" />
+          <img {...fixedImage(session.avatarUrl || DEFAULT_PUBLIC_AVATAR_URL, 64)} alt="当前头像" decoding="async" className="size-16 rounded-2xl object-cover" />
           <div>
             <input ref={avatarRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => {
               const file = event.target.files?.[0]; if (!file) return;

@@ -80,13 +80,6 @@ export const createFriendSchema = z.object({
 
 export const updateFriendSchema = createFriendSchema.partial();
 
-// --- Messages ---
-export const createMessageSchema = z.object({
-  author: z.string().min(1, '昵称不能为空').max(20),
-  content: z.string().min(1, '留言不能为空').max(300),
-  honeypot: z.string().max(0, '请求无效').optional(),
-});
-
 // --- Albums ---
 export const createAlbumSchema = z.object({
   title: z.string().min(1, '标题不能为空').max(100),

@@ -3,6 +3,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import ClientSocials from './ClientSocials';
+import { formatSiteDate } from '../lib/datetime';
+import { responsiveImage } from '../lib/images/cdn';
 
 interface Activity { id: string; type: string; title: string; date: string; url: string; }
 
@@ -20,7 +22,7 @@ export default function AboutClient({ contentHtml, coverImage, activities }: { c
     <div>
       {/* Cover */}
       <div className="w-full h-48 md:h-64 rounded-3xl overflow-hidden mb-8 relative group">
-        <img src={coverImage} alt="cover" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+        <img {...responsiveImage(coverImage, { sizes: '(min-width: 1024px) 896px, 95vw', minWidth: 640, maxWidth: 1920 })} alt="cover" fetchPriority="high" decoding="async" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
       </div>
 
@@ -45,7 +47,7 @@ export default function AboutClient({ contentHtml, coverImage, activities }: { c
                 <Link href={activity.url} className="flex items-center gap-4 p-4 rounded-2xl bg-white/40 dark:bg-slate-800/50 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-lg transition-all duration-300 hover:scale-[1.01] group">
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex-shrink-0 ${activity.type === '文章' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400'}`}>{activity.type}</span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors flex-1 truncate">{activity.title}</span>
-                  <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">{new Date(activity.date).toLocaleDateString('zh-CN')}</span>
+                  <span className="text-[10px] text-slate-400 font-mono flex-shrink-0">{formatSiteDate(activity.date)}</span>
                 </Link>
               </motion.div>
             ))}

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { siteConfig } from '../siteConfig';
+import { fixedImage } from '../lib/images/cdn';
 
 export default function SplashScreen() {
   const [show, setShow] = useState(false);
@@ -37,7 +38,7 @@ export default function SplashScreen() {
             transition={{ type: 'spring', damping: 15, stiffness: 200, delay: 0.2 }}
             className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-indigo-500 to-purple-500 shadow-[0_0_40px_rgba(99,102,241,0.6)] mb-8"
           >
-            <img src={siteConfig.avatarUrl} alt="avatar" className="w-full h-full rounded-full object-cover bg-white" />
+            <img {...fixedImage(siteConfig.avatarUrl, 112)} alt="avatar" fetchPriority="high" className="w-full h-full rounded-full object-cover bg-white" />
           </motion.div>
 
           <motion.h1

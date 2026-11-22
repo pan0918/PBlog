@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPendingMessage, getApprovedMessages } from '../../../lib/db/messages';
-import { revalidateAfterMessage } from '../../../lib/admin/revalidate';
-import { checkMessageRateLimit, validateMessageSubmission } from '../../../lib/messageWall';
+import { validateMessageSubmission } from '../../../lib/messageWall';
+import { getClientIp } from '../../../lib/public-auth/request';
+import { consumePublicRateLimit, createPublicRateKey } from '../../../lib/public-auth/rate-limit';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function getClientIp(request: NextRequest): string {
-  return request.headers.get('cf-connecting-ip') ||
-    request.headers.get('x-real-ip') ||
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    'unknown';
-}
+// Stored in the database so the limit holds across serverless instances.
+const MESSAGE_RATE_WINDOWS = [
+  { limit: 3, windowMs: 10 * 60 * 1000 },
+  { limit: 10, windowMs: 60 * 60 * 1000 },
+];
 
 export async function GET() {
   try {
@@ -30,8 +30,13 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const ip = getClientIp(request);
-  const rateCheck = checkMessageRateLimit(ip);
+  let rateCheck: Awaited<ReturnType<typeof consumePublicRateLimit>>;
+  try {
+    const rateKey = await createPublicRateKey('message', '', getClientIp(request));
+    rateCheck = await consumePublicRateLimit('message', rateKey, MESSAGE_RATE_WINDOWS);
+  } catch {
+    return NextResponse.json({ error: '留言提交失败，请稍后再试' }, { status: 500 });
+  }
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: '提交太频繁，请稍后再试' },
@@ -56,11 +61,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // Pending messages are not public yet, so no page cache needs refreshing;
+    // approving one in the admin revalidates the wall.
     await createPendingMessage({
       author: validation.author,
       content: validation.content,
     });
-    revalidateAfterMessage();
     return NextResponse.json({ ok: true, message: '留言已收到，审核后展示。' });
   } catch {
     return NextResponse.json({ error: '留言提交失败，请稍后再试' }, { status: 500 });

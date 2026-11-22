@@ -1,15 +1,6 @@
 import { db } from './db';
 import { formatUpdateTime } from './utils';
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkGfm from 'remark-gfm';
-import remarkRehype from 'remark-rehype';
-import rehypeHighlight from 'rehype-highlight';
-import rehypeStringify from 'rehype-stringify';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import rehypeSlug from 'rehype-slug';
-import { katexOptions } from './markdown';
+import { renderMarkdownContent } from './markdown';
 import { unstable_cache } from 'next/cache';
 
 export interface PostMeta {
@@ -22,55 +13,51 @@ export interface PostMeta {
   cover: string;
   category: string | null;
   formattedDate: string;
-  content: string;
   viewCount: number;
 }
 
-/** 前台：获取所有已发布文章 */
+/**
+ * 前台：获取所有已发布文章。
+ * 数据库错误直接抛出：失败结果不会进入缓存，ISR 会继续提供上一次成功生成的页面。
+ */
 async function queryAllPosts(): Promise<PostMeta[]> {
-  try {
-    const result = await db.execute(`
-      SELECT p.id, p.slug, p.title, p.published_at, p.summary, p.cover_url, p.content, p.view_count,
-             c.name as category_name,
-             COALESCE((
-               SELECT json_group_array(t.name)
-               FROM post_tags pt
-               JOIN tags t ON t.id = pt.tag_id
-               WHERE pt.post_id = p.id
-             ), '[]') as tags_json
-      FROM posts p
-      LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.status = 'published' AND p.deleted_at IS NULL
-      ORDER BY p.is_pinned DESC, p.published_at DESC, p.created_at DESC
-    `);
+  const result = await db.execute(`
+    SELECT p.id, p.slug, p.title, p.published_at, p.summary, p.cover_url, substr(p.content, 1, 120) AS excerpt, p.view_count,
+           c.name as category_name,
+           COALESCE((
+             SELECT json_group_array(t.name)
+             FROM post_tags pt
+             JOIN tags t ON t.id = pt.tag_id
+             WHERE pt.post_id = p.id
+           ), '[]') as tags_json
+    FROM posts p
+    LEFT JOIN categories c ON p.category_id = c.id
+    WHERE p.status = 'published' AND p.deleted_at IS NULL
+    ORDER BY p.is_pinned DESC, p.published_at DESC, p.created_at DESC
+  `);
 
-    return result.rows.map((row) => {
-      const r = row as Record<string, unknown>;
-      const rawDate = (r.published_at as string) || '1970-01-01';
-      let tags: string[] = [];
-      try {
-        const parsed = JSON.parse((r.tags_json as string) || '[]');
-        if (Array.isArray(parsed)) tags = parsed.filter((tag): tag is string => typeof tag === 'string');
-      } catch {}
+  return result.rows.map((row) => {
+    const r = row as Record<string, unknown>;
+    const rawDate = (r.published_at as string) || '1970-01-01';
+    let tags: string[] = [];
+    try {
+      const parsed = JSON.parse((r.tags_json as string) || '[]');
+      if (Array.isArray(parsed)) tags = parsed.filter((tag): tag is string => typeof tag === 'string');
+    } catch {}
 
-      return {
-        id: r.id as string,
-        slug: r.slug as string,
-        title: (r.title as string) || '',
-        date: rawDate,
-        description: (r.summary as string) || ((r.content as string) || '').substring(0, 120),
-        tags,
-        cover: (r.cover_url as string) || '',
-        category: (r.category_name as string) || null,
-        formattedDate: formatUpdateTime(rawDate),
-        content: (r.content as string) || '',
-        viewCount: (r.view_count as number) || 0,
-      };
-    });
-  } catch {
-    // Fallback: if DB not configured, return empty
-    return [];
-  }
+    return {
+      id: r.id as string,
+      slug: r.slug as string,
+      title: (r.title as string) || '',
+      date: rawDate,
+      description: (r.summary as string) || (r.excerpt as string) || '',
+      tags,
+      cover: (r.cover_url as string) || '',
+      category: (r.category_name as string) || null,
+      formattedDate: formatUpdateTime(rawDate),
+      viewCount: (r.view_count as number) || 0,
+    };
+  });
 }
 
 export const getAllPosts = unstable_cache(
@@ -79,91 +66,66 @@ export const getAllPosts = unstable_cache(
   { tags: ['posts'], revalidate: 300 },
 );
 
-/** 获取文章详情（含 Markdown 渲染） */
+/**
+ * 获取文章详情（含 Markdown 渲染）。文章不存在时返回 null；
+ * 数据库错误直接抛出，避免把一次临时故障缓存成"文章不存在"。
+ */
 export async function getPostBySlug(slug: string): Promise<{
   data: PostMeta;
-  rawContent: string;
   contentHtml: string;
   toc: { level: number; text: string; id: string }[];
 } | null> {
-  try {
-    let result = await db.execute({
+  let result = await db.execute({
+    sql: `SELECT p.*, c.name as category_name FROM posts p LEFT JOIN categories c ON p.category_id = c.id WHERE p.slug = ? AND p.status = 'published' AND p.deleted_at IS NULL`,
+    args: [slug],
+  });
+
+  if (result.rows.length === 0 && slug.includes('/')) {
+    const legacySlug = slug.replace(/\//g, '-');
+    result = await db.execute({
       sql: `SELECT p.*, c.name as category_name FROM posts p LEFT JOIN categories c ON p.category_id = c.id WHERE p.slug = ? AND p.status = 'published' AND p.deleted_at IS NULL`,
-      args: [slug],
+      args: [legacySlug],
     });
-
-    if (result.rows.length === 0 && slug.includes('/')) {
-      const legacySlug = slug.replace(/\//g, '-');
-      result = await db.execute({
-        sql: `SELECT p.*, c.name as category_name FROM posts p LEFT JOIN categories c ON p.category_id = c.id WHERE p.slug = ? AND p.status = 'published' AND p.deleted_at IS NULL`,
-        args: [legacySlug],
-      });
-    }
-
-    if (result.rows.length === 0) return null;
-
-    const r = result.rows[0] as Record<string, unknown>;
-    const content = (r.content as string) || '';
-    const rawDate = (r.published_at as string) || '1970-01-01';
-
-    // Get tags
-    const tagsResult = await db.execute({
-      sql: `SELECT t.name FROM tags t JOIN post_tags pt ON pt.tag_id = t.id WHERE pt.post_id = ?`,
-      args: [r.id as string],
-    });
-    const tags = tagsResult.rows.map((t: Record<string, unknown>) => t.name as string);
-
-    // Render Markdown
-    let processedContent = content;
-    processedContent = processedContent.replace(/^(\s*\d+)\.([^ \n])/gm, '$1. $2');
-    processedContent = processedContent.replace(/\r\n/g, '\n').replace(/^[ \t]+$/gm, '');
-    const blocks = processedContent.split(/(```[\s\S]*?```)/g);
-    processedContent = blocks.map((block, index) => {
-      if (index % 2 === 1) return block;
-      return block.replace(/\n{3,}/g, (match) => {
-        const brCount = match.length - 2;
-        return '\n\n' + '<br/>'.repeat(brCount) + '\n\n';
-      });
-    }).join('');
-
-    const processed = await unified()
-      .use(remarkParse).use(remarkGfm).use(remarkMath)
-      .use(remarkRehype, { allowDangerousHtml: true })
-      // @ts-ignore
-      .use(rehypeHighlight, { detect: true, ignoreMissing: true, subset: ['cpp', 'c', 'python', 'java', 'javascript', 'typescript', 'go', 'rust', 'bash', 'json', 'html', 'css', 'sql', 'xml'] })
-      .use(rehypeKatex, katexOptions).use(rehypeSlug).use(rehypeStringify, { allowDangerousHtml: true })
-      .process(processedContent);
-
-    const contentHtml = processed.toString();
-
-    // Extract TOC
-    const headingRegex = /<h([1-3])\s+id="([^"]+)"[^>]*>([\s\S]*?)<\/h[1-3]>/g;
-    const toc: { level: number; text: string; id: string }[] = [];
-    let match;
-    while ((match = headingRegex.exec(contentHtml)) !== null) {
-      const text = match[3].replace(/<[^>]*>/g, '').trim();
-      toc.push({ level: parseInt(match[1]), text, id: match[2] });
-    }
-
-    return {
-      data: {
-        id: r.id as string,
-        slug: r.slug as string,
-        title: (r.title as string) || '',
-        date: rawDate,
-        description: (r.summary as string) || content.substring(0, 120),
-        tags,
-        cover: (r.cover_url as string) || '',
-        category: (r.category_name as string) || null,
-        formattedDate: formatUpdateTime(rawDate),
-        content,
-        viewCount: (r.view_count as number) || 0,
-      },
-      rawContent: content,
-      contentHtml,
-      toc,
-    };
-  } catch {
-    return null;
   }
+
+  if (result.rows.length === 0) return null;
+
+  const r = result.rows[0] as Record<string, unknown>;
+  const content = (r.content as string) || '';
+  const rawDate = (r.published_at as string) || '1970-01-01';
+
+  // Get tags
+  const tagsResult = await db.execute({
+    sql: `SELECT t.name FROM tags t JOIN post_tags pt ON pt.tag_id = t.id WHERE pt.post_id = ?`,
+    args: [r.id as string],
+  });
+  const tags = tagsResult.rows.map((t: Record<string, unknown>) => t.name as string);
+
+  const contentHtml = await renderMarkdownContent(content);
+
+  // Extract TOC
+  const headingRegex = /<h([1-3])\s+id="([^"]+)"[^>]*>([\s\S]*?)<\/h[1-3]>/g;
+  const toc: { level: number; text: string; id: string }[] = [];
+  let match;
+  while ((match = headingRegex.exec(contentHtml)) !== null) {
+    const text = match[3].replace(/<[^>]*>/g, '').trim();
+    toc.push({ level: parseInt(match[1]), text, id: match[2] });
+  }
+
+  return {
+    data: {
+      id: r.id as string,
+      slug: r.slug as string,
+      title: (r.title as string) || '',
+      date: rawDate,
+      description: (r.summary as string) || content.substring(0, 120),
+      tags,
+      cover: (r.cover_url as string) || '',
+      category: (r.category_name as string) || null,
+      formattedDate: formatUpdateTime(rawDate),
+      viewCount: (r.view_count as number) || 0,
+    },
+    contentHtml,
+    toc,
+  };
 }

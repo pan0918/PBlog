@@ -37,10 +37,10 @@ test("photo wall delivers stored derivatives without reprocessing originals", as
   assert.match(config, /deviceSizes:\s*\[[^\]]*2048\s*\]/s);
   assert.doesNotMatch(config, /deviceSizes:\s*\[[^\]]*3840/s);
 
-  assert.match(page, /thumbnailUrl:\s*p\.thumbnail_url\s*\|\|\s*p\.preview_url\s*\|\|\s*p\.image_url/);
-  assert.match(page, /previewUrl:\s*p\.preview_url\s*\|\|\s*p\.image_url/);
-  assert.match(page, /originalUrl:\s*p\.image_url/);
-  assert.match(page, /cover:\s*photos\[0\]\?\.thumbnailUrl\s*\|\|\s*a\.cover_url\s*\|\|\s*['"]["']/);
+  assert.match(page, /thumbnailUrl:\s*toCdnAssetUrl\(p\.thumbnail_url\s*\|\|\s*p\.preview_url\s*\|\|\s*p\.image_url\)/);
+  assert.match(page, /previewUrl:\s*toCdnAssetUrl\(p\.preview_url\s*\|\|\s*p\.image_url\)/);
+  assert.match(page, /originalUrl:\s*toCdnAssetUrl\(p\.image_url\)/);
+  assert.match(page, /cover:\s*photos\[0\]\?\.thumbnailUrl\s*\|\|\s*toCdnAssetUrl\(a\.cover_url\s*\|\|\s*['"]["']\)/);
 
   assert.match(wall, /from\s+["']next\/image["']/);
   assert.match(wall, /sizes=["']\(max-width:\s*640px\)\s*85vw/);

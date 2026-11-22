@@ -39,27 +39,6 @@ export interface PostInput {
 
 export type PostUpdateInput = Partial<PostInput>;
 
-/** 前台：获取已发布文章 */
-export async function getPublishedPosts(): Promise<PostWithMeta[]> {
-  const result = await db.execute(`
-    SELECT p.*, c.name as category_name, c.slug as category_slug
-    FROM posts p
-    LEFT JOIN categories c ON p.category_id = c.id
-    WHERE p.status = 'published' AND p.deleted_at IS NULL
-    ORDER BY p.is_pinned DESC, p.published_at DESC, p.created_at DESC
-  `);
-
-  const posts = result.rows as unknown as PostWithMeta[];
-  for (const post of posts) {
-    const tagsResult = await db.execute({
-      sql: `SELECT t.id, t.name, t.slug FROM tags t JOIN post_tags pt ON pt.tag_id = t.id WHERE pt.post_id = ?`,
-      args: [post.id],
-    });
-    post.tags = tagsResult.rows as unknown as { id: string; name: string; slug: string }[];
-  }
-  return posts;
-}
-
 /** 后台：获取所有文章（含草稿） */
 export async function getAdminPosts(): Promise<PostWithMeta[]> {
   const result = await db.execute(`
@@ -226,21 +205,6 @@ export async function softDeletePost(id: string): Promise<void> {
 /** 增加浏览量 */
 export async function incrementViewCount(id: string): Promise<void> {
   await db.execute({ sql: `UPDATE posts SET view_count = view_count + 1 WHERE id = ?`, args: [id] });
-}
-
-/** 获取所有文章 slug（用于 generateStaticParams） */
-export async function getAllPostSlugs(): Promise<string[]> {
-  const result = await db.execute(`SELECT slug FROM posts WHERE status = 'published' AND deleted_at IS NULL`);
-  return result.rows.map((r: Record<string, unknown>) => r.slug as string);
-}
-
-/** 获取分类下文章 slug */
-export async function getPostSlugsByCategory(categorySlug: string): Promise<string[]> {
-  const result = await db.execute({
-    sql: `SELECT p.slug FROM posts p JOIN categories c ON p.category_id = c.id WHERE c.slug = ? AND p.status = 'published' AND p.deleted_at IS NULL`,
-    args: [categorySlug],
-  });
-  return result.rows.map((r: Record<string, unknown>) => r.slug as string);
 }
 
 export async function getPostSlugsByCategoryId(categoryId: string): Promise<string[]> {

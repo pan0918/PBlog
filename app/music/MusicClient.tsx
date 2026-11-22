@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useMusic, useMusicPlayback, type Song, type LyricLine } from '../../components/MusicProvider';
 import { formatTime } from '../../lib/utils';
 import { getActiveLyricIndex } from '../../lib/music-lyrics';
+import { resizeImageUrl } from '../../lib/images/cdn';
 
 export default function MusicClient() {
   const {
@@ -138,7 +139,7 @@ export default function MusicClient() {
       <div className="relative flex flex-col md:grid md:grid-cols-12 gap-6 md:gap-8 w-full md:items-stretch md:h-[calc(100vh-320px)] md:min-h-[600px] md:max-h-[720px]">
         {/* Blurred background */}
         <div className="absolute inset-[-5%] pointer-events-none rounded-[40px] overflow-hidden z-0">
-          <div className="absolute inset-0 bg-cover bg-center transition-all duration-1000 blur-[30px] opacity-40 dark:opacity-20 saturate-150" style={{ backgroundImage: `url(${songCover})` }} />
+          <div className="absolute inset-0 bg-cover bg-center transition-all duration-1000 blur-[30px] opacity-40 dark:opacity-20 saturate-150" style={{ backgroundImage: `url(${resizeImageUrl(songCover, 64)})` }} />
           <div className="absolute inset-0 bg-white/40 dark:bg-black/40" />
         </div>
 

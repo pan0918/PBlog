@@ -5,6 +5,7 @@ import { ChevronDown, Heart, MessageCircle, Pencil } from 'lucide-react';
 import { DEFAULT_PUBLIC_AVATAR_URL } from '../../lib/public-auth/presentation';
 import CommentComposer from './CommentComposer';
 import type { ArticleComment, CommentSession } from './types';
+import { fixedImage } from '../../lib/images/cdn';
 
 function relativeTime(value: string) {
   const delta = Date.now() - new Date(value).getTime();
@@ -16,7 +17,7 @@ function relativeTime(value: string) {
 }
 
 function Avatar({ comment }: { comment: ArticleComment }) {
-  return <img src={comment.author.avatarUrl || DEFAULT_PUBLIC_AVATAR_URL} alt="" className="size-9 shrink-0 rounded-xl object-cover ring-1 ring-white/70 dark:ring-white/10" />;
+  return <img {...fixedImage(comment.author.avatarUrl || DEFAULT_PUBLIC_AVATAR_URL, 36)} alt="" loading="lazy" decoding="async" className="size-9 shrink-0 rounded-xl object-cover ring-1 ring-white/70 dark:ring-white/10" />;
 }
 
 export default function CommentItem({

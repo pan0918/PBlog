@@ -1,10 +1,28 @@
 "use client";
 
-export default function CalendarCard() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const today = now.getDate();
+import { useEffect, useState } from "react";
+import { getSiteDateParts } from "../lib/datetime";
+
+type CalendarDay = { year: number; month: number; day: number };
+
+function siteCalendarDay(value: string): CalendarDay {
+  const parts = getSiteDateParts(value);
+  if (!parts) return localCalendarDay(new Date(value));
+  return { year: Number(parts.year), month: Number(parts.month) - 1, day: Number(parts.day) };
+}
+
+function localCalendarDay(date: Date): CalendarDay {
+  return { year: date.getFullYear(), month: date.getMonth(), day: date.getDate() };
+}
+
+export default function CalendarCard({ renderedAt }: { renderedAt: string }) {
+  // The homepage HTML is cached, so hydrate with the day it was rendered on and
+  // then switch to the visitor's actual day.
+  const [current, setCurrent] = useState(() => siteCalendarDay(renderedAt));
+  useEffect(() => {
+    setCurrent(localCalendarDay(new Date()));
+  }, []);
+  const { year, month, day: today } = current;
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const monthNames = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
