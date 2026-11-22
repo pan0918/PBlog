@@ -29,6 +29,7 @@ interface AssetCdnConfig {
   imageOrigins: string[];
   imageHost: string;
   imageTransformHost: string;
+  mediaProxyOrigin: string;
 }
 
 interface SiteConfig {
@@ -71,15 +72,22 @@ export const siteConfig: SiteConfig = {
     "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2000&auto=format&fit=crop",
   ],
   defaultPostCover: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=1000&auto=format&fit=crop",
-  // 图片 / 音乐加速：给图床绑定自己的域名后再填写 host，留空则继续使用原始地址。
-  // 图片和音乐都存在图床里，所以一个域名同时加速两者。配置步骤见 README「图片与音乐加速」。
+  // 图片 / 音乐加速，配置步骤见 README「图片与音乐加速」。留空则继续使用原始地址。
   assetCdn: {
-    // 图床原始地址，数据库里这些前缀的链接（图片和音乐）会被改写到 imageHost
-    imageOrigins: ["https://a68b43cc.cloudflare-imgbed-9pz.pages.dev", "https://cloudflare-imgbed-9pz.pages.dev"],
-    // 绑定到 CloudFlare-ImgBed Pages 项目的自有域名，例如 "https://img.example.com"
-    imageHost: "https://img.aibrium.cn",
-    // 已开启 Cloudflare Image Transformations 的域名（通常与 imageHost 相同），留空则不按尺寸压缩
-    imageTransformHost: "https://img.aibrium.cn",
+    // 图床地址，数据库里这些前缀的链接（图片和音乐）会被改写到 imageHost
+    imageOrigins: [
+      "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev",
+      "https://cloudflare-imgbed-9pz.pages.dev",
+      "https://img.aibrium.cn",
+    ],
+    // 浏览器加载图片 / 音乐用的地址前缀。"/media" 表示经博客自己的域名（Vercel）转发到
+    // mediaProxyOrigin：国内访问 Vercel 比直连 Cloudflare 免费节点快得多。
+    // 也可以填图床域名（如 "https://img.aibrium.cn"）直连。
+    imageHost: "/media",
+    // 按尺寸压缩图片用的地址前缀（对应域名需开启 Cloudflare Image Transformations），留空则不压缩
+    imageTransformHost: "/media",
+    // "/media" 转发到的图床域名（见 next.config.ts 的 rewrites），留空则不开启转发
+    mediaProxyOrigin: "https://img.aibrium.cn",
   },
   social: {
     github: "https://github.com/pan0918",

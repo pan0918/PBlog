@@ -1,9 +1,10 @@
 import { siteConfig } from '../../siteConfig';
 
-// Image and music delivery. Both are stored in the image bed, which lives on
-// *.pages.dev (slow and often DNS-polluted in mainland China) and streams
-// every file from HuggingFace on each request. Once it is bound to our own
-// domain, URLs are rewritten here; when Cloudflare Image Transformations is
+// Image and music delivery. Both are stored in the image bed (Cloudflare Pages
+// backed by HuggingFace). URLs are rewritten here onto `imageHost`, which is
+// either the image bed's own domain or a same-site path such as "/media" that
+// next.config.ts proxies through Vercel (much faster than Cloudflare's free
+// network from mainland China). When Cloudflare Image Transformations is
 // enabled, images are also resized to the displayed size, converted to
 // AVIF/WebP and cached at the edge. With an empty config every helper returns
 // the original URL, so nothing changes.
@@ -123,9 +124,9 @@ export function createAssetCdn(config: AssetCdnConfig) {
     return { src: twoX, srcSet: `${oneX} 1x, ${twoX} 2x` };
   }
 
-  /** Origins worth a <link rel="preconnect"> because most media comes from them. */
+  /** Cross-origin media hosts worth a <link rel="preconnect"> (same-site paths need none). */
   function getPreconnectOrigins(): string[] {
-    return [...new Set([imageHost, imageTransformHost].filter(Boolean))];
+    return [...new Set([imageHost, imageTransformHost].filter((host) => /^https?:\/\//i.test(host)))];
   }
 
   return { toCdnAssetUrl, canResizeImage, resizeImageUrl, responsiveImage, fixedImage, getPreconnectOrigins };

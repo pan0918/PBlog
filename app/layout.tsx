@@ -10,16 +10,18 @@ import ClientDecorations from '../components/ClientDecorations';
 import { EffectQualityProvider } from "../components/EffectQualityProvider";
 import { ToastProvider } from "../components/ToastProvider";
 import SiteChrome from "../components/SiteChrome";
-import { getPreconnectOrigins, toCdnAssetUrl } from "../lib/images/cdn";
+import { getPreconnectOrigins, resizeImageUrl } from "../lib/images/cdn";
 
-const faviconUrl = toCdnAssetUrl(siteConfig.faviconUrl);
+// The source icon is ~1 MB; browsers only need a small copy.
+const faviconUrl = resizeImageUrl(siteConfig.faviconUrl, 64);
+const appleIconUrl = resizeImageUrl(siteConfig.faviconUrl, 192);
 // Warm up DNS + TLS for the media domain so the first image / song starts sooner.
 const preconnectOrigins = getPreconnectOrigins();
 
 export const metadata: Metadata = {
   title: siteConfig.title,
   description: siteConfig.bio,
-  icons: { icon: faviconUrl, apple: faviconUrl },
+  icons: { icon: faviconUrl, apple: appleIconUrl },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

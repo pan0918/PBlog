@@ -9,7 +9,7 @@ const ORIGINS = {
 const BED_IMAGE = "https://a68b43cc.imgbed.pages.dev/file/1782476376234_%E5%8D%9A%E5%AE%A2.png";
 
 test("an empty CDN config leaves every URL untouched", () => {
-  const cdn = createAssetCdn({ ...ORIGINS, imageHost: "", imageTransformHost: "" });
+  const cdn = createAssetCdn({ ...ORIGINS, imageHost: "", imageTransformHost: "", mediaProxyOrigin: "" });
 
   assert.equal(cdn.toCdnAssetUrl(BED_IMAGE), BED_IMAGE);
   assert.equal(cdn.canResizeImage(BED_IMAGE), false);
@@ -18,7 +18,7 @@ test("an empty CDN config leaves every URL untouched", () => {
 });
 
 test("a custom domain replaces the image-bed origins for images and audio", () => {
-  const cdn = createAssetCdn({ ...ORIGINS, imageHost: "https://img.example.com/", imageTransformHost: "" });
+  const cdn = createAssetCdn({ ...ORIGINS, imageHost: "https://img.example.com/", imageTransformHost: "", mediaProxyOrigin: "" });
 
   assert.equal(cdn.toCdnAssetUrl(BED_IMAGE), "https://img.example.com/file/1782476376234_%E5%8D%9A%E5%AE%A2.png");
   assert.equal(cdn.toCdnAssetUrl("https://imgbed.pages.dev/file/a.png?x=1"), "https://img.example.com/file/a.png?x=1");
@@ -29,7 +29,7 @@ test("a custom domain replaces the image-bed origins for images and audio", () =
 });
 
 test("image transformations resize same-zone sources with an original-file fallback", () => {
-  const cdn = createAssetCdn({ ...ORIGINS, imageHost: "https://img.example.com", imageTransformHost: "https://img.example.com" });
+  const cdn = createAssetCdn({ ...ORIGINS, imageHost: "https://img.example.com", imageTransformHost: "https://img.example.com", mediaProxyOrigin: "" });
 
   assert.equal(
     cdn.resizeImageUrl(BED_IMAGE, 640),
@@ -49,8 +49,20 @@ test("image transformations resize same-zone sources with an original-file fallb
   assert.deepEqual(cdn.getPreconnectOrigins(), ["https://img.example.com"]);
 });
 
+test("a same-site proxy path serves media through the blog's own domain", () => {
+  const cdn = createAssetCdn({ ...ORIGINS, imageHost: "/media", imageTransformHost: "/media", mediaProxyOrigin: "https://img.example.com" });
+
+  assert.equal(cdn.toCdnAssetUrl("https://a68b43cc.imgbed.pages.dev/file/1_%E6%B8%A9.mp3"), "/media/file/1_%E6%B8%A9.mp3");
+  assert.equal(
+    cdn.resizeImageUrl(BED_IMAGE, 640),
+    "/media/cdn-cgi/image/width=640,quality=75,format=auto,fit=scale-down,onerror=redirect/file/1782476376234_%E5%8D%9A%E5%AE%A2.png",
+  );
+  assert.match(cdn.fixedImage(BED_IMAGE, 40).srcSet, /^\/media\/cdn-cgi\/image\/width=64,/);
+  assert.deepEqual(cdn.getPreconnectOrigins(), []);
+});
+
 test("a separate transformation host fetches the image bed by absolute URL", () => {
-  const cdn = createAssetCdn({ ...ORIGINS, imageHost: "", imageTransformHost: "https://cdn.example.com" });
+  const cdn = createAssetCdn({ ...ORIGINS, imageHost: "", imageTransformHost: "https://cdn.example.com", mediaProxyOrigin: "" });
 
   assert.equal(
     cdn.resizeImageUrl(BED_IMAGE, 256, 80),
@@ -59,7 +71,7 @@ test("a separate transformation host fetches the image bed by absolute URL", () 
 });
 
 test("NetEase and Unsplash images use their native resizing", () => {
-  const cdn = createAssetCdn({ ...ORIGINS, imageHost: "", imageTransformHost: "" });
+  const cdn = createAssetCdn({ ...ORIGINS, imageHost: "", imageTransformHost: "", mediaProxyOrigin: "" });
 
   assert.equal(
     cdn.resizeImageUrl("https://p3.music.126.net/abc==/1099.jpg", 128),

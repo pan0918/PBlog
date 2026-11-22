@@ -141,18 +141,24 @@ Cloudflare 控制台 → **Images → Transformations** → 选择 `aibrium.cn` 
 
 ```typescript
 assetCdn: {
-  imageOrigins: ["https://a68b43cc.cloudflare-imgbed-9pz.pages.dev", "https://cloudflare-imgbed-9pz.pages.dev"],
-  imageHost: "https://img.aibrium.cn",           // 第 1 步绑定的图床域名
-  imageTransformHost: "https://img.aibrium.cn",  // 第 2 步开启了转换的域名；没开启就留空
+  imageOrigins: ["https://a68b43cc.cloudflare-imgbed-9pz.pages.dev", "https://cloudflare-imgbed-9pz.pages.dev", "https://img.aibrium.cn"],
+  imageHost: "/media",                         // 经博客域名转发（见下文「为什么要经 Vercel 转发」）
+  imageTransformHost: "/media",                // 开启了图片转换就填，和 imageHost 相同；没开启就留空
+  mediaProxyOrigin: "https://img.aibrium.cn",  // /media 转发到的图床域名（第 1 步绑定的）
 },
 ```
 
 部署后在浏览器开发者工具的 Network 面板检查：
 
-- 图片地址变成 `https://img.aibrium.cn/cdn-cgi/image/width=...`；
-- 响应的 `content-type` 为 `image/avif` 或 `image/webp`；
-- 刷新后 `cf-cache-status` 为 `HIT`；
-- 音乐地址变成 `https://img.aibrium.cn/file/...mp3`。
+- 图片地址变成 `https://www.aibrium.cn/media/cdn-cgi/image/width=...`，`content-type` 为 `image/avif` 或 `image/webp`；
+- 刷新后响应头 `x-vercel-cache` 为 `HIT`；
+- 音乐地址变成 `https://www.aibrium.cn/media/file/...mp3`。
+
+### 为什么要经 Vercel 转发
+
+国内访问 Cloudflare 免费套餐通常被分配到美国节点，晚高峰实测只有几 KB/s；同一时间访问 Vercel（新加坡节点）有几百 KB/s。所以浏览器只访问博客自己的域名 `/media/...`，由 `next.config.ts` 的 rewrites 转发到 `img.aibrium.cn`：Cloudflare 负责压缩和缓存，Vercel 负责把文件送到国内访客手里，并按图床返回的缓存头把文件缓存在 Vercel 的节点上。
+
+代价是图片和音乐的流量计入 Vercel 免费额度（每月 100 GB Fast Data Transfer，个人博客通常用不完，可在 Vercel 控制台 Usage 页查看）。想改回直连，把 `imageHost`、`imageTransformHost` 改成 `"https://img.aibrium.cn"` 即可。
 
 ### 其他已做的加载优化
 
@@ -160,7 +166,7 @@ assetCdn: {
 - 文章正文图片自动生成 `srcset`，按正文宽度加载；
 - 网易云封面使用其 CDN 自带的缩放参数（`?param=`）；
 - `/api/songs` 播放列表走缓存，后台修改歌曲后自动刷新；
-- 页面头部对图床域名做 `preconnect`，提前完成 DNS 与 TLS 握手。
+- 网站图标使用 64px 的压缩版（原图约 1 MB）。
 
 长期来看，如果首次加载仍然偏慢，可以把图床的存储渠道从 HuggingFace 换成 Cloudflare R2（CloudFlare-ImgBed 原生支持），回源会快很多。
 
