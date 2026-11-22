@@ -11,6 +11,7 @@ export default async function MomentsPage() {
     date: m.published_at || m.created_at,
     mood: m.mood || '',
     weather: m.weather || '',
+    location: m.location?.trim() || '',
     content: m.content,
   }));
 

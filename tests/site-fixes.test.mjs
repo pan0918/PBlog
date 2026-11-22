@@ -120,3 +120,15 @@ test("rate limits key on the IP Vercel sets, not spoofable proxy headers", async
   assert.equal(getClientIp(request({ "x-forwarded-for": "203.0.113.9, 10.0.0.1" })), "203.0.113.9");
   assert.equal(getClientIp(request({ "cf-connecting-ip": "6.6.6.6" })), "unknown");
 });
+
+test("moments show their location next to the weather only when one is set", async () => {
+  const [page, list] = await Promise.all([
+    readFile("app/moments/page.tsx", "utf8"),
+    readFile("app/moments/MomentList.tsx", "utf8"),
+  ]);
+
+  assert.match(page, /location: m\.location\?\.trim\(\) \|\| ''/);
+  assert.match(list, /\{moment\.weather && [^\n]+\n\s*\{moment\.location && \(/);
+  assert.match(list, /<MapPin /);
+  assert.match(list, /m\.location\.toLowerCase\(\)\.includes\(q\)/);
+});

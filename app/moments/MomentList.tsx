@@ -1,9 +1,10 @@
 "use client";
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { MapPin } from 'lucide-react';
 import { formatSiteDate, getSiteDateParts } from '../../lib/datetime';
 
-export interface Moment { id: string; title: string; date: string; mood: string; weather: string; content: string; }
+export interface Moment { id: string; title: string; date: string; mood: string; weather: string; location: string; content: string; }
 
 function getMonthKey(dateStr: string): string {
   if (!dateStr) return '';
@@ -43,7 +44,8 @@ export default function MomentList({ moments }: { moments: Moment[] }) {
         m.title.toLowerCase().includes(q) ||
         m.content.toLowerCase().includes(q) ||
         m.mood.toLowerCase().includes(q) ||
-        m.weather.toLowerCase().includes(q)
+        m.weather.toLowerCase().includes(q) ||
+        m.location.toLowerCase().includes(q)
       );
     }
     return list;
@@ -121,6 +123,12 @@ export default function MomentList({ moments }: { moments: Moment[] }) {
                   <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{formatSiteDate(moment.date, '-')}</span>
                   {moment.mood && <span className="text-xs px-2 py-0.5 rounded-full bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 font-bold">{moment.mood}</span>}
                   {moment.weather && <span className="text-xs px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 font-bold">{moment.weather}</span>}
+                  {moment.location && (
+                    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold">
+                      <MapPin className="w-3 h-3" aria-hidden="true" />
+                      {moment.location}
+                    </span>
+                  )}
                 </div>
                 {moment.title && <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{moment.title}</h3>}
                 <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{moment.content}</p>
