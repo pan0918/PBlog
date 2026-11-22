@@ -77,9 +77,9 @@ export const siteConfig: SiteConfig = {
     // 图床原始地址，数据库里这些前缀的链接（图片和音乐）会被改写到 imageHost
     imageOrigins: ["https://a68b43cc.cloudflare-imgbed-9pz.pages.dev", "https://cloudflare-imgbed-9pz.pages.dev"],
     // 绑定到 CloudFlare-ImgBed Pages 项目的自有域名，例如 "https://img.example.com"
-    imageHost: "",
+    imageHost: "https://img.aibrium.cn",
     // 已开启 Cloudflare Image Transformations 的域名（通常与 imageHost 相同），留空则不按尺寸压缩
-    imageTransformHost: "",
+    imageTransformHost: "https://img.aibrium.cn",
   },
   social: {
     github: "https://github.com/pan0918",
