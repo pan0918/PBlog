@@ -44,8 +44,8 @@ export default async function Home() {
             {/* Left Column */}
             <aside className="w-full lg:w-[260px] flex-shrink-0 flex flex-col gap-6">
               <ProfileCard postCount={allPosts.length} momentCount={momentCount} photoCount={photoCount} />
-              <NavigationCard />
               <SiteDashboard />
+              <NavigationCard />
               <SiteStats lastUpdatedAt={lastPostUpdatedAt || siteConfig.buildDate} />
             </aside>
 
