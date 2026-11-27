@@ -1,155 +1,143 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { siteConfig } from '../../../siteConfig';
+import { getMonthlyAiUsage } from '../../../lib/ai/budget';
+import { isAiConfigured, openChatStream, type AiMessage } from '../../../lib/ai/deepseek';
+import { getClientIp } from '../../../lib/public-auth/request';
+import { consumePublicRateLimit, createPublicRateKey } from '../../../lib/public-auth/rate-limit';
 
-interface ChatMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
-interface ChatRequestBody {
-  message?: unknown;
-  history?: unknown;
-  config?: {
-    apiBaseUrl?: string;
-    apiKey?: string;
-    model?: string;
-    systemPrompt?: string;
-  };
-}
+const MAX_MESSAGE_LENGTH = 300;
+const MAX_HISTORY = 8;
+const MAX_HISTORY_ITEM_LENGTH = 500;
+// Replies are capped at ~80 Chinese characters by the persona prompt.
+const MAX_REPLY_TOKENS = 200;
 
-const MAX_MESSAGE_LENGTH = 2000;
-const MAX_HISTORY = 10;
-
-// Hosts the relay is allowed to call — prevents this endpoint from being abused as an
-// open relay / SSRF vector. Configurable via siteConfig.petConfig.allowedApiHosts.
-const ALLOWED_HOSTS: string[] = siteConfig.petConfig.allowedApiHosts ?? [
-  'generativelanguage.googleapis.com',
-  'api.openai.com',
+// Per visitor IP, stored in the database so the limit holds across serverless instances.
+const CHAT_RATE_WINDOWS = [
+  { limit: 6, windowMs: 60 * 1000 },
+  { limit: 30, windowMs: 60 * 60 * 1000 },
+  { limit: 80, windowMs: 24 * 60 * 60 * 1000 },
 ];
 
-function hostOf(url: string): string | null {
-  try {
-    return new URL(url).host.toLowerCase();
-  } catch {
-    return null;
-  }
+const RESTING_REPLY = `${siteConfig.petConfig.name}今天说了太多话，要去睡觉啦，下次再陪你聊喵~`;
+
+function reply(text: string, status = 200, headers?: HeadersInit) {
+  return NextResponse.json({ reply: text }, { status, headers });
 }
 
 // Reject obvious cross-site use; stay lenient when no Origin/Referer is present
 // (same-origin fetches without an Origin header, server-to-server, curl, etc.).
 function isSameOrigin(request: NextRequest): boolean {
-  const selfHost = request.nextUrl.host.toLowerCase();
   const candidate = request.headers.get('origin') || request.headers.get('referer');
   if (!candidate) return true;
-  const h = hostOf(candidate);
-  return h === null ? true : h === selfHost;
+  try {
+    return new URL(candidate).host.toLowerCase() === request.nextUrl.host.toLowerCase();
+  } catch {
+    return true;
+  }
+}
+
+function sanitizeHistory(history: unknown): AiMessage[] {
+  if (!Array.isArray(history)) return [];
+  return history
+    .filter((m): m is { role?: unknown; content: string } =>
+      !!m && typeof m === 'object' && typeof (m as { content?: unknown }).content === 'string')
+    .slice(-MAX_HISTORY)
+    .map((m) => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.content.slice(0, MAX_HISTORY_ITEM_LENGTH),
+    }));
+}
+
+/**
+ * Streams the deltas as plain text. `settled` resolves once the generator has
+ * finished (and so recorded its usage), including when the visitor disconnects.
+ */
+function toTextStream(deltas: AsyncGenerator<string>, upstream: AbortController) {
+  let markSettled!: () => void;
+  const settled = new Promise<void>((resolve) => { markSettled = resolve; });
+  const encoder = new TextEncoder();
+
+  const body = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const { value, done } = await deltas.next();
+        if (!done) {
+          controller.enqueue(encoder.encode(value));
+          return;
+        }
+      } catch (error) {
+        if (!upstream.signal.aborted) console.error('Chat stream failed', error);
+      }
+      // Ending normally keeps whatever the visitor already received.
+      try { controller.close(); } catch {}
+      markSettled();
+    },
+    async cancel() {
+      upstream.abort();
+      await deltas.return(undefined).catch(() => {});
+      markSettled();
+    },
+  });
+  return { body, settled };
 }
 
 export async function POST(request: NextRequest) {
-  if (!isSameOrigin(request)) {
-    return NextResponse.json({ reply: '喵？这个请求不太对劲...' }, { status: 403 });
-  }
+  if (!isSameOrigin(request)) return reply('喵？这个请求不太对劲...', 403);
 
-  let body: ChatRequestBody;
+  let body: { message?: unknown; history?: unknown };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ reply: '喵？没听清你说什么...' }, { status: 400 });
+    return reply('喵？没听清你说什么...', 400);
   }
 
-  const { message, history, config } = body;
+  const message = typeof body.message === 'string' ? body.message.trim() : '';
+  if (!message) return reply('说点什么呀喵~', 400);
+  if (message.length > MAX_MESSAGE_LENGTH) return reply('太长了喵，说短一点~', 400);
 
-  // --- Validate input ---
-  if (typeof message !== 'string' || message.trim().length === 0) {
-    return NextResponse.json({ reply: '说点什么呀喵~' }, { status: 400 });
-  }
-  if (message.length > MAX_MESSAGE_LENGTH) {
-    return NextResponse.json({ reply: '太长了喵，说短一点~' }, { status: 400 });
-  }
+  if (!isAiConfigured()) return reply(RESTING_REPLY);
 
-  const safeHistory: { role: 'user' | 'assistant'; content: string }[] = Array.isArray(history)
-    ? history
-        .filter(
-          (m): m is { role?: unknown; content: string } =>
-            !!m && typeof m === 'object' && typeof (m as { content?: unknown }).content === 'string'
-        )
-        .slice(-MAX_HISTORY)
-        .map((m) => ({
-          role: m.role === 'assistant' ? 'assistant' : 'user',
-          content: String(m.content).slice(0, MAX_MESSAGE_LENGTH),
-        }))
-    : [];
-
-  const petConfig = siteConfig.petConfig;
-  const geminiConfig = siteConfig.geminiConfig;
-
-  // Allow client-side config override, fallback to server env / siteConfig
-  const apiBaseUrl = config?.apiBaseUrl || process.env.PET_API_BASE_URL || 'https://generativelanguage.googleapis.com';
-  const apiKey = config?.apiKey || process.env.PET_API_KEY || process.env.GEMINI_API_KEY || '';
-  const model = config?.model || process.env.PET_MODEL || geminiConfig.modelId || 'gemini-2.5-flash-lite';
-  const systemPrompt = config?.systemPrompt || petConfig.systemPrompt;
-
-  if (!apiKey) {
-    return NextResponse.json({ reply: 'AI 助手暂未配置 API Key 喵~ 请点击猫咪头像进入设置配置。' });
+  try {
+    const rateKey = await createPublicRateKey('pet-chat', '', getClientIp(request));
+    const rateCheck = await consumePublicRateLimit('pet-chat', rateKey, CHAT_RATE_WINDOWS);
+    if (!rateCheck.allowed) {
+      return reply('说太快啦，让煤球喘口气喵~', 429, { 'Retry-After': String(rateCheck.retryAfterSeconds) });
+    }
+    if ((await getMonthlyAiUsage()).exhausted) return reply(RESTING_REPLY);
+  } catch (error) {
+    console.error('Chat pre-checks failed', error);
+    return reply('网络出问题了喵~ 等会儿再试试', 503);
   }
 
-  // Enforce the host allowlist on the (possibly client-supplied) base URL.
-  const baseHost = hostOf(apiBaseUrl);
-  if (!baseHost || !ALLOWED_HOSTS.includes(baseHost)) {
-    return NextResponse.json(
-      { reply: '这个 API 地址不被允许喵~（可在 siteConfig.petConfig.allowedApiHosts 添加白名单）' },
-      { status: 400 }
-    );
-  }
-
-  const maxOutputTokens = geminiConfig.maxOutputTokens || 150;
-  const temperature = typeof geminiConfig.temperature === 'number' ? geminiConfig.temperature : 0.85;
-
-  const messages: ChatMessage[] = [
-    { role: 'system', content: systemPrompt },
-    ...safeHistory,
+  // The fixed persona goes first so DeepSeek's prefix cache can reuse it across visitors.
+  const messages: AiMessage[] = [
+    { role: 'system', content: siteConfig.petConfig.systemPrompt },
+    ...sanitizeHistory(body.history),
     { role: 'user', content: message },
   ];
 
-  const isGemini = baseHost.includes('generativelanguage');
-
+  const upstream = new AbortController();
+  let deltas: AsyncGenerator<string>;
   try {
-    if (isGemini) {
-      // Gemini API format
-      const url = `${apiBaseUrl.replace(/\/$/, '')}/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-      const geminiMessages = messages.filter((m) => m.role !== 'system');
-      const systemMsg = messages.find((m) => m.role === 'system');
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: geminiMessages.map((m) => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: (systemMsg?.content ? systemMsg.content + '\n\n' : '') + m.content }],
-          })),
-          generationConfig: { maxOutputTokens, temperature },
-        }),
-      });
-      const data = await response.json();
-      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '喵？听不太懂...';
-      return NextResponse.json({ reply });
-    } else {
-      // OpenAI-compatible format
-      const url = `${apiBaseUrl.replace(/\/$/, '')}/v1/chat/completions`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({ model, messages, max_tokens: maxOutputTokens, temperature }),
-      });
-      const data = await response.json();
-      const reply = data.choices?.[0]?.message?.content || '喵？听不太懂...';
-      return NextResponse.json({ reply });
-    }
-  } catch {
-    return NextResponse.json({ reply: '网络出问题了喵~' });
+    deltas = await openChatStream({
+      feature: 'pet-chat',
+      messages,
+      maxTokens: MAX_REPLY_TOKENS,
+      signal: AbortSignal.any([request.signal, upstream.signal]),
+    });
+  } catch (error) {
+    console.error('Chat request failed', error);
+    return reply('网络出问题了喵~ 等会儿再试试', 503);
   }
+
+  const { body: stream, settled } = toTextStream(deltas, upstream);
+  // Keeps the function alive until usage is recorded, even if the visitor leaves mid-reply.
+  after(settled);
+  return new Response(stream, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
+  });
 }

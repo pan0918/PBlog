@@ -227,6 +227,18 @@ CREATE TABLE IF NOT EXISTS songs (
   deleted_at TEXT
 );
 
+-- AI 调用记录（用于估算花费和每月额度；首次调用 AI 时也会自动建表）
+CREATE TABLE IF NOT EXISTS ai_usage_logs (
+  id TEXT PRIMARY KEY,
+  feature TEXT NOT NULL,
+  model TEXT NOT NULL,
+  prompt_cache_hit_tokens INTEGER NOT NULL DEFAULT 0,
+  prompt_cache_miss_tokens INTEGER NOT NULL DEFAULT 0,
+  completion_tokens INTEGER NOT NULL DEFAULT 0,
+  cost_usd REAL NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
 -- 索引
 CREATE INDEX IF NOT EXISTS idx_posts_status_published_at ON posts(status, published_at);
 CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category_id);
@@ -244,3 +256,4 @@ CREATE INDEX IF NOT EXISTS idx_post_comments_post_created ON post_comments(post_
 CREATE INDEX IF NOT EXISTS idx_post_comments_parent_created ON post_comments(parent_id, status, created_at, id);
 CREATE INDEX IF NOT EXISTS idx_post_comments_user ON post_comments(public_user_id, status);
 CREATE INDEX IF NOT EXISTS idx_songs_sort ON songs(sort_order);
+CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_created ON ai_usage_logs(created_at);

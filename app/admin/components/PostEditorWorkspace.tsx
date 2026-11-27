@@ -88,6 +88,9 @@ export default function PostEditorWorkspace({
   const [newTagSlug, setNewTagSlug] = useState('');
   const [showTagInput, setShowTagInput] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  // AI-suggested tag names that don't exist yet; created only when clicked.
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const { toast, showToast } = useAdminToast();
   const [isDirty, setIsDirty] = useState(false);
 
@@ -144,11 +147,8 @@ export default function PostEditorWorkspace({
     setNewTagSlug((current) => current || generateSlug(value));
   }, []);
 
-  const handleAddTag = useCallback(async () => {
-    const name = newTagName.trim();
-    const slug = newTagSlug.trim();
-    if (!name || !slug) return;
-
+  /** Creates a tag and selects it. Returns whether it succeeded. */
+  const createTag = useCallback(async (name: string, slug: string) => {
     try {
       const res = await fetch('/api/admin/tags', {
         method: 'POST',
@@ -159,18 +159,71 @@ export default function PostEditorWorkspace({
       if (data.ok) {
         setTags((current) => [...current, data.data]);
         setSelectedTagIds((current) => [...current, data.data.id]);
-        setNewTagName('');
-        setNewTagSlug('');
-        setShowTagInput(false);
         setIsDirty(true);
         showToast('success', '标签已创建');
-      } else {
-        showToast('error', data.message || '创建标签失败');
+        return true;
       }
+      showToast('error', data.message || '创建标签失败');
     } catch {
       showToast('error', '创建标签失败');
     }
-  }, [newTagName, newTagSlug, showToast]);
+    return false;
+  }, [showToast]);
+
+  const handleAddTag = useCallback(async () => {
+    const name = newTagName.trim();
+    const slug = newTagSlug.trim();
+    if (!name || !slug) return;
+
+    if (await createTag(name, slug)) {
+      setNewTagName('');
+      setNewTagSlug('');
+      setShowTagInput(false);
+    }
+  }, [createTag, newTagName, newTagSlug]);
+
+  const handleCreateSuggestedTag = useCallback(async (name: string) => {
+    // Names like "C++" leave nothing after slugging; fall back to a unique slug.
+    if (await createTag(name, generateSlug(name) || `tag-${Date.now().toString(36)}`)) {
+      setSuggestedTags((current) => current.filter((tag) => tag !== name));
+    }
+  }, [createTag]);
+
+  const handleGenerateMeta = useCallback(async () => {
+    if (aiLoading) return;
+    const content = editorRef.current?.getContent() || form.content;
+    if (!content.trim()) {
+      showToast('error', '正文为空，先写点内容再生成');
+      return;
+    }
+    if (form.summary.trim() && !confirm('已经有摘要了，要用 AI 生成的内容替换吗？')) return;
+
+    setAiLoading(true);
+    try {
+      const res = await fetch('/api/admin/ai/post-meta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: form.title, content }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        showToast('error', data.message || 'AI 生成失败');
+        return;
+      }
+
+      const { summary, tags: names } = data.data as { summary: string; tags: string[] };
+      updateForm({ summary });
+      const byName = new Map(tags.map((tag) => [tag.name.toLowerCase(), tag.id]));
+      const matchedIds = names.flatMap((name) => byName.get(name.toLowerCase()) ?? []);
+      setSelectedTagIds((current) => [...new Set([...current, ...matchedIds])]);
+      setSuggestedTags(names.filter((name) => !byName.has(name.toLowerCase())));
+      showToast('success', '已生成摘要和标签，记得检查一下再保存');
+    } catch {
+      showToast('error', 'AI 生成失败');
+    } finally {
+      setAiLoading(false);
+    }
+  }, [aiLoading, form.content, form.summary, form.title, showToast, tags, updateForm]);
 
   const handleSubmit = useCallback(async () => {
     if (loading) return;
@@ -282,6 +335,27 @@ export default function PostEditorWorkspace({
                 </button>
               )}
 
+              {suggestedTags.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4, marginTop: 4, width: '100%' }}>
+                  <span style={{ fontSize: 12, color: 'var(--admin-text-secondary)' }}>AI 建议新建：</span>
+                  {suggestedTags.map((name) => (
+                    <button key={name} type="button" onClick={() => handleCreateSuggestedTag(name)} style={{
+                      padding: '2px 8px', borderRadius: 4, fontSize: 12,
+                      border: '1px dashed #5D87FF', background: '#5D87FF0d',
+                      color: '#5D87FF', cursor: 'pointer',
+                    }}>
+                      + {name}
+                    </button>
+                  ))}
+                  <button type="button" onClick={() => setSuggestedTags([])} style={{
+                    background: 'none', border: 'none', padding: '2px 4px', fontSize: 12,
+                    color: 'var(--admin-text-secondary)', cursor: 'pointer',
+                  }}>
+                    忽略
+                  </button>
+                </div>
+              )}
+
               {!showTagInput && availableTags.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4, width: '100%' }}>
                   {availableTags.map((tag) => (
@@ -331,7 +405,19 @@ export default function PostEditorWorkspace({
 
       <div className="admin-card" style={{ marginBottom: 16, padding: '16px 24px' }}>
         <div className="admin-form-group" style={{ marginBottom: 0 }}>
-          <label className="admin-form-label">摘要</label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <label className="admin-form-label">摘要</label>
+            <button
+              type="button"
+              onClick={handleGenerateMeta}
+              disabled={aiLoading}
+              className="admin-btn admin-btn-default admin-btn-sm"
+              style={{ height: 26, fontSize: 12, marginBottom: 8 }}
+              title="根据正文生成摘要（同时用作搜索引擎描述）和标签"
+            >
+              {aiLoading ? 'AI 生成中...' : '✨ AI 生成摘要和标签'}
+            </button>
+          </div>
           <textarea
             value={form.summary}
             onChange={(event) => updateForm({ summary: event.target.value })}

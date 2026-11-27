@@ -1,4 +1,5 @@
 import 'highlight.js/styles/atom-one-dark.css';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import PageTransition from '../../../components/PageTransition';
@@ -9,11 +10,41 @@ import SidebarLyric from '../../../components/SidebarLyric';
 import ProfileCard from '../../../components/ProfileCard';
 import ClientViewCount from '../../../components/ClientViewCount';
 import { getAllPosts, getPostBySlug } from '../../../lib/posts';
-import { responsiveImage } from '../../../lib/images/cdn';
+import { resizeImageUrl, responsiveImage } from '../../../lib/images/cdn';
+import { toPlainDescription } from '../../../lib/seo';
 
 export async function generateStaticParams() {
   const posts = await getAllPosts();
   return posts.map(p => ({ slug: p.slug.split('/') }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug?: string[] }> }): Promise<Metadata> {
+  const slug = ((await params).slug || []).join('/');
+  // The cached post list avoids a second database round trip and Markdown render.
+  const posts = await getAllPosts();
+  const post = posts.find((p) => p.slug === slug) ?? posts.find((p) => p.slug === slug.replace(/\//g, '-'));
+  if (!post) return {};
+
+  const description = toPlainDescription(post.description);
+  const path = `/posts/${post.slug.split('/').map(encodeURIComponent).join('/')}`;
+  return {
+    title: post.title,
+    description,
+    keywords: post.tags,
+    alternates: { canonical: path },
+    // Next.js replaces the layout's openGraph object rather than merging it.
+    openGraph: {
+      type: 'article',
+      siteName: siteConfig.title,
+      locale: 'zh_CN',
+      title: post.title,
+      description,
+      url: path,
+      publishedTime: post.date,
+      tags: post.tags,
+      images: [resizeImageUrl(post.cover || siteConfig.defaultPostCover, 1200)],
+    },
+  };
 }
 
 function getRecentPosts(currentSlug: string, allPosts: { slug: string; title: string; formattedDate: string }[]) {

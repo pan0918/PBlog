@@ -1,4 +1,6 @@
 import { db } from '../../lib/db';
+import { getMonthlyAiUsage, type MonthlyAiUsage } from '../../lib/ai/budget';
+import { isAiConfigured } from '../../lib/ai/deepseek';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,8 +48,69 @@ async function getStats(): Promise<StatCard[]> {
   }
 }
 
+async function getAiUsage(): Promise<MonthlyAiUsage | null> {
+  try {
+    return await getMonthlyAiUsage();
+  } catch (error) {
+    console.error('Failed to load AI usage', error);
+    return null;
+  }
+}
+
+function formatUsd(value: number) {
+  return `$${value.toFixed(value < 1 ? 4 : 2)}`;
+}
+
+function AiUsageCard({ usage, configured }: { usage: MonthlyAiUsage | null; configured: boolean }) {
+  const percent = usage ? Math.min(100, (usage.visitor.costUsd / usage.budgetUsd) * 100) : 0;
+  const barColor = percent >= 100 ? '#fa896b' : percent >= 80 ? '#ffae1f' : '#13deb9';
+
+  return (
+    <div className="admin-card" style={{ marginBottom: 32 }}>
+      <div className="admin-card-header">
+        <div>
+          <h4>AI 用量（本月）</h4>
+          <p>按 DeepSeek 官方价格估算，实际扣费以 DeepSeek 后台为准</p>
+        </div>
+      </div>
+      {!configured ? (
+        <p style={{ margin: 0, fontSize: 14, color: 'var(--admin-text-secondary)' }}>
+          还没有配置 DEEPSEEK_API_KEY 环境变量，AI 功能未启用。
+        </p>
+      ) : !usage ? (
+        <p style={{ margin: 0, fontSize: 14, color: 'var(--admin-text-secondary)' }}>用量数据暂时读取失败。</p>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 8 }}>
+              <span style={{ color: 'var(--admin-text-secondary)' }}>访客聊天 · {usage.visitor.calls} 次</span>
+              <span style={{ fontWeight: 600, color: 'var(--admin-text-primary)' }}>
+                {formatUsd(usage.visitor.costUsd)} / {`$${usage.budgetUsd}`}
+              </span>
+            </div>
+            <div style={{ height: 8, borderRadius: 4, background: '#f2f4f5', overflow: 'hidden' }}>
+              <div style={{ width: `${percent}%`, height: '100%', background: barColor }} />
+            </div>
+            <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--admin-text-secondary)' }}>
+              {usage.exhausted ? '本月额度已用完，煤球暂停聊天，下个月自动恢复。' : '用完后煤球会暂停聊天，下个月自动恢复。'}
+            </p>
+          </div>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 8 }}>
+              <span style={{ color: 'var(--admin-text-secondary)' }}>后台写作辅助 · {usage.admin.calls} 次</span>
+              <span style={{ fontWeight: 600, color: 'var(--admin-text-primary)' }}>{formatUsd(usage.admin.costUsd)}</span>
+            </div>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--admin-text-secondary)' }}>不计入上面的额度。</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default async function AdminDashboard() {
-  const stats = await getStats();
+  const configured = isAiConfigured();
+  const [stats, aiUsage] = await Promise.all([getStats(), configured ? getAiUsage() : null]);
 
   return (
     <div>
@@ -70,6 +133,8 @@ export default async function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      <AiUsageCard usage={aiUsage} configured={configured} />
 
       {/* Quick Actions */}
       <div className="admin-card">

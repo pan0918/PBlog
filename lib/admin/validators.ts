@@ -22,6 +22,11 @@ export const createPostSchema = z.object({
 
 export const updatePostSchema = createPostSchema.partial();
 
+export const aiPostMetaSchema = z.object({
+  title: z.string().max(200).default(''),
+  content: z.string().trim().min(1, '正文为空，先写点内容再生成'),
+});
+
 // --- Categories ---
 export const createCategorySchema = z.object({
   name: z.string().min(1, '名称不能为空').max(50),

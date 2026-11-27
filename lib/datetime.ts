@@ -40,3 +40,10 @@ export function formatSiteTime(value: string | Date): string {
   const parts = getSiteDateParts(value);
   return parts ? `${parts.hour}:${parts.minute}` : '';
 }
+
+/** The first instant of the current month in the site time zone (Asia/Shanghai has no DST). */
+export function startOfSiteMonth(now: Date = new Date()): Date {
+  const parts = getSiteDateParts(now);
+  if (!parts) throw new Error('Invalid date');
+  return new Date(`${parts.year}-${parts.month}-01T00:00:00+08:00`);
+}

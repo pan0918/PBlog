@@ -85,8 +85,9 @@ export const siteConfig = {
   danmakuList: [...],            // 弹幕文字
   buildDate: "2026-05-21T00:00:00",  // 建站日期（运行时间）
 
-  geminiConfig: { ... },         // AI 猫猫模型参数
-  petConfig: { ... },            // AI 猫猫人设、主动消息、允许调用的 API 域名
+  siteUrl: "https://www.aibrium.cn", // 正式地址，用于 sitemap 和分享预览
+  aiConfig: { model, monthlyBudgetUsd }, // DeepSeek 模型和访客功能每月费用上限（美元）
+  petConfig: { ... },            // AI 猫猫「煤球」的人设和主动消息
 };
 ```
 
@@ -96,7 +97,8 @@ export const siteConfig = {
 
 文章、说说、相册、项目、友链、歌曲都存放在数据库，请在后台管理系统 `/admin` 中维护。保存后会自动刷新前台对应页面的缓存。
 
-- **文章**：Vditor 编辑器，支持 Markdown、数学公式、代码高亮、图片上传（直传图床）、快捷保存、全屏写作和本地草稿。
+- **文章**：Vditor 编辑器，支持 Markdown、数学公式、代码高亮、图片上传（直传图床）、快捷保存、全屏写作和本地草稿。摘要旁的「AI 生成摘要和标签」按钮会根据正文生成摘要（同时用作搜索引擎描述）和标签，已有的标签自动勾选，新标签点一下才会创建。
+- **AI 用量**：仪表盘显示本月 AI 调用次数和估算花费。访客聊天超过 `aiConfig.monthlyBudgetUsd` 后煤球暂停聊天，下个月自动恢复；后台写作辅助不计入额度。调用记录存在 `ai_usage_logs` 表，首次调用时自动创建，无需手动迁移。
 - **说说**：保存为草稿后再发布时，会记录第一次发布的时间。
 - **留言墙**：访客提交后进入待审核，在后台通过后才展示；同一 IP 10 分钟最多 3 条、1 小时最多 10 条。
 - **评论 / 用户**：文章下方的原生评论系统，访客注册登录后评论、回复、点赞；后台可隐藏评论、禁言或封禁用户。
@@ -240,11 +242,8 @@ IMAGE_BED_TOKEN=...
 IMAGE_BED_BASE_URL=...             # 可选，默认 https://a68b43cc.cloudflare-imgbed-9pz.pages.dev
 IMAGE_BED_UPLOAD_CHANNEL=...       # 可选，默认 huggingface
 
-# AI 猫猫（可选）
-GEMINI_API_KEY=...
-PET_API_BASE_URL=...               # 可选，OpenAI 兼容接口地址，需在 petConfig.allowedApiHosts 白名单中
-PET_API_KEY=...
-PET_MODEL=...
+# AI 功能（可选）：煤球聊天、后台一键生成摘要和标签
+DEEPSEEK_API_KEY=...               # 不填时煤球只会回复固定文案，后台 AI 按钮不可用
 
 # 仅 scripts/seed-admin.ts 使用
 ADMIN_INIT_USERNAME=admin

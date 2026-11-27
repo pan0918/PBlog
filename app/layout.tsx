@@ -19,8 +19,10 @@ const appleIconUrl = resizeImageUrl(siteConfig.faviconUrl, 192);
 const preconnectOrigins = getPreconnectOrigins();
 
 export const metadata: Metadata = {
-  title: siteConfig.title,
+  metadataBase: new URL(siteConfig.siteUrl),
+  title: { default: siteConfig.title, template: `%s | ${siteConfig.title}` },
   description: siteConfig.bio,
+  openGraph: { siteName: siteConfig.title, locale: 'zh_CN', type: 'website' },
   icons: { icon: faviconUrl, apple: appleIconUrl },
 };
 

@@ -31,6 +31,7 @@ async function main() {
     `CREATE TABLE IF NOT EXISTS albums (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT, cover_url TEXT, location TEXT, status TEXT NOT NULL DEFAULT 'published', sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, deleted_at TEXT)`,
     `CREATE TABLE IF NOT EXISTS photos (id TEXT PRIMARY KEY, album_id TEXT NOT NULL, title TEXT, description TEXT, image_url TEXT NOT NULL, thumbnail_url TEXT, preview_url TEXT, width INTEGER, height INTEGER, sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, deleted_at TEXT, FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE)`,
     `CREATE TABLE IF NOT EXISTS songs (id TEXT PRIMARY KEY, title TEXT NOT NULL, artist TEXT NOT NULL, album TEXT NOT NULL DEFAULT '', pic TEXT NOT NULL DEFAULT '', url TEXT NOT NULL, lrc TEXT NOT NULL DEFAULT '', sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, deleted_at TEXT)`,
+    `CREATE TABLE IF NOT EXISTS ai_usage_logs (id TEXT PRIMARY KEY, feature TEXT NOT NULL, model TEXT NOT NULL, prompt_cache_hit_tokens INTEGER NOT NULL DEFAULT 0, prompt_cache_miss_tokens INTEGER NOT NULL DEFAULT 0, completion_tokens INTEGER NOT NULL DEFAULT 0, cost_usd REAL NOT NULL DEFAULT 0, created_at TEXT NOT NULL)`,
     `CREATE INDEX IF NOT EXISTS idx_posts_status_published_at ON posts(status, published_at)`,
     `CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category_id)`,
     `CREATE INDEX IF NOT EXISTS idx_posts_pinned ON posts(is_pinned, published_at)`,
@@ -47,6 +48,7 @@ async function main() {
     `CREATE INDEX IF NOT EXISTS idx_post_comments_parent_created ON post_comments(parent_id, status, created_at, id)`,
     `CREATE INDEX IF NOT EXISTS idx_post_comments_user ON post_comments(public_user_id, status)`,
     `CREATE INDEX IF NOT EXISTS idx_songs_sort ON songs(sort_order)`,
+    `CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_created ON ai_usage_logs(created_at)`,
   ];
 
   console.log(`📦 Executing ${statements.length} SQL statements...`);

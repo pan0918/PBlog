@@ -9,20 +9,16 @@ interface SocialConfig {
   xiaohongshu?: string;
 }
 
-interface GeminiConfig {
-  modelId: string;
-  systemPrompt: string;
-  maxOutputTokens: number;
-  temperature: number;
+interface AiConfig {
+  model: string;
+  monthlyBudgetUsd: number;
 }
 
 interface PetConfig {
   name: string;
-  avatar: string;
   systemPrompt: string;
   proactiveMessages: string[];
   proactiveInterval: number;
-  allowedApiHosts: string[];
 }
 
 interface AssetCdnConfig {
@@ -34,6 +30,7 @@ interface AssetCdnConfig {
 
 interface SiteConfig {
   title: string;
+  siteUrl: string;
   faviconUrl: string;
   authorName: string;
   bio: string;
@@ -51,12 +48,14 @@ interface SiteConfig {
   chatterDescription: string;
   danmakuList: string[];
   buildDate: string;
-  geminiConfig: GeminiConfig;
+  aiConfig: AiConfig;
   petConfig: PetConfig;
 }
 
 export const siteConfig: SiteConfig = {
   title: "Frud's Blog",
+  // 网站正式地址，用于搜索引擎（sitemap）和分享预览里的绝对链接
+  siteUrl: "https://www.aibrium.cn",
   faviconUrl: "https://a68b43cc.cloudflare-imgbed-9pz.pages.dev/file/1782456852356_icon.png",
   authorName: "Frud_",
   bio: "Never forget what you are. The rest of the world will not. Wear it like armor, and it can never be used to hurt you.",
@@ -103,15 +102,15 @@ export const siteConfig: SiteConfig = {
   chatterDescription: "留下你的足迹，每一张便签都是一份温暖",
   danmakuList: ["在干嘛呢？", "今天也要加油鸭！", "前端开发中...", "Tailwind CSS 真好用", "BUG 修复进度 99%", "写代码中", "摸鱼中~", "下一顿吃什么？"],
   buildDate: "2026-05-21T00:00:00",
-  geminiConfig: {
-    modelId: "gemini-2.5-flash-lite",
-    systemPrompt: "你现在是一只傲娇、聪明、有点毒舌但很可爱的暹罗猫。你的名字叫\"煤球\"。你说话的特点是：必须简短，每次最多一两句话。喜欢在句尾加上\"喵~\"。经常抱怨肚子饿。回复字数最多不能超过100字。绝对不要承认自己是一个AI模型。",
-    maxOutputTokens: 150,
-    temperature: 0.85,
+  // AI 功能（DeepSeek）。API Key 放在 Vercel 环境变量 DEEPSEEK_API_KEY 里，不要写进代码。
+  aiConfig: {
+    model: "deepseek-flash",
+    // 访客功能（和煤球聊天）每月的费用上限，单位美元。用完后煤球改用本地回复，下个月自动恢复；
+    // 后台写作辅助不受这个限制。实际花费以 DeepSeek 后台为准，这里是按官方价格估算的。
+    monthlyBudgetUsd: 2,
   },
   petConfig: {
     name: "煤球",
-    avatar: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=meiqiu&backgroundColor=c0aede",
     systemPrompt: "你现在是一只傲娇、聪明、有点毒舌但很可爱的暹罗猫。你的名字叫\"煤球\"。你说话的特点是：必须简短，每次最多一两句话。喜欢在句尾加上\"喵~\"。经常抱怨肚子饿。回复字数最多不能超过80字。绝对不要承认自己是一个AI模型。你要表现得像一个真实存在的小宠物，有情绪、有脾气。",
     proactiveMessages: [
       "主人~该休息一下了喵",
@@ -123,8 +122,5 @@ export const siteConfig: SiteConfig = {
       "煤球想你了喵~",
     ],
     proactiveInterval: 30 * 60 * 1000,
-    // Hosts the /api/chat relay is allowed to call (prevents open-relay / SSRF).
-    // Add your own OpenAI-compatible endpoints here if you self-host a proxy.
-    allowedApiHosts: ["generativelanguage.googleapis.com", "api.openai.com"],
   },
 };
